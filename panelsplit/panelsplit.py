@@ -56,7 +56,7 @@ class PanelSplit:
         Returns: Number of splits
         """
         return self.n_splits
-
+    
     def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict'):
         """
         Perform cross-validated predictions using a given predictor model.
@@ -86,8 +86,11 @@ class PanelSplit:
         predictions = {}
     
         for train_indices, test_indices in tqdm(self.split(X=X, y=y)):
-            y_train = y[train_indices].dropna()
-            X_train = X[y_train.index, :]
+            # Remove NaN values from y_train
+            train_mask = ~np.isnan(y[train_indices])
+            y_train = y[train_indices][train_mask]
+            X_train = X[train_indices][train_mask]
+    
             X_test, y_test = X[test_indices], y[test_indices]
     
             model = estimator.fit(X_train, y_train)
@@ -108,4 +111,3 @@ class PanelSplit:
             predictions.update(dict(zip(test_indices_list, y_test)))
     
         return predictions
-    
