@@ -57,7 +57,7 @@ class PanelSplit:
         """
         return self.n_splits
 
-    def cross_val_predict(self, estimator, X, y, prediction_method='predict'):
+    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict'):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -70,6 +70,9 @@ class PanelSplit:
 
         y : pandas Series
             The target variable to be predicted.
+
+        indices : pandas DataFrame
+            Indices corresponding to the dataset.
 
         prediction_method : str, optional (default='predict')
             The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
@@ -90,7 +93,7 @@ class PanelSplit:
             X_train = X.iloc[y_train.index]
             X_test, y_test = X.iloc[test_indices], y.iloc[test_indices]
 
-            pred = pd.DataFrame(index=test_indices)
+            pred = indices.iloc[test_indices].copy()
             pred['y_true'] = y_test.values
 
             model = estimator.fit(X_train, y_train)
