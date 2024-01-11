@@ -86,7 +86,7 @@ class PanelSplit:
         """
         predictions = []
 
-        for train_indices, test_indices in tqdm(self.all_indices):
+        for train_indices, test_indices in tqdm(self.split()):
             # first drop nas with respect to y_train
             y_train = y.iloc[train_indices].dropna()
             # use y_train to filter for X_train
