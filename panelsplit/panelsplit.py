@@ -133,7 +133,7 @@ class PanelSplit:
         predictions = []
         fitted_models = []  # List to store fitted models
 
-        for train_indices, test_indices in tqdm(self.split():
+        for train_indices, test_indices in tqdm(self.split()):
             # first drop nas with respect to y_train
             y_train = y.iloc[train_indices].dropna()
             # use y_train to filter for X_train
