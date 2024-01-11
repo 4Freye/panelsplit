@@ -57,7 +57,44 @@ class PanelSplit:
         """
         return self.n_splits
 
-    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict'):
+    def _predict_fold(self, estimator, X_train, y_train, X_test, prediction_method='predict'):
+        """
+        Perform predictions for a single fold.
+
+        Parameters:
+        -----------
+        estimator : The machine learning model used for prediction.
+
+        X_train : pandas DataFrame
+            The input features for training.
+
+        y_train : pandas Series
+            The target variable for training.
+
+        X_test : pandas DataFrame
+            The input features for testing.
+
+        prediction_method : str, optional (default='predict')
+            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
+
+        Returns:
+        --------
+        pd.Series
+            Series containing predicted values.
+
+        """
+        model = estimator.fit(X_train, y_train)
+
+        if prediction_method == 'predict':
+            return model.predict(X_test)
+        elif prediction_method == 'predict_proba':
+            return model.predict_proba(X_test)[:, 1]
+        elif prediction_method == 'predict_log_proba':
+            return model.predict_log_proba(X_test)[:, 1]
+        else:
+            raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
+
+    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict', y_pred_col='y_pred', return_fitted_models=False):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -77,36 +114,42 @@ class PanelSplit:
         prediction_method : str, optional (default='predict')
             The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
 
+        y_pred_col : str, optional (default='y_pred')
+            The column name for the predicted values.
+
+        return_fitted_models : bool, optional (default=False)
+            If True, return a list of fitted models at the end of cross-validation.
+
         Returns:
         --------
         pd.DataFrame
             Concatenated DataFrame containing predictions made by the model during cross-validation.
             It includes the original indices joined with the predicted values.
 
+        list of fitted models (if return_fitted_models=True)
+            List containing fitted models for each fold.
+
         """
         predictions = []
+        fitted_models = []  # List to store fitted models
 
-        for train_indices, test_indices in tqdm(self.split()):
+        for train_indices, test_indices in tqdm(self.all_indices):
             # first drop nas with respect to y_train
             y_train = y.iloc[train_indices].dropna()
             # use y_train to filter for X_train
             X_train = X.iloc[y_train.index]
-            X_test, y_test = X.iloc[test_indices], y.iloc[test_indices]
+            X_test, _ = X.iloc[test_indices], y.iloc[test_indices]
 
             pred = indices.iloc[test_indices].copy()
-            pred['y_true'] = y_test.values
+            pred[y_pred_col] = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method)
 
-            model = estimator.fit(X_train, y_train)
-
-            if prediction_method == 'predict':
-                pred['y_pred'] = model.predict(X_test)
-            elif prediction_method == 'predict_proba':
-                pred['y_pred'] = model.predict_proba(X_test)[:, 1]
-            elif prediction_method == 'predict_log_proba':
-                pred['y_pred'] = model.predict_log_proba(X_test)[:, 1]
-            else:
-                raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
+            fitted_models.append(estimator.fit(X_train, y_train))  # Store the fitted model
 
             predictions.append(pred)
 
-        return pd.concat(predictions, axis=0)
+        result_df = pd.concat(predictions, axis=0)
+
+        if return_fitted_models:
+            return result_df, fitted_models
+        else:
+            return result_df
