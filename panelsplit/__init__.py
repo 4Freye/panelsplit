@@ -1,1 +1,1 @@
-
+from .panelsplit import PanelSplit
