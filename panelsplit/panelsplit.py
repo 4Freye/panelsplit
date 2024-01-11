@@ -87,7 +87,7 @@ class PanelSplit:
     
         for train_indices, test_indices in tqdm(self.split(X=X, y=y)):
             y_train = y[train_indices].dropna()
-            X_train = X[y_train.index]
+            X_train = X[y_train.index, :]
             X_test, y_test = X[test_indices], y[test_indices]
     
             model = estimator.fit(X_train, y_train)
