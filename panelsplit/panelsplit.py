@@ -85,7 +85,7 @@ def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict
     """
     predictions = {}
 
-    for train_indices, test_indices in tqdm(self.all_indices):
+    for train_indices, test_indices in tqdm(self.split(X=X, y=y)):
         y_train = y[train_indices].dropna()
         X_train = X[y_train.index]
         X_test, y_test = X[test_indices], y[test_indices]
@@ -102,7 +102,7 @@ def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict
             raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
         # Convert test indices to a list for cases where test_indices is a NumPy array
-        test_indices_list = indices[test_indices].tolist()
+        test_indices_list = test_indices.tolist()
 
         # Update predictions dictionary with key-value pairs
         predictions.update(dict(zip(test_indices_list, y_test)))
