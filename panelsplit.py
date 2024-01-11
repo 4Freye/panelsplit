@@ -57,7 +57,7 @@ class PanelSplit:
         """
         return self.n_splits
 
-    def cross_val_predict(self, estimator, X, y):
+    def cross_val_predict(self, estimator, X, y, prediction_method='predict'):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -70,6 +70,9 @@ class PanelSplit:
 
         y : pandas Series
             The target variable to be predicted.
+
+        prediction_method : str, optional (default='predict')
+            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
 
         Returns:
         --------
@@ -92,7 +95,14 @@ class PanelSplit:
 
             model = estimator.fit(X_train, y_train)
 
-            pred['y_pred'] = model.predict_proba(X_test)[:, 1]
+            if prediction_method == 'predict':
+                pred['y_pred'] = model.predict(X_test)
+            elif prediction_method == 'predict_proba':
+                pred['y_pred'] = model.predict_proba(X_test)[:, 1]
+            elif prediction_method == 'predict_log_proba':
+                pred['y_pred'] = model.predict_log_proba(X_test)[:, 1]
+            else:
+                raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
             predictions.append(pred)
 
