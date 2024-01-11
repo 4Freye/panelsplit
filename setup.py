@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),  # Automatically discover and include all packages in the project
 
     # Metadata
-    author='Eric Frey,
+    author='Eric Frey',
     author_email='eric.frey@bse.eu',
     description='A custom toolkit for working with panel data.',
     url='https://github.com/4Freye/panelsplit',  # URL to your GitHub repository
