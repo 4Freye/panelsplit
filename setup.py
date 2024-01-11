@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='panelsplit',  # Replace with the desired name of your package
     version='0.1.0',
-    packages=find_packages(),  # Automatically discover and include all packages in the project
+    packages=find_packages(include=['panelsplit', 'panelsplit.*']),  # Include only packages within the "panelsplit" folder
 
     # Metadata
     author='Eric Frey',
