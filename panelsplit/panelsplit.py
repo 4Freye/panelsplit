@@ -57,7 +57,7 @@ class PanelSplit:
         """
         return self.n_splits
 
-    def _predict_fold(self, estimator, X_train, y_train, X_test, prediction_method='predict'):
+    def _predict_fold(self, estimator, X_train, y_train, X_test, prediction_method='predict', sample_weight=None):
         """
         Perform predictions for a single fold.
 
@@ -77,24 +77,28 @@ class PanelSplit:
         prediction_method : str, optional (default='predict')
             The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
 
+        sample_weight : pandas Series or numpy array, optional (default=None)
+            Sample weights for the training data.
+
         Returns:
         --------
         pd.Series
             Series containing predicted values.
 
         """
-        model = estimator.fit(X_train, y_train)
+        model = estimator.fit(X_train, y_train, sample_weight=sample_weight)
 
         if prediction_method == 'predict':
-            return model.predict(X_test)
+            return model.predict(X_test), model
         elif prediction_method == 'predict_proba':
-            return model.predict_proba(X_test)[:, 1]
+            return model.predict_proba(X_test)[:, 1], model
         elif prediction_method == 'predict_log_proba':
-            return model.predict_log_proba(X_test)[:, 1]
+            return model.predict_log_proba(X_test)[:, 1], model
         else:
             raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
-    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict', y_pred_col='y_pred', return_fitted_models=False):
+    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict', y_pred_col='y_pred',
+                          return_fitted_models=False, sample_weight=None):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -120,6 +124,9 @@ class PanelSplit:
         return_fitted_models : bool, optional (default=False)
             If True, return a list of fitted models at the end of cross-validation.
 
+        sample_weight : pandas Series or numpy array, optional (default=None)
+            Sample weights for the training data.
+
         Returns:
         --------
         pd.DataFrame
@@ -140,10 +147,13 @@ class PanelSplit:
             X_train = X.iloc[y_train.index]
             X_test, _ = X.iloc[test_indices], y.iloc[test_indices]
 
-            pred = indices.iloc[test_indices].copy()
-            pred[y_pred_col] = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method)
+            if sample_weight is not None:
+                sw = sample_weight[y_train.index]
 
-            fitted_models.append(estimator.fit(X_train, y_train))  # Store the fitted model
+            pred = indices.iloc[test_indices].copy()
+            pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
+
+            fitted_models.append(model)  # Store the fitted model
 
             predictions.append(pred)
 
