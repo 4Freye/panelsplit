@@ -1,6 +1,7 @@
 from sklearn.model_selection import TimeSeriesSplit
 from tqdm import tqdm
 import pandas as pd
+import warning
 
 class PanelSplit:
     def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
@@ -65,10 +66,10 @@ class PanelSplit:
             train_indices = self.all_periods.iloc[self.all_periods.isin(train_periods)].index
             test_indices = self.all_periods.iloc[self.all_periods.isin(test_periods)].index
             
-            if self.drop_folds and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.iloc[train_indices].eq(0).all() or y.iloc[test_indices].eq(0).all())):
+            if self.drop_folds and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.iloc[train_indices].nunique() == 1 or y.iloc[test_indices].nunique() == 1)):
                 if init:
                     self.n_splits -= 1
-                    print(f'Dropping fold {i} as it is either empty or contains all zeros in the train or test set.')
+                    print(f'Dropping fold {i} as either the test or train set is either empty or contains only one unique value.')
                 else:
                     continue
             else:
