@@ -3,7 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 
 class PanelSplit:
-    def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False):
+    def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
         """
         A class for performing time series cross-validation with custom train/test splits based on unique periods.
 
@@ -16,13 +16,25 @@ class PanelSplit:
         - max_train_size: Maximum size for a single training set.
         - plot: Flag to visualize time series splits
         """
+
         if unique_periods == None:
             unique_periods = pd.Series(train_periods.unique()).sort_values()
         self.tss = TimeSeriesSplit(n_splits=n_splits, gap=gap, test_size=test_size, max_train_size = max_train_size)
         indices = self.tss.split(unique_periods.reset_index(drop=True))
         self.u_periods_cv = self.split_unique_periods(indices, unique_periods)
         self.all_periods = train_periods.reset_index()
+    
+        if y is not None and drop_folds is False:
+            warnings.warn("Ignoring y values because drop_folds is False.")
+        
+        if y is None and drop_folds is True:
+            raise ValueError("Cannot drop folds without specifying y values.")
+        
+        self.drop_folds = drop_folds
+
         self.n_splits = n_splits
+        self.split(y=y, init=True)
+
         if plot:
             self.plot_time_series_splits(self.u_periods_cv)
         
@@ -43,7 +55,7 @@ class PanelSplit:
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
-    def split(self, X = None, y = None, groups=None):
+    def split(self, X = None, y = None, groups=None, init=False):
         """
         Generate train/test indices based on unique periods.
         """
@@ -52,7 +64,15 @@ class PanelSplit:
         for i, (train_periods, test_periods) in enumerate(self.u_periods_cv):
             train_indices = self.all_periods.iloc[self.all_periods.isin(train_periods)].index
             test_indices = self.all_periods.iloc[self.all_periods.isin(test_periods)].index
-            self.all_indices.append((train_indices, test_indices))
+            
+            if self.drop_folds and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.iloc[train_indices].eq(0).all() or y.iloc[test_indices].eq(0).all())):
+                if init:
+                    self.n_splits -= 1
+                    print(f'Dropping fold {i} as it is either empty or contains all zeros in the train or test set.')
+                else:
+                    continue
+            else:
+                self.all_indices.append((train_indices, test_indices))
         
         return self.all_indices
    
@@ -204,42 +224,10 @@ class PanelSplit:
         Perform cross-validated predictions using a given predictor model in parallel.
 
         Parameters:
-        -----------
-        estimator : The machine learning model used for prediction.
+        - n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
 
-        X : pandas DataFrame
-            The input features for the predictor.
+        # ... (rest of the parameters remain the same)
 
-        y : pandas Series
-            The target variable to be predicted.
-
-        indices : pandas DataFrame
-            Indices corresponding to the dataset.
-
-        prediction_method : str, optional (default='predict')
-            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-
-        y_pred_col : str, optional (default=None)
-            The column name for the predicted values.
-
-        return_fitted_models : bool, optional (default=False)
-            If True, return a list of fitted models at the end of cross-validation.
-
-        sample_weight : pandas Series or numpy array, optional (default=None)
-            Sample weights for the training data.
-        
-        n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
-
-        Returns:
-        --------
-        pd.DataFrame
-            Concatenated DataFrame containing predictions made by the model during cross-validation.
-            It includes the original indices joined with the predicted values.
-
-        list of fitted models (if return_fitted_models=True)
-            List containing fitted models for each fold.
-
-        """
         Returns:
         --------
         pd.DataFrame
