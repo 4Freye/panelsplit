@@ -3,7 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 
 class PanelSplit:
-    def __init__(self, unique_periods, train_periods, n_splits=5, gap=None, test_size=None, max_train_size=None):
+    def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False):
         """
         A class for performing time series cross-validation with custom train/test splits based on unique periods.
 
@@ -14,13 +14,18 @@ class PanelSplit:
         - unique_periods: Pandas DataFrame or Series containing unique periods
         - train_periods: All available training periods
         - max_train_size: Maximum size for a single training set.
+        - plot: Flag to visualize time series splits
         """
-        self.tss = TimeSeriesSplit(n_splits=n_splits, gap=gap, test_size=test_size, max_train_size=max_train_size)
-        indices = self.tss.split(unique_periods)
+        if unique_periods == None:
+            unique_periods = pd.Series(train_periods.unique()).sort_values()
+        self.tss = TimeSeriesSplit(n_splits=n_splits, gap=gap, test_size=test_size, max_train_size = max_train_size)
+        indices = self.tss.split(unique_periods.reset_index(drop=True))
         self.u_periods_cv = self.split_unique_periods(indices, unique_periods)
-        self.all_periods = train_periods
+        self.all_periods = train_periods.reset_index()
         self.n_splits = n_splits
-
+        if plot:
+            self.plot_time_series_splits(self.u_periods_cv)
+        
     def split_unique_periods(self, indices, unique_periods):
         """
         Split unique periods into train/test sets based on TimeSeriesSplit indices.
@@ -38,25 +43,25 @@ class PanelSplit:
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
-    def split(self, X=None, y=None, groups=None):
+    def split(self, X = None, y = None, groups=None):
         """
         Generate train/test indices based on unique periods.
         """
         self.all_indices = []
-
+        
         for i, (train_periods, test_periods) in enumerate(self.u_periods_cv):
-            train_indices = self.all_periods.loc[self.all_periods.isin(train_periods)].index
-            test_indices = self.all_periods.loc[self.all_periods.isin(test_periods)].index
+            train_indices = self.all_periods.iloc[self.all_periods.isin(train_periods)].index
+            test_indices = self.all_periods.iloc[self.all_periods.isin(test_periods)].index
             self.all_indices.append((train_indices, test_indices))
-
+        
         return self.all_indices
-
-    def get_n_splits(self, X=None, y=None, groups=None):
+   
+    def get_n_splits(self, X=None, y =None, groups=None):
         """
         Returns: Number of splits
         """
         return self.n_splits
-
+    
     def _predict_fold(self, estimator, X_train, y_train, X_test, prediction_method='predict', sample_weight=None):
         """
         Perform predictions for a single fold.
@@ -97,7 +102,7 @@ class PanelSplit:
         else:
             raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
-    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict', y_pred_col='y_pred',
+    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict', y_pred_col=None,
                           return_fitted_models=False, sample_weight=None):
         """
         Perform cross-validated predictions using a given predictor model.
@@ -118,7 +123,7 @@ class PanelSplit:
         prediction_method : str, optional (default='predict')
             The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
 
-        y_pred_col : str, optional (default='y_pred')
+        y_pred_col : str, optional (default=None)
             The column name for the predicted values.
 
         return_fitted_models : bool, optional (default=False)
@@ -139,6 +144,11 @@ class PanelSplit:
         """
         predictions = []
         fitted_models = []  # List to store fitted models
+        if y_pred_col is None:
+            if hasattr(y, 'name'):
+                y_pred_col = str(y.name) + '_pred'
+            else:
+                y_pred_col =  'y_pred'
 
         for train_indices, test_indices in tqdm(self.split()):
             # first drop nas with respect to y_train
@@ -161,5 +171,112 @@ class PanelSplit:
 
         if return_fitted_models:
             return result_df, fitted_models
+        else:
+            return result_df
+    
+    def plot_time_series_splits(self, split_output):
+        """
+        Visualize time series splits using a scatter plot.
+
+        Parameters:
+        - split_output: Output of time series splits
+        """
+        folds = len(split_output)
+        fig, ax = plt.subplots()
+        
+        def int_to_dt(an_array):
+            return pd.to_datetime(an_array.astype(str), format='%Y%m')
+
+        for i, (train_index, test_index) in enumerate(split_output):
+            ax.scatter(int_to_dt(train_index), [i] * len(train_index), color='blue', marker='.', s=50)
+            ax.scatter(int_to_dt(test_index), [i] * len(test_index), color='red', marker='.', s=50)
+
+        ax.set_xlabel('Periods')
+        ax.set_ylabel('Folds')
+        ax.set_title('Cross-Validation Splits')
+        ax.set_yticks(range(folds))  # Set the number of ticks on y-axis
+        ax.set_yticklabels([f'{i}' for i in range(folds)])  # Set custom labels for y-axi
+        plt.show()
+
+    def cross_val_predict_parallel(self, estimator, X, y, indices, prediction_method='predict', y_pred_col=None,
+                                   return_fitted_models=False, sample_weight=None, n_jobs=-1):
+        """
+        Perform cross-validated predictions using a given predictor model in parallel.
+
+        Parameters:
+        -----------
+        estimator : The machine learning model used for prediction.
+
+        X : pandas DataFrame
+            The input features for the predictor.
+
+        y : pandas Series
+            The target variable to be predicted.
+
+        indices : pandas DataFrame
+            Indices corresponding to the dataset.
+
+        prediction_method : str, optional (default='predict')
+            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
+
+        y_pred_col : str, optional (default=None)
+            The column name for the predicted values.
+
+        return_fitted_models : bool, optional (default=False)
+            If True, return a list of fitted models at the end of cross-validation.
+
+        sample_weight : pandas Series or numpy array, optional (default=None)
+            Sample weights for the training data.
+        
+        n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
+
+        Returns:
+        --------
+        pd.DataFrame
+            Concatenated DataFrame containing predictions made by the model during cross-validation.
+            It includes the original indices joined with the predicted values.
+
+        list of fitted models (if return_fitted_models=True)
+            List containing fitted models for each fold.
+
+        """
+        Returns:
+        --------
+        pd.DataFrame
+            Concatenated DataFrame containing predictions made by the model during cross-validation.
+            It includes the original indices joined with the predicted values.
+
+        list of fitted models (if return_fitted_models=True)
+            List containing fitted models for each fold.
+
+        """
+        if y_pred_col is None:
+            if hasattr(y, 'name'):
+                y_pred_col = str(y.name) + '_pred'
+            else:
+                y_pred_col =  'y_pred'
+            
+        def predict_fold_parallel(train_indices, test_indices):
+            y_train = y.iloc[train_indices].dropna()
+            X_train = X.iloc[y_train.index]
+            X_test, _ = X.iloc[test_indices], y.iloc[test_indices]
+
+            if sample_weight is not None:
+                sw = sample_weight[y_train.index]
+
+            pred = indices.iloc[test_indices].copy()
+            pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
+
+            return pred, model
+
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(predict_fold_parallel)(train_indices, test_indices) for train_indices, test_indices in tqdm(self.split())
+        )
+
+        predictions, fitted_models = zip(*results)
+        result_df = pd.concat(predictions, axis=0)
+
+        if return_fitted_models:
+            return result_df, list(fitted_models)
         else:
             return result_df
