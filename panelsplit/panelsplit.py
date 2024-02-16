@@ -9,11 +9,11 @@ class PanelSplit:
         A class for performing time series cross-validation with custom train/test splits based on unique periods.
 
         Parameters:
+        - train_periods: All available training periods
+        - unique_periods: Pandas DataFrame or Series containing unique periods. 
         - n_splits: Number of splits for TimeSeriesSplit
         - gap: Gap between train and test sets in TimeSeriesSplit
         - test_size: Size of the test set in TimeSeriesSplit
-        - unique_periods: Pandas DataFrame or Series containing unique periods
-        - train_periods: All available training periods
         - max_train_size: Maximum size for a single training set.
         - plot: Flag to visualize time series splits
         """
