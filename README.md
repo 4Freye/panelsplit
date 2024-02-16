@@ -14,8 +14,8 @@ pip install git+https://github.com/4Freye/panelsplit.git
 ## Documentation
 
 ### Initialization Parameters
-- **df_periods**: The periods in the DataFrame.
-- **unique_periods**: Pandas Series containing unique periods. Default is `None`, in which case unique periods are derived from `df_periods`.
+- **periods**: Pandas Series representing the time series of the DataFrame.
+- **unique_periods**: Pandas Series containing unique periods. Default is `None`, in which case unique periods are derived from `periods` and then sorted.
 - **n_splits**: Number of splits for the underlying `TimeSeriesSplit`.
 - **gap**: Gap between train and test sets in the `TimeSeriesSplit`.
 - **test_size**: Size of the test set in the `TimeSeriesSplit`.
