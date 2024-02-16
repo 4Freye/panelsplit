@@ -26,16 +26,6 @@ pip install git+https://github.com/4Freye/panelsplit.git
 
 ### Methods
 
-#### `split_unique_periods(indices, unique_periods)`
-Split unique periods into train/test sets based on `TimeSeriesSplit` indices.
-
-##### Parameters
-- **indices**: TimeSeriesSplit indices.
-- **unique_periods**: Pandas DataFrame or Series containing unique periods.
-
-##### Returns
-List of tuples containing train and test periods.
-
 #### `split(X=None, y=None, groups=None, init=False)`
 Generate train/test indices based on unique periods.
 
@@ -59,20 +49,6 @@ Returns the number of splits.
 ##### Returns
 Number of splits.
 
-#### `_predict_fold(estimator, X_train, y_train, X_test, prediction_method='predict', sample_weight=None)`
-Perform predictions for a single fold.
-
-##### Parameters
-- **estimator**: Machine learning model.
-- **X_train**: Features for training.
-- **y_train**: Target variable for training.
-- **X_test**: Features for testing.
-- **prediction_method**: Prediction method. Default is `'predict'`.
-- **sample_weight**: Sample weights for the training data.
-
-##### Returns
-Series containing predicted values.
-
 #### `cross_val_predict(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None)`
 Perform cross-validated predictions using a given predictor model.
 
@@ -88,12 +64,6 @@ Perform cross-validated predictions using a given predictor model.
 
 ##### Returns
 Concatenated DataFrame containing predictions made by the model during cross-validation.
-
-#### `plot_time_series_splits(split_output)`
-Visualize time series splits using a scatter plot.
-
-##### Parameters
-- **split_output**: Output of time series splits.
 
 #### `cross_val_transform(transformer, X, return_fitted_transformers=False, include_test_in_fit=False)`
 Perform cross-validated transformation using a given transformer.
