@@ -243,7 +243,7 @@ class PanelSplit:
         splits = self.split()
         _X = X.copy()
     
-        for train_indices, test_indices in tqdm(self.split()):
+        for train_indices, test_indices in self.split():
             X_train = _X.loc[train_indices]
             X_test = _X.loc[test_indices]
     
