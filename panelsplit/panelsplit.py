@@ -1,6 +1,7 @@
 from sklearn.model_selection import TimeSeriesSplit
 from tqdm import tqdm
 import pandas as pd
+import matplotlib.pyplot as plt
 
 class PanelSplit:
     def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
