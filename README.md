@@ -29,64 +29,64 @@ pip install git+https://github.com/4Freye/panelsplit.git
 #### `split(X=None, y=None, groups=None, init=False)`
 Generate train/test indices based on unique periods.
 
-##### Parameters
-- **X**: Features.
-- **y**: Target variable.
-- **groups**: Group labels for the samples.
-- **init**: Flag indicating initialization phase.
+  ##### Parameters
+  - **X**: Features.
+  - **y**: Target variable.
+  - **groups**: Group labels for the samples.
+  - **init**: Flag indicating initialization phase.
 
-##### Returns
-List of train/test indices.
+  ##### Returns
+  List of train/test indices.
 
 #### `get_n_splits(X=None, y=None, groups=None)`
 Returns the number of splits.
 
-##### Parameters
-- **X**: Features.
-- **y**: Target variable.
-- **groups**: Group labels for the samples.
-
-##### Returns
-Number of splits.
+  ##### Parameters
+  - **X**: Features.
+  - **y**: Target variable.
+  - **groups**: Group labels for the samples.
+  
+  ##### Returns
+  Number of splits.
 
 #### `cross_val_predict(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None)`
 Perform cross-validated predictions using a given predictor model.
-
-##### Parameters
-- **estimator**: Machine learning model.
-- **X**: Features.
-- **y**: Target variable.
-- **indices**: Indices corresponding to the dataset.
-- **prediction_method**: Prediction method. Default is `'predict'`.
-- **y_pred_col**: Column name for the predicted values.
-- **return_fitted_models**: Whether to return fitted models. Default is `False`.
-- **sample_weight**: Sample weights for the training data.
-
-##### Returns
-Concatenated DataFrame containing predictions made by the model during cross-validation.
+  
+  ##### Parameters
+  - **estimator**: Machine learning model.
+  - **X**: Features.
+  - **y**: Target variable.
+  - **indices**: Indices corresponding to the dataset.
+  - **prediction_method**: Prediction method. Default is `'predict'`.
+  - **y_pred_col**: Column name for the predicted values.
+  - **return_fitted_models**: Whether to return fitted models. Default is `False`.
+  - **sample_weight**: Sample weights for the training data.
+  
+  ##### Returns
+  Concatenated DataFrame containing predictions made by the model during cross-validation.
 
 #### `cross_val_predict_parallel(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None, n_jobs=-1)`
 Perform cross-validated predictions using a given predictor model in parallel.
-
-##### Parameters
-- **n_jobs**: (Optional) Number of parallel jobs. Set to -1 to use all available CPU cores. Default is `-1`.
-
-##### Returns
-- **result_df**: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
-- **fitted_models (if return_fitted_models=True)**: List containing fitted models for each fold.
+  
+  ##### Parameters
+  - **n_jobs**: (Optional) Number of parallel jobs. Set to -1 to use all available CPU cores. Default is `-1`.
+  
+  ##### Returns
+  - **result_df**: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
+  - **fitted_models (if return_fitted_models=True)**: List containing fitted models for each fold.
 
 
 #### `cross_val_transform(transformer, X, return_fitted_transformers=False, include_test_in_fit=False)`
 Perform cross-validated transformation using a given transformer.
-
-##### Parameters
-- **transformer**: Transformer object.
-- **X**: Features.
-- **return_fitted_transformers**: Whether to return fitted transformers. Default is `False`.
-- **include_test_in_fit**: Whether to include test data in fitting. Default is `False`.
-
-##### Returns
-DataFrame containing transformed values during cross-validation.
+  
+  ##### Parameters
+  - **transformer**: Transformer object.
+  - **X**: Features.
+  - **return_fitted_transformers**: Whether to return fitted transformers. Default is `False`.
+  - **include_test_in_fit**: Whether to include test data in fitting. Default is `False`.
+  
+  ##### Returns
+  DataFrame containing transformed values during cross-validation.
 
 ---
 
