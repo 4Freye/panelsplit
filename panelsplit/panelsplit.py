@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 import numpy as np
+from sklearn.base import clone
 
 class PanelSplit:
     def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
@@ -219,6 +220,7 @@ class PanelSplit:
         plt.show()
 
     def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
+        
          
         """
         Perform cross-validated imputation using a given imputer.
