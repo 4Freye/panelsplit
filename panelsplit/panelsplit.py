@@ -199,7 +199,58 @@ class PanelSplit:
             return result_df, fitted_models
         else:
             return result_df
-    
+            
+    def cross_val_predict_parallel(self, estimator, X, y, indices, prediction_method='predict', y_pred_col=None,
+                                   return_fitted_models=False, sample_weight=None, n_jobs=-1):
+        """
+        Perform cross-validated predictions using a given predictor model in parallel.
+
+        Parameters:
+        - n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
+
+        # ... (rest of the parameters remain the same)
+
+        Returns:
+        --------
+        pd.DataFrame
+            Concatenated DataFrame containing predictions made by the model during cross-validation.
+            It includes the original indices joined with the predicted values.
+
+        list of fitted models (if return_fitted_models=True)
+            List containing fitted models for each fold.
+
+        """
+        if y_pred_col is None:
+            if hasattr(y, 'name'):
+                y_pred_col = str(y.name) + '_pred'
+            else:
+                y_pred_col =  'y_pred'
+            
+        def predict_fold_parallel(train_indices, test_indices):
+            y_train = y.loc[train_indices].dropna()
+            X_train = X.loc[y_train.index]
+            X_test, _ = X.loc[test_indices], y.loc[test_indices]
+
+            if sample_weight is not None:
+                sw = sample_weight[y_train.index]
+
+            pred = indices.loc[test_indices].copy()
+            pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
+
+            return pred, model
+
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(predict_fold_parallel)(train_indices, test_indices) for train_indices, test_indices in tqdm(self.split())
+        )
+
+        predictions, fitted_models = zip(*results)
+        result_df = pd.concat(predictions, axis=0)
+
+        if return_fitted_models:
+            return result_df, list(fitted_models)
+        else:
+            return result_df
+            
     def _plot_time_series_splits(self, split_output):
         """
         Visualize time series splits using a scatter plot.
