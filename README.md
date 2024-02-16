@@ -42,7 +42,7 @@ panel_split = PanelSplit(train_periods=train_periods)
 
 ## Examples
 
-For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository.
+For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository. (Coming soon)
 
 ## Contributing
 
