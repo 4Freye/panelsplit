@@ -4,7 +4,7 @@ PanelSplit is a Python package designed to facilitate time series cross-validati
 
 ## Features
 
-- **Custom Time Series Cross-Validation:** Perform time series cross-validation in a panel data setting with flexible train/test splits using the same parameters as [TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html).
+- **Time Series Cross-Validation:** Perform time series cross-validation in a panel data setting with flexible train/test splits using the same parameters as [TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html).
 - **Visualization Support:** Includes features for visualizing time series splits, aiding in understanding the distribution of train and test data across periods.
 - **Cross-Validated Transformation:** Enables cross-validated transformation using a given transformer, ensuring consistent preprocessing across different folds of time series data.
 - **Cross-Validated Prediction:** Allows for cross-validated predictions using a given machine learning model, facilitating robust model evaluation on time series data.
