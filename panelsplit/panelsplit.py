@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.base import clone
 
 class PanelSplit:
-    def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
+    def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = 0, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
         """
         A class for performing time series cross-validation with custom train/test splits based on unique periods.
 
