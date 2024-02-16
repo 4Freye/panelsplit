@@ -218,7 +218,7 @@ class PanelSplit:
         ax.set_yticklabels([f'{i}' for i in range(folds)])  # Set custom labels for y-axi
         plt.show()
 
-     def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
+    def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
          
         """
         Perform cross-validated imputation using a given imputer.
