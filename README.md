@@ -11,7 +11,7 @@ pip install git+https://github.com/4Freye/panelsplit.git
 ```
 ---
 
-## PanelSplit Documentation
+## Documentation
 
 ### Initialization Parameters
 - **train_periods**: All available training periods.
