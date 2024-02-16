@@ -1,8 +1,7 @@
 ---
-
 # PanelSplit: A Tool for Panel Data Analysis
 
-PanelSplit is a Python package designed to facilitate time series cross-validation with custom train/test splits based on unique periods. This tool is particularly useful for handling panel data in various stages throughout the data pipeline, including feature engineering, hyper-parameter tuning, and model estimation (fitting and predicting).
+PanelSplit is a Python package designed to facilitate panel data cross-validation. This tool is particularly useful for handling panel data in various stages throughout the data pipeline, including feature engineering, hyper-parameter tuning, and model estimation.
 
 ## Features
 
@@ -16,7 +15,7 @@ PanelSplit is a Python package designed to facilitate time series cross-validati
 You can install PanelSplit using pip:
 
 ```bash
-pip install panelsplit
+pip install git+https://github.com/4Freye/panelsplit.git
 ```
 
 ## Usage
@@ -30,10 +29,9 @@ import pandas as pd
 
 # Define your train periods and unique periods
 train_periods = pd.date_range(start='2022-01-01', end='2022-12-31', freq='M')
-unique_periods = pd.Series(train_periods.unique())
 
 # Initialize PanelSplit object
-panel_split = PanelSplit(train_periods=train_periods, unique_periods=unique_periods)
+panel_split = PanelSplit(train_periods=train_periods)
 
 # Perform cross-validated predictions
 # (Example code for using cross_val_predict)
@@ -55,13 +53,5 @@ Contributions to PanelSplit are welcome! If you encounter any issues or have sug
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-Feel free to customize the README further to include additional information or usage examples specific to your project.
-
-PanelSplit is an extension of sklearn's [TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html), but applied to panel data.
-
-It can be installed by running ```pip install git+https://github.com/4Freye/panelsplit.git```
-
-After installation, the PanelSplit class can be imported by running ```from panelsplit import PanelSplit```
 
 This repo is a work in progress. Stay tuned!
