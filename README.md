@@ -92,7 +92,7 @@ Perform cross-validated transformation using a given transformer.
 
 ## Examples
 
-For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository. (Coming soon)
+For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository.
 
 ## Contributing
 
