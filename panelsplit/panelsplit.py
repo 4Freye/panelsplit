@@ -254,7 +254,7 @@ class PanelSplit:
             transformers.append(transformer_train) # add to list of fitted transformers
             _X.loc[test_indices] = transformer_train.transform(X.loc[test_indices]) # transform and insert into _X
     
-        if return_fitted_imputers:
+        if return_fitted_transformers:
             return _X, transformers
         else:
             return _X
