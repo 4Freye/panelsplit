@@ -13,12 +13,14 @@ class PanelSplit:
 
         Parameters:
         - train_periods: All available training periods
-        - unique_periods: Pandas DataFrame or Series containing unique periods. 
-        - n_splits: Number of splits for TimeSeriesSplit
-        - gap: Gap between train and test sets in TimeSeriesSplit
-        - test_size: Size of the test set in TimeSeriesSplit
+        - unique_periods: Pandas DataFrame or Series containing unique periods.
+        - n_splits: Number of splits for TimeSeriesSplit.
+        - gap: Gap between train and test sets in TimeSeriesSplit.
+        - test_size: Size of the test set in TimeSeriesSplit.
         - max_train_size: Maximum size for a single training set.
-        - plot: Flag to visualize time series splits
+        - plot: Flag to visualize time series splits.
+        - drop_folds: Whether to drop folds with empty or single-value train or test sets.
+        - y: Target variable. Required if drop_folds is True.
         """
 
         if unique_periods == None:
