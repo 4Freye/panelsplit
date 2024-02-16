@@ -23,7 +23,7 @@ class PanelSplit:
         self.tss = TimeSeriesSplit(n_splits=n_splits, gap=gap, test_size=test_size, max_train_size = max_train_size)
         indices = self.tss.split(unique_periods.reset_index(drop=True))
         self.u_periods_cv = self.split_unique_periods(indices, unique_periods)
-        self.all_periods = train_periods.reset_index()
+        self.all_periods = train_periods
     
         if y is not None and drop_folds is False:
             warnings.warn("Ignoring y values because drop_folds is False.")
@@ -63,10 +63,10 @@ class PanelSplit:
         self.all_indices = []
         
         for i, (train_periods, test_periods) in enumerate(self.u_periods_cv):
-            train_indices = self.all_periods.iloc[self.all_periods.isin(train_periods)].index
-            test_indices = self.all_periods.iloc[self.all_periods.isin(test_periods)].index
+            train_indices = self.all_periods.isin(train_periods).values
+            test_indices = self.all_periods.isin(test_periods).values
             
-            if self.drop_folds and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.iloc[train_indices].nunique() == 1 or y.iloc[test_indices].nunique() == 1)):
+            if self.drop_folds and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.loc[train_indices].nunique() == 1 or y.loc[test_indices].nunique() == 1)):
                 if init:
                     self.n_splits -= 1
                     print(f'Dropping fold {i} as either the test or train set is either empty or contains only one unique value.')
@@ -173,15 +173,15 @@ class PanelSplit:
 
         for train_indices, test_indices in tqdm(self.split()):
             # first drop nas with respect to y_train
-            y_train = y.iloc[train_indices].dropna()
+            y_train = y.loc[train_indices].dropna()
             # use y_train to filter for X_train
-            X_train = X.iloc[y_train.index]
-            X_test, _ = X.iloc[test_indices], y.iloc[test_indices]
+            X_train = X.loc[y_train.index]
+            X_test, _ = X.loc[test_indices], y.loc[test_indices]
 
             if sample_weight is not None:
                 sw = sample_weight[y_train.index]
 
-            pred = indices.iloc[test_indices].copy()
+            pred = indices.loc[test_indices].copy()
             pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
 
             fitted_models.append(model)  # Store the fitted model
@@ -246,14 +246,14 @@ class PanelSplit:
                 y_pred_col =  'y_pred'
             
         def predict_fold_parallel(train_indices, test_indices):
-            y_train = y.iloc[train_indices].dropna()
-            X_train = X.iloc[y_train.index]
-            X_test, _ = X.iloc[test_indices], y.iloc[test_indices]
+            y_train = y.loc[train_indices].dropna()
+            X_train = X.loc[y_train.index]
+            X_test, _ = X.loc[test_indices], y.loc[test_indices]
 
             if sample_weight is not None:
                 sw = sample_weight[y_train.index]
 
-            pred = indices.iloc[test_indices].copy()
+            pred = indices.loc[test_indices].copy()
             pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
 
             return pred, model
