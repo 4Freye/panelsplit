@@ -22,21 +22,7 @@ pip install git+https://github.com/4Freye/panelsplit.git
 Here's a basic example demonstrating how to use PanelSplit for time series cross-validation:
 
 ```python
-from panelsplit import PanelSplit
-from sklearn.model_selection import TimeSeriesSplit
-import pandas as pd
-
-# Define your train periods and unique periods
-train_periods = pd.date_range(start='2022-01-01', end='2022-12-31', freq='M')
-
-# Initialize PanelSplit object
-panel_split = PanelSplit(train_periods=train_periods)
-
-# Perform cross-validated predictions
-# (Example code for using cross_val_predict)
-
-# Perform cross-validated imputation
-# (Example code for using cross_val_impute)
+# coming soon
 ```
 
 ## Examples
