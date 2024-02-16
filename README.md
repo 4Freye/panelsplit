@@ -29,11 +29,11 @@ pip install git+https://github.com/4Freye/panelsplit.git
 #### `split(X=None, y=None, groups=None, init=False)`
 Generate train/test indices based on unique periods.
 
-  ##### Parameters
-  - **X**: Features.
-  - **y**: Target variable.
-  - **groups**: Group labels for the samples.
-  - **init**: Flag indicating initialization phase.
+  > ##### Parameters
+  > - **X**: Features.
+  > - **y**: Target variable.
+  > - **groups**: Group labels for the samples.
+  > - **init**: Flag indicating initialization phase.
 
   ##### Returns
   List of train/test indices.
