@@ -1,11 +1,11 @@
 ---
 # PanelSplit: A Tool for Panel Data Analysis
 
-PanelSplit is a Python package designed to facilitate panel data cross-validation. This tool is particularly useful for handling panel data in various stages throughout the data pipeline, including feature engineering, hyper-parameter tuning, and model estimation.
+PanelSplit is a Python package designed to facilitate time-series cross-validation. This tool is particularly useful for handling panel data in various stages throughout the data pipeline, including feature engineering, hyper-parameter tuning, and model estimation.
 
 ## Features
 
-- **Custom Train/Test Splits**: Perform time series cross-validation with flexible train/test splits based on unique periods.
+- **Custom Train/Test Splits**: Perform time-series cross-validation in a panel data setting with flexible train/test splits using the same parameters as [TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html).
 - **Visualization**: Visualize time series splits to understand the distribution of training and testing data.
 - **Imputation Support**: Perform cross-validated imputation using a specified imputer object.
 - **Parallelization**: Utilize parallel processing for faster cross-validation when dealing with large datasets.
