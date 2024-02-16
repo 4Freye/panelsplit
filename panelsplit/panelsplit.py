@@ -219,9 +219,7 @@ class PanelSplit:
         ax.set_yticklabels([f'{i}' for i in range(folds)])  # Set custom labels for y-axi
         plt.show()
 
-    def cross_val_transform(self, imputer, X, return_fitted_transformers=False):
-        
-         
+    def cross_val_transform(self, transformer, X, return_fitted_transformers=False, include_test_in_fit = False):
         """
         Perform cross-validated imputation using a given imputer.
     
@@ -237,24 +235,26 @@ class PanelSplit:
         np.ndarray
             Concatenated array containing imputed values during cross-validation.
         """
-        imputed_values = []
-        imputers = []
-    
-        splits = self.split()
+        transformers = []
         _X = X.copy()
     
         for train_indices, test_indices in self.split():
-            X_train = _X.loc[train_indices]
-            X_test = _X.loc[test_indices]
+            X_train = X.loc[train_indices]
+            X_test = X.loc[test_indices]
     
-            # Fit the imputer on the train set and transform the test set
-            imputer_train = clone(imputer)
-            imputer_train.fit(X_train)
-            imputers.append(imputer_train)
-    
-            _X.loc[test_indices] = imputer_train.transform(X_test)
+            # create a copy of the transformer
+            transfomer_train = clone(transformer)
+
+            # If include test_in_fit, train on both the test and train. Otherwise train on the train.
+            if include_test_in_fit:    
+                transformer_train.fit(pd.concat([X_train, X_test]))
+            else:
+                transformer_train.fit(X_train)
+            
+            transformers.append(transformer_train) # add to list of fitted transformers
+            _X.loc[test_indices] = transformer_train.transform(X.loc[test_indices]) # transform and insert into _X
     
         if return_fitted_imputers:
-            return _X, imputers
+            return _X, transformers
         else:
             return _X
