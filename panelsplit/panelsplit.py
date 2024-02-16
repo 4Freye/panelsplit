@@ -27,7 +27,7 @@ class PanelSplit:
             unique_periods = pd.Series(train_periods.unique()).sort_values()
         self.tss = TimeSeriesSplit(n_splits=n_splits, gap=gap, test_size=test_size, max_train_size = max_train_size)
         indices = self.tss.split(unique_periods.reset_index(drop=True))
-        self.u_periods_cv = self.split_unique_periods(indices, unique_periods)
+        self.u_periods_cv = self._split_unique_periods(indices, unique_periods)
         self.all_periods = train_periods
     
         if y is not None and drop_folds is False:
@@ -42,9 +42,9 @@ class PanelSplit:
         self.split(y=y, init=True)
 
         if plot:
-            self.plot_time_series_splits(self.u_periods_cv)
+            self._plot_time_series_splits(self.u_periods_cv)
         
-    def split_unique_periods(self, indices, unique_periods):
+    def _split_unique_periods(self, indices, unique_periods):
         """
         Split unique periods into train/test sets based on TimeSeriesSplit indices.
 
@@ -200,7 +200,7 @@ class PanelSplit:
         else:
             return result_df
     
-    def plot_time_series_splits(self, split_output):
+    def _plot_time_series_splits(self, split_output):
         """
         Visualize time series splits using a scatter plot.
 
