@@ -221,19 +221,19 @@ class PanelSplit:
 
     def cross_val_transform(self, transformer, X, return_fitted_transformers=False, include_test_in_fit = False):
         """
-        Perform cross-validated imputation using a given imputer.
+        Perform cross-validated transformation using a given transformer.
     
         Parameters:
         -----------
-        imputer : The imputer object used for imputation.
+        transformer : The transformer object used for transformation.
     
         X : pandas DataFrame
-            The input features for the imputer.
+            The input features for the transformer.
     
         Returns:
         --------
-        np.ndarray
-            Concatenated array containing imputed values during cross-validation.
+        pd.DataFrame
+            DataFrame containing transformed values during cross-validation.
         """
         transformers = []
         _X = X.copy()
