@@ -206,10 +206,31 @@ class PanelSplit:
         Perform cross-validated predictions using a given predictor model in parallel.
 
         Parameters:
-        - n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
+        
+        estimator : The machine learning model used for prediction.
 
-        # ... (rest of the parameters remain the same)
+        X : pandas DataFrame
+            The input features for the predictor.
 
+        y : pandas Series
+            The target variable to be predicted.
+
+        indices : pandas DataFrame
+            Indices corresponding to the dataset.
+
+        prediction_method : str, optional (default='predict')
+            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
+
+        y_pred_col : str, optional (default=None)
+            The column name for the predicted values.
+
+        return_fitted_models : bool, optional (default=False)
+            If True, return a list of fitted models at the end of cross-validation.
+
+        sample_weight : pandas Series or numpy array, optional (default=None)
+            Sample weights for the training data.
+        n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
+        
         Returns:
         --------
         pd.DataFrame
