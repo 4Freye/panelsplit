@@ -177,12 +177,12 @@ class PanelSplit:
             # use y_train to filter for X_train
             X_train = X.loc[y_train.index]
             X_test, _ = X.loc[test_indices], y.loc[test_indices]
+            pred = indices.loc[test_indices].copy()
 
             if sample_weight is not None:
-                sw = sample_weight[y_train.index]
-
-            pred = indices.loc[test_indices].copy()
-            pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
+                pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sample_weight[y_train.index])
+            else:
+                pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method)
 
             fitted_models.append(model)  # Store the fitted model
 
