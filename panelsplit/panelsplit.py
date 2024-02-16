@@ -218,40 +218,40 @@ class PanelSplit:
         ax.set_yticklabels([f'{i}' for i in range(folds)])  # Set custom labels for y-axi
         plt.show()
 
- def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
-    """
-    Perform cross-validated imputation using a given imputer.
-
-    Parameters:
-    -----------
-    imputer : The imputer object used for imputation.
-
-    X : pandas DataFrame
-        The input features for the imputer.
-
-    Returns:
-    --------
-    np.ndarray
-        Concatenated array containing imputed values during cross-validation.
-    """
-    imputed_values = []
-    imputers = []
-
-    splits = self.split()
-    _X = X.copy()
-
-    for train_indices, test_indices in tqdm(self.split()):
-        X_train = _X.loc[train_indices]
-        X_test = _X.loc[test_indices]
-
-        # Fit the imputer on the train set and transform the test set
-        imputer_train = clone(imputer)
-        imputer_train.fit(X_train)
-        imputers.append(imputer_train)
-
-        _X.loc[test_indices] = imputer_train.transform(X_test)
-
-    if return_fitted_imputers:
-        return _X, imputers
-    else:
-        return _X
+     def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
+        """
+        Perform cross-validated imputation using a given imputer.
+    
+        Parameters:
+        -----------
+        imputer : The imputer object used for imputation.
+    
+        X : pandas DataFrame
+            The input features for the imputer.
+    
+        Returns:
+        --------
+        np.ndarray
+            Concatenated array containing imputed values during cross-validation.
+        """
+        imputed_values = []
+        imputers = []
+    
+        splits = self.split()
+        _X = X.copy()
+    
+        for train_indices, test_indices in tqdm(self.split()):
+            X_train = _X.loc[train_indices]
+            X_test = _X.loc[test_indices]
+    
+            # Fit the imputer on the train set and transform the test set
+            imputer_train = clone(imputer)
+            imputer_train.fit(X_train)
+            imputers.append(imputer_train)
+    
+            _X.loc[test_indices] = imputer_train.transform(X_test)
+    
+        if return_fitted_imputers:
+            return _X, imputers
+        else:
+            return _X
