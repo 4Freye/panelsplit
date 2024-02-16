@@ -219,6 +219,7 @@ class PanelSplit:
         plt.show()
 
      def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
+         
         """
         Perform cross-validated imputation using a given imputer.
     
