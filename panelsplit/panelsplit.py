@@ -205,12 +205,9 @@ class PanelSplit:
         folds = len(split_output)
         fig, ax = plt.subplots()
         
-        def int_to_dt(an_array):
-            return pd.to_datetime(an_array.astype(str), format='%Y%m')
-
         for i, (train_index, test_index) in enumerate(split_output):
-            ax.scatter(int_to_dt(train_index), [i] * len(train_index), color='blue', marker='.', s=50)
-            ax.scatter(int_to_dt(test_index), [i] * len(test_index), color='red', marker='.', s=50)
+            ax.scatter(train_index, [i] * len(train_index), color='blue', marker='.', s=50)
+            ax.scatter(test_index, [i] * len(test_index), color='red', marker='.', s=50)
 
         ax.set_xlabel('Periods')
         ax.set_ylabel('Folds')
