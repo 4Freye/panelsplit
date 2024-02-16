@@ -3,6 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
+import numpy as np
 
 class PanelSplit:
     def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = None, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
@@ -217,53 +218,40 @@ class PanelSplit:
         ax.set_yticklabels([f'{i}' for i in range(folds)])  # Set custom labels for y-axi
         plt.show()
 
-    def cross_val_predict_parallel(self, estimator, X, y, indices, prediction_method='predict', y_pred_col=None,
-                                   return_fitted_models=False, sample_weight=None, n_jobs=-1):
-        """
-        Perform cross-validated predictions using a given predictor model in parallel.
+ def cross_val_impute(self, imputer, X, return_fitted_imputers=False):
+    """
+    Perform cross-validated imputation using a given imputer.
 
-        Parameters:
-        - n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
+    Parameters:
+    -----------
+    imputer : The imputer object used for imputation.
 
-        # ... (rest of the parameters remain the same)
+    X : pandas DataFrame
+        The input features for the imputer.
 
-        Returns:
-        --------
-        pd.DataFrame
-            Concatenated DataFrame containing predictions made by the model during cross-validation.
-            It includes the original indices joined with the predicted values.
+    Returns:
+    --------
+    np.ndarray
+        Concatenated array containing imputed values during cross-validation.
+    """
+    imputed_values = []
+    imputers = []
 
-        list of fitted models (if return_fitted_models=True)
-            List containing fitted models for each fold.
+    splits = self.split()
+    _X = X.copy()
 
-        """
-        if y_pred_col is None:
-            if hasattr(y, 'name'):
-                y_pred_col = str(y.name) + '_pred'
-            else:
-                y_pred_col =  'y_pred'
-            
-        def predict_fold_parallel(train_indices, test_indices):
-            y_train = y.loc[train_indices].dropna()
-            X_train = X.loc[y_train.index]
-            X_test, _ = X.loc[test_indices], y.loc[test_indices]
+    for train_indices, test_indices in tqdm(self.split()):
+        X_train = _X.loc[train_indices]
+        X_test = _X.loc[test_indices]
 
-            if sample_weight is not None:
-                sw = sample_weight[y_train.index]
+        # Fit the imputer on the train set and transform the test set
+        imputer_train = clone(imputer)
+        imputer_train.fit(X_train)
+        imputers.append(imputer_train)
 
-            pred = indices.loc[test_indices].copy()
-            pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
+        _X.loc[test_indices] = imputer_train.transform(X_test)
 
-            return pred, model
-
-        results = Parallel(n_jobs=n_jobs)(
-            delayed(predict_fold_parallel)(train_indices, test_indices) for train_indices, test_indices in tqdm(self.split())
-        )
-
-        predictions, fitted_models = zip(*results)
-        result_df = pd.concat(predictions, axis=0)
-
-        if return_fitted_models:
-            return result_df, list(fitted_models)
-        else:
-            return result_df
+    if return_fitted_imputers:
+        return _X, imputers
+    else:
+        return _X
