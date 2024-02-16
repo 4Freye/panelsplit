@@ -243,7 +243,7 @@ class PanelSplit:
             X_test = X.loc[test_indices]
     
             # create a copy of the transformer
-            transfomer_train = clone(transformer)
+            transformer_train = clone(transformer)
 
             # If include test_in_fit, train on both the test and train. Otherwise train on the train.
             if include_test_in_fit:    
