@@ -53,7 +53,7 @@ Returns the number of splits.
 Perform cross-validated predictions using a given predictor model.
   
   > ##### Parameters
-  > - **estimator**: Machine learning model.
+  > - **estimator**: estimator object.
   > - **X**: Features.
   > - **y**: Target variable.
   > - **indices**: Indices corresponding to the dataset.
