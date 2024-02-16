@@ -14,8 +14,14 @@ setup(
 
     # Dependencies
     install_requires=[
-        # 
+        'scikit-learn',  # for TimeSeriesSplit and clone
+        'tqdm',  # for progress bar
+        'pandas',  # for DataFrame and Series
+        'matplotlib',  # for plotting
+        'joblib',  # for parallel computing
+        'numpy'  # for numerical operations
     ],
+
 
     # Other configurations
     classifiers=[
