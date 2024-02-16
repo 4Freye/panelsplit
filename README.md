@@ -65,6 +65,17 @@ Perform cross-validated predictions using a given predictor model.
 ##### Returns
 Concatenated DataFrame containing predictions made by the model during cross-validation.
 
+#### `cross_val_predict_parallel(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None, n_jobs=-1)`
+Perform cross-validated predictions using a given predictor model in parallel.
+
+##### Parameters
+- **n_jobs**: (Optional) Number of parallel jobs. Set to -1 to use all available CPU cores. Default is `-1`.
+
+##### Returns
+- **result_df**: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
+- **fitted_models (if return_fitted_models=True)**: List containing fitted models for each fold.
+
+
 #### `cross_val_transform(transformer, X, return_fitted_transformers=False, include_test_in_fit=False)`
 Perform cross-validated transformation using a given transformer.
 
