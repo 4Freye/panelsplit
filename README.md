@@ -30,21 +30,17 @@ pip install git+https://github.com/4Freye/panelsplit.git
 Generate train/test indices based on unique periods.
 
   > ##### Parameters
-  > - **X**: Features.
-  > - **y**: Target variable.
-  > - **groups**: Group labels for the samples.
-  > - **init**: Flag indicating initialization phase.
+  > - **X, y, groups**: Always ignored, exist for compatibility.
+  > - **init**: Flag indicating initialization phase, when n_splits is modified depending on whether or not drop_folds is True. When split is called apart from initialization, this should be set to False.
 
   > ##### Returns
   > List of train/test indices.
 
 #### `get_n_splits(X=None, y=None, groups=None)`
-Returns the number of splits.
+Returns the number of splitting iterations in the cross-validator.
 
   > ##### Parameters
-  > - **X**: Features.
-  > - **y**: Target variable.
-  > - **groups**: Group labels for the samples.
+  > - **X, y, groups**: Always ignored, exist for compatibility.
   
   > ##### Returns
   > Number of splits.
@@ -56,7 +52,7 @@ Perform cross-validated predictions using a given predictor model.
   > - **estimator**: estimator object.
   > - **X**: Features.
   > - **y**: Target variable.
-  > - **indices**: Indices corresponding to the dataset.
+  > - **indices**: Indices corresponding to the dataset. The predicted target will be a new column added to these indices.
   > - **prediction_method**: Prediction method. Default is `'predict'`.
   > - **y_pred_col**: Column name for the predicted values.
   > - **return_fitted_models**: Whether to return fitted models. Default is `False`.
@@ -66,10 +62,11 @@ Perform cross-validated predictions using a given predictor model.
   > Concatenated DataFrame containing predictions made by the model during cross-validation.
 
 #### `cross_val_predict_parallel(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None, n_jobs=-1)`
-Perform cross-validated predictions using a given predictor model in parallel.
+Perform cross-validated predictions using a given predictor model in parallel. All the parameters are the same as cross_val_predict, except for n_jobs.
   
 > ##### Parameters
 > - **n_jobs**: (Optional) Number of parallel jobs. Set to -1 to use all available CPU cores. Default is `-1`.
+> - See cross_val_predict for additional parameters.
 
 > ##### Returns
 > - **result_df**: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
