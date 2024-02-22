@@ -19,8 +19,7 @@ setup(
         'pandas',  # for DataFrame and Series
         'matplotlib',  # for plotting
         'joblib',  # for parallel computing
-        'numpy',  # for numerical operations
-        'warnings' # for warnings
+        'numpy'  # for numerical operations
     ],
 
 
