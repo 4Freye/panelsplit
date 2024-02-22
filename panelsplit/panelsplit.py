@@ -5,38 +5,41 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 import numpy as np
 from sklearn.base import clone
+import warnings
 
 class PanelSplit:
-    def __init__(self, train_periods, unique_periods= None, n_splits = 5, gap = 0, test_size = None, max_train_size=None, plot=False, drop_folds=False, y=None):
+    def __init__(self, periods, unique_periods= None, snapshots = None, n_splits = 5, gap = 0, test_size = 1, max_train_size=None, plot=False, drop_splits=False, y=None):
         """
         A class for performing time series cross-validation with custom train/test splits based on unique periods.
 
         Parameters:
-        - train_periods: All available training periods
-        - unique_periods: Pandas DataFrame or Series containing unique periods.
+        - periods: A pandas Series containing all available training periods.
+        - unique_periods: Optional. Pandas DataFrame or Series containing unique periods.
+        - snapshots: Optional. A Pandas Series defining the snapshot for the observation (when it was updated)
         - n_splits: Number of splits for TimeSeriesSplit.
         - gap: Gap between train and test sets in TimeSeriesSplit.
         - test_size: Size of the test set in TimeSeriesSplit.
         - max_train_size: Maximum size for a single training set.
         - plot: Flag to visualize time series splits.
-        - drop_folds: Whether to drop folds with empty or single-value train or test sets.
-        - y: Target variable. Required if drop_folds is True.
+        - drop_splits: Whether to drop splits with empty or single-value train or test sets.
+        - y: Target variable to assess whether splits contain empty or single-value train or test sets. Required if drop_splits is True.
         """
 
-        if unique_periods == None:
-            unique_periods = pd.Series(train_periods.unique()).sort_values()
+        if unique_periods is None:
+            unique_periods = pd.Series(periods.unique()).sort_values()
         self.tss = TimeSeriesSplit(n_splits=n_splits, gap=gap, test_size=test_size, max_train_size = max_train_size)
         indices = self.tss.split(unique_periods.reset_index(drop=True))
         self.u_periods_cv = self._split_unique_periods(indices, unique_periods)
-        self.all_periods = train_periods
+        self.all_periods = periods
+        self.snapshots = snapshots
     
-        if y is not None and drop_folds is False:
-            warnings.warn("Ignoring y values because drop_folds is False.")
+        if y is not None and drop_splits is False:
+            warnings.warn("Ignoring y values because drop_splits is False.", stacklevel=2)
         
-        if y is None and drop_folds is True:
-            raise ValueError("Cannot drop folds without specifying y values.")
+        if y is None and drop_splits is True:
+            raise ValueError("Cannot drop splits without specifying y values.")
         
-        self.drop_folds = drop_folds
+        self.drop_splits = drop_splits
 
         self.n_splits = n_splits
         self.split(y=y, init=True)
@@ -49,11 +52,13 @@ class PanelSplit:
         Split unique periods into train/test sets based on TimeSeriesSplit indices.
 
         Parameters:
-        - indices: TimeSeriesSplit indices
-        - unique_periods: Pandas DataFrame or Series containing unique periods
+        - indices: TimeSeriesSplit indices.
+        - unique_periods: Pandas DataFrame or Series containing unique periods.
 
-        Returns: List of tuples containing train and test periods
+        Returns: 
+        List of tuples containing train and test periods.
         """
+
         u_periods_cv = []
         for i, (train_index, test_index) in enumerate(indices):
             unique_train_periods = unique_periods.iloc[train_index].values
@@ -66,20 +71,29 @@ class PanelSplit:
         Generate train/test indices based on unique periods.
         """
         self.all_indices = []
-        
+       
         for i, (train_periods, test_periods) in enumerate(self.u_periods_cv):
-            train_indices = self.all_periods.isin(train_periods).values
-            test_indices = self.all_periods.isin(test_periods).values
-            
-            if self.drop_folds and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.loc[train_indices].nunique() == 1 or y.loc[test_indices].nunique() == 1)):
+            if self.snapshots is not None:
+                if test_periods.max() >= self.snapshots.min():
+                    snapshot_val = test_periods.max()  
+                else:
+                    snapshot_val = self.snapshots.min()
+                    if init:
+                        warnings.warn(f'The maximum period value {test_periods.max()} for split {i} is less than the minimum snapshot value {self.snapshots.min()}. Defaulting to minimum snapshot value for split {i}.', stacklevel=2)
+                train_indices = self.all_periods.isin(train_periods).values & (self.snapshots == snapshot_val)
+                test_indices = self.all_periods.isin(test_periods).values & (self.snapshots == snapshot_val)
+            else:
+                train_indices = self.all_periods.isin(train_periods).values
+                test_indices = self.all_periods.isin(test_periods).values 
+
+            if self.drop_splits and ((len(train_indices) == 0 or len(test_indices) == 0) or (y.loc[train_indices].nunique() == 1 or y.loc[test_indices].nunique() == 1)):
                 if init:
                     self.n_splits -= 1
-                    print(f'Dropping fold {i} as either the test or train set is either empty or contains only one unique value.')
+                    print(f'Dropping split {i} as either the test or train set is either empty or contains only one unique value.')
                 else:
                     continue
             else:
                 self.all_indices.append((train_indices, test_indices))
-        
         return self.all_indices
    
     def get_n_splits(self, X=None, y =None, groups=None):
@@ -88,198 +102,142 @@ class PanelSplit:
         """
         return self.n_splits
     
-    def _predict_fold(self, estimator, X_train, y_train, X_test, prediction_method='predict', sample_weight=None):
+    def gen_snapshots(self, data, period_col = None):
         """
-        Perform predictions for a single fold.
+        Generate snapshots for each split.
 
         Parameters:
-        -----------
-        estimator : The machine learning model used for prediction.
+        - data: A pandas DataFrame from which snapshots are generated.
+        - period_col: Optional. A str, the column in data from which the column snapshot_period is created.
 
-        X_train : pandas DataFrame
-            The input features for training.
+        Returns: 
+        A pandas DataFrame where each split has its own set of observations.
+        """
 
-        y_train : pandas Series
-            The target variable for training.
+        _data = data.copy()
+        splits = self.split()
+        snapshots = []
+        for i, split in enumerate(splits):
+            split_indices = np.array([split[0], split[1]]).any(axis = 0)
+            if period_col is not None:
+                last_period = _data.loc[split_indices, period_col].unique().max()
+                snapshots.append(_data.loc[split_indices].assign(split = i, snapshot_period = last_period))
+            else:
+                snapshots.append(_data.loc[split_indices].assign(split = i))
+        return pd.concat(snapshots)
 
-        X_test : pandas DataFrame
-            The input features for testing.
+    def _predict_split(self, model, X_test, prediction_method='predict'):
+        """
+        Perform predictions for a single split.
 
-        prediction_method : str, optional (default='predict')
-            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-
-        sample_weight : pandas Series or numpy array, optional (default=None)
-            Sample weights for the training data.
+        Parameters:
+        - estimator: The machine learning model used for prediction.
+        - X_train: pandas DataFrame. The input features for training.
+        - y_train: pandas Series. The target variable for training.
+        - X_test: pandas DataFrame. The input features for testing.
+        - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
+        - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
 
         Returns:
-        --------
-        pd.Series
-            Series containing predicted values.
-
+        pd.Series: Series containing predicted values.
         """
-        model = estimator.fit(X_train, y_train, sample_weight=sample_weight)
 
         if prediction_method == 'predict':
-            return model.predict(X_test), model
+            return model.predict(X_test)
         elif prediction_method == 'predict_proba':
-            return model.predict_proba(X_test)[:, 1], model
+            return model.predict_proba(X_test)[:, 1]
         elif prediction_method == 'predict_log_proba':
-            return model.predict_log_proba(X_test)[:, 1], model
+            return model.predict_log_proba(X_test)[:, 1]
         else:
             raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
-    def cross_val_predict(self, estimator, X, y, indices, prediction_method='predict', y_pred_col=None,
-                          return_fitted_models=False, sample_weight=None):
+    def cross_val_fit(self, estimator, X, y, sample_weight=None, n_jobs=1):
+        """
+        Fit the estimator using cross-validation.
+
+        Parameters:
+        - estimator: The machine learning model to be fitted.
+        - X: pandas DataFrame. The input features for the estimator.
+        - y: pandas Series. The target variable for the estimator.
+        - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
+        - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+
+        Returns:
+        list of fitted models: List containing fitted models for each split.
+        """
+        def fit_split(train_indices):
+            y_train = y.loc[train_indices].dropna()
+            X_train = X.loc[y_train.index]
+            if sample_weight is not None:
+                sw = sample_weight.loc[y_train.index]
+            else:
+                sw = None
+            return estimator.fit(X_train, y_train, sample_weight=sw)
+
+        fitted_models = Parallel(n_jobs=n_jobs)(
+            delayed(fit_split)(train_indices)
+            for train_indices, _ in tqdm(self.split())
+        )
+        return fitted_models
+
+    def cross_val_predict(self, fitted_models, X, labels, prediction_method='predict', y_pred_col=None, n_jobs=1):
         """
         Perform cross-validated predictions using a given predictor model.
 
         Parameters:
-        -----------
-        estimator : The machine learning model used for prediction.
-
-        X : pandas DataFrame
-            The input features for the predictor.
-
-        y : pandas Series
-            The target variable to be predicted.
-
-        indices : pandas DataFrame
-            Indices corresponding to the dataset.
-
-        prediction_method : str, optional (default='predict')
-            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-
-        y_pred_col : str, optional (default=None)
-            The column name for the predicted values.
-
-        return_fitted_models : bool, optional (default=False)
-            If True, return a list of fitted models at the end of cross-validation.
-
-        sample_weight : pandas Series or numpy array, optional (default=None)
-            Sample weights for the training data.
+        - fitted_models: A list of machine learning models used for prediction.
+        - X: pandas DataFrame. The input features for the predictor.
+        - y: pandas Series. The target variable to be predicted.
+        - labels: pandas DataFrame. Labels corresponding to the predicted values.
+        - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
+        - y_pred_col: Optional str (default=None). The column name for the predicted values.
+        - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
 
         Returns:
-        --------
-        pd.DataFrame
-            Concatenated DataFrame containing predictions made by the model during cross-validation.
-            It includes the original indices joined with the predicted values.
-
-        list of fitted models (if return_fitted_models=True)
-            List containing fitted models for each fold.
-
+        pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original labels joined with the predicted values.
         """
-        predictions = []
-        fitted_models = []  # List to store fitted models
-        if y_pred_col is None:
-            if hasattr(y, 'name'):
-                y_pred_col = str(y.name) + '_pred'
-            else:
-                y_pred_col =  'y_pred'
+        def predict_split(model, test_indices):
+            X_test = X.loc[test_indices]
+            pred = labels.loc[test_indices].copy()
+            pred[y_pred_col] = self._predict_split(model, X_test, prediction_method)
+            return pred
 
-        for train_indices, test_indices in tqdm(self.split()):
-            # first drop nas with respect to y_train
-            y_train = y.loc[train_indices].dropna()
-            # use y_train to filter for X_train
-            X_train = X.loc[y_train.index]
-            X_test, _ = X.loc[test_indices], y.loc[test_indices]
-            pred = indices.loc[test_indices].copy()
+        predictions = Parallel(n_jobs=n_jobs)(
+            delayed(predict_split)(fitted_models[i], test_indices)
+            for i, (_, test_indices) in tqdm(enumerate(self.split()))
+        )
+        return pd.concat(predictions, axis=0)
 
-            if sample_weight is not None:
-                pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sample_weight[y_train.index])
-            else:
-                pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method)
-
-            fitted_models.append(model)  # Store the fitted model
-
-            predictions.append(pred)
-
-        result_df = pd.concat(predictions, axis=0)
-
-        if return_fitted_models:
-            return result_df, fitted_models
-        else:
-            return result_df
-            
-    def cross_val_predict_parallel(self, estimator, X, y, indices, prediction_method='predict', y_pred_col=None,
-                                   return_fitted_models=False, sample_weight=None, n_jobs=-1):
+    def cross_val_fit_predict(self, estimator, X, y, labels, prediction_method='predict', y_pred_col=None, sample_weight=None, n_jobs=1):
         """
-        Perform cross-validated predictions using a given predictor model in parallel.
+        Fit the estimator using cross-validation and then make predictions.
 
         Parameters:
-        
-        estimator : The machine learning model used for prediction.
+        - estimator: The machine learning model to be fitted.
+        - X: pandas DataFrame. The input features for the estimator.
+        - y: pandas Series. The target variable for the estimator.
+        - labels: pandas DataFrame. Labels corresponding to the predicted values.
+        - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
+        - y_pred_col: Optional str (default=None). The column name for the predicted values.
+        - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
+        - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
 
-        X : pandas DataFrame
-            The input features for the predictor.
-
-        y : pandas Series
-            The target variable to be predicted.
-
-        indices : pandas DataFrame
-            Indices corresponding to the dataset.
-
-        prediction_method : str, optional (default='predict')
-            The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-
-        y_pred_col : str, optional (default=None)
-            The column name for the predicted values.
-
-        return_fitted_models : bool, optional (default=False)
-            If True, return a list of fitted models at the end of cross-validation.
-
-        sample_weight : pandas Series or numpy array, optional (default=None)
-            Sample weights for the training data.
-        n_jobs: Number of parallel jobs. Set to -1 to use all available CPU cores.
-        
         Returns:
-        --------
-        pd.DataFrame
-            Concatenated DataFrame containing predictions made by the model during cross-validation.
-            It includes the original indices joined with the predicted values.
-
-        list of fitted models (if return_fitted_models=True)
-            List containing fitted models for each fold.
-
+        pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
+        list of fitted models: List containing fitted models for each split.
         """
-        if y_pred_col is None:
-            if hasattr(y, 'name'):
-                y_pred_col = str(y.name) + '_pred'
-            else:
-                y_pred_col =  'y_pred'
-            
-        def predict_fold_parallel(train_indices, test_indices):
-            y_train = y.loc[train_indices].dropna()
-            X_train = X.loc[y_train.index]
-            X_test, _ = X.loc[test_indices], y.loc[test_indices]
-
-            if sample_weight is not None:
-                sw = sample_weight[y_train.index]
-
-            pred = indices.loc[test_indices].copy()
-            pred[y_pred_col], model = self._predict_fold(estimator, X_train, y_train, X_test, prediction_method, sample_weight=sw)
-
-            return pred, model
-
-        results = Parallel(n_jobs=n_jobs)(
-            delayed(predict_fold_parallel)(train_indices, test_indices) for train_indices, test_indices in tqdm(self.split())
-        )
-
-        predictions, fitted_models = zip(*results)
-        result_df = pd.concat(predictions, axis=0)
-
-        if return_fitted_models:
-            return result_df, list(fitted_models)
-        else:
-            return result_df
+        fitted_models = self.cross_val_fit(estimator, X, y, sample_weight=sample_weight, n_jobs=n_jobs)
+        preds = self.cross_val_predict(fitted_models, X, y, labels, prediction_method, y_pred_col, n_jobs=n_jobs)
+        return preds, fitted_models
             
     def _plot_time_series_splits(self, split_output):
         """
         Visualize time series splits using a scatter plot.
 
         Parameters:
-        - split_output: Output of time series splits
+        - split_output: Output of time series splits.
         """
-        folds = len(split_output)
+        splits = len(split_output)
         fig, ax = plt.subplots()
         
         for i, (train_index, test_index) in enumerate(split_output):
@@ -287,48 +245,82 @@ class PanelSplit:
             ax.scatter(test_index, [i] * len(test_index), color='red', marker='.', s=50)
 
         ax.set_xlabel('Periods')
-        ax.set_ylabel('Folds')
+        ax.set_ylabel('Split')
         ax.set_title('Cross-Validation Splits')
-        ax.set_yticks(range(folds))  # Set the number of ticks on y-axis
-        ax.set_yticklabels([f'{i}' for i in range(folds)])  # Set custom labels for y-axi
+        ax.set_yticks(range(splits))  # Set the number of ticks on y-axis
+        ax.set_yticklabels([f'{i}' for i in range(splits)])  # Set custom labels for y-axi
         plt.show()
 
-    def cross_val_transform(self, transformer, X, return_fitted_transformers=False, include_test_in_fit = False):
+    def _cross_val_fit(self, transformer, X, include_test_in_fit=False):
         """
-        Perform cross-validated transformation using a given transformer.
-    
+        Perform cross-validated fitting using a given transformer.
+
         Parameters:
-        -----------
-        transformer : The transformer object used for transformation.
-    
-        X : pandas DataFrame
-            The input features for the transformer.
-    
+        - transformer: The transformer object used for fitting.
+        - X: pandas DataFrame. The input features for the transformer.
+        - include_test_in_fit: Optional bool (default=False). If True, include test data in fitting the transformer.
+
         Returns:
-        --------
-        pd.DataFrame
-            DataFrame containing transformed values during cross-validation.
+        list of fitted transformers: List containing fitted transformers for each split.
         """
         transformers = []
-        _X = X.copy()
-    
+
         for train_indices, test_indices in self.split():
             X_train = X.loc[train_indices]
             X_test = X.loc[test_indices]
-    
+
             # create a copy of the transformer
             transformer_train = clone(transformer)
 
-            # If include test_in_fit, train on both the test and train. Otherwise train on the train.
+            # If include_test_in_fit, train on both the test and train. Otherwise train on the train.
             if include_test_in_fit:    
                 transformer_train.fit(pd.concat([X_train, X_test]))
             else:
                 transformer_train.fit(X_train)
-            
+
             transformers.append(transformer_train) # add to list of fitted transformers
-            _X.loc[test_indices] = transformer_train.transform(X.loc[test_indices]) # transform and insert into _X
-    
-        if return_fitted_transformers:
-            return _X, transformers
-        else:
-            return _X
+
+        return transformers
+
+    def cross_val_transform(self, transformers, X, transform_train = False):
+        """
+        Perform cross-validated transformation using fitted transformers.
+
+        Parameters:
+        - transformers: List of fitted transformers.
+        - X: pandas DataFrame. The input features for the transformation.
+        - transform_train: Optional bool (default=False). If True, transform train set as well as the test set.
+
+        Returns:
+        pd.DataFrame: DataFrame containing transformed values during cross-validation.
+        """
+        _X = X.copy()
+
+        for i, (train_indices, test_indices) in enumerate(self.split()):
+            if transform_train:
+                if self.snapshots is None:
+                    raise ValueError("Cannot transform training sets without providing snapshots.")
+                train_or_test = pd.concat([train_indices, test_indices], axis = 1).any(axis = 1)
+                _X.loc[train_or_test] = transformers[i].transform(X.loc[train_or_test])
+            else:
+                _X.loc[test_indices] = transformers[i].transform(X.loc[test_indices])
+        return _X
+
+    def cross_val_fit_transform(self, transformer, X, include_test_in_fit=False, transform_train=False):
+        """
+        Perform cross-validated fitting and transformation using a given transformer.
+
+        Parameters:
+        - transformer: The transformer object used for fitting and transformation.
+        - X: pandas DataFrame. The input features for the transformer.
+        - include_test_in_fit: Optional bool (default=False). If True, include test data in fitting the transformer.
+        - transform_train: Optional bool (default=False). If True, transform train set as well as the test set.
+
+        Returns:
+        pd.DataFrame: DataFrame containing transformed values during cross-validation.
+        list of fitted transformers: List containing fitted transformers for each split.
+        """
+        transformers = self._cross_val_fit(transformer, X, include_test_in_fit)
+        _X = self.cross_val_transform(transformers, X, transform_train)
+
+        return _X, transformers
