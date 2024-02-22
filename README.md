@@ -110,7 +110,6 @@ Perform cross-validated transformation using a given transformer.
 > - **transform_train**: *bool (default=False)*. Whether to transform train set as well as the test set.
 
 > ##### Returns
-> DataFrame containing transformed values during cross-validation.
 > **result_df, fitted_transformers:** DataFrame containing transformed values during cross-validation as well as a list containing fitted transformers for each fold.
 
 ---
