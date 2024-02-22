@@ -226,8 +226,8 @@ class PanelSplit:
         pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
         list of fitted models: List containing fitted models for each split.
         """
-        fitted_models = self.cross_val_fit(estimator, X, y, sample_weight=sample_weight, n_jobs=n_jobs)
-        preds = self.cross_val_predict(fitted_models, X, y, labels, prediction_method, y_pred_col, n_jobs=n_jobs)
+        fitted_models = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
+        preds = self.cross_val_predict(fitted_models, X, labels, prediction_method, y_pred_col, n_jobs)
         return preds, fitted_models
             
     def _plot_time_series_splits(self, split_output):
