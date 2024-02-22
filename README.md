@@ -14,15 +14,16 @@ pip install git+https://github.com/4Freye/panelsplit.git
 ## Documentation
 
 ### Initialization Parameters
-- **periods**: Pandas Series representing the time series of the DataFrame.
-- **unique_periods**: Pandas Series containing unique periods. Default is `None`, in which case unique periods are derived from `periods` and then sorted.
-- **n_splits**: Number of splits for the underlying `TimeSeriesSplit`.
-- **gap**: Gap between train and test sets in the `TimeSeriesSplit`.
-- **test_size**: Size of the test set in the `TimeSeriesSplit`.
-- **max_train_size**: Maximum size for a single training set.
-- **plot**: Flag to visualize time series splits. Default is `False`.
-- **drop_folds**: Flag to drop folds with either empty or single unique values in train or test sets.
-- **y**: Target variable. Required if `drop_folds` is set to `True`.
+- **periods**: *Pandas Series*. Represents the time series of the DataFrame.
+- **unique_periods**: *Pandas Series*. Contains unique periods. Default is `None`, in which case unique periods are derived from `periods` and then sorted.
+- **snapshots**: *Pandas Series, default=None*. Defines the snapshot for the observation, i.e. when the observation was updated.
+- **n_splits**: *int, default=5*. Number of splits for the underlying `TimeSeriesSplit`.
+- **gap**: *int, default=0*. Gap between train and test sets in `TimeSeriesSplit`.
+- **test_size**: *int, default=1*. Size of the test set in `TimeSeriesSplit`.
+- **max_train_size**: *int, default=None*. Maximum size for a single training set in `TimeSeriesSplit`.
+- **plot**: *bool, default=False*. Flag to visualize time series splits.
+- **drop_folds**: *bool, default=False*. Flag to drop folds with either empty or single unique values in train or test sets.
+- **y**: *Pandas Series, default=None* Target variable. Required if `drop_folds` is set to `True`.
 
 ### Methods
 
@@ -45,45 +46,72 @@ Returns the number of splitting iterations in the cross-validator.
   > ##### Returns
   > Number of splits.
 
-#### `cross_val_predict(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None)`
+#### `gen_snapshots(self, data, period_col = None)`
+Generate snapshots for each split.
+
+  > ##### Parameters
+  > - **data**: A pandas DataFrame from which snapshots are generated.
+  > - **period_col**: Optional. A str, the column in data from which the column snapshot_period is created.
+
+  > ##### Returns
+  > A pandas DataFrame where each split has its own set of observations.
+
+#### `cross_val_fit(estimator, X, y, sample_weight=None, n_jobs=1)`
 Perform cross-validated predictions using a given predictor model.
   
   > ##### Parameters
   > - **estimator**: estimator object.
   > - **X**: Features.
   > - **y**: Target variable.
-  > - **indices**: Indices corresponding to the dataset. The predicted target will be a new column added to these indices.
-  > - **prediction_method**: Prediction method. Default is `'predict'`.
-  > - **y_pred_col**: Column name for the predicted values.
-  > - **return_fitted_models**: Whether to return fitted models. Default is `False`.
   > - **sample_weight**: Sample weights for the training data.
+  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel.
   
   > ##### Returns
-  > Concatenated DataFrame containing predictions made by the model during cross-validation.
+  > **fitted_models:** A list containing fitted models for each fold.
 
-#### `cross_val_predict_parallel(estimator, X, y, indices, prediction_method='predict', y_pred_col=None, return_fitted_models=False, sample_weight=None, n_jobs=-1)`
-Perform cross-validated predictions using a given predictor model in parallel. All the parameters are the same as cross_val_predict, except for n_jobs.
+#### `cross_val_predict(fitted_models, X, labels, prediction_method='predict', y_pred_col=None, n_jobs=1)`
+Perform cross-validated predictions using a given predictor model.
   
-> ##### Parameters
-> - **n_jobs**: (Optional) Number of parallel jobs. Set to -1 to use all available CPU cores. Default is `-1`.
-> - See cross_val_predict for additional parameters.
+  > ##### Parameters
+  > - **fitted_models**: A list of fitted models, one for each fold.
+  > - **X**: Features.
+  > - **labels**: pandas DataFrame containing labels for the target variable predicted by the model. The predicted target will be a new column added to this DataFrame.
+  > - **prediction_method**: The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'. Default is `'predict'`.
+  > - **y_pred_col**: Column name for the predicted values. Default is `None`, in which case the name will be the name of `y.name + 'pred'`. If y does not have a name attribute, the name will be `'y_pred'`.
+  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel.
 
-> ##### Returns
-> - **result_df**: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
-> - **fitted_models (if return_fitted_models=True)**: List containing fitted models for each fold.
+  > ##### Returns
+  > **result_df:** Concatenated DataFrame containing predictions made by the model during cross-validation.
 
 
-#### `cross_val_transform(transformer, X, return_fitted_transformers=False, include_test_in_fit=False)`
+#### `cross_val_fit_predict(estimator, X, y, labels, prediction_method='predict', y_pred_col=None, sample_weight=None, n_jobs=1)`
+Perform cross-validated predictions using a given predictor model.
+  
+  > ##### Parameters
+  > - **estimator**: estimator object.
+  > - **X**: Features.
+  > - **y**: Target variable.
+  > - **labels**: pandas DataFrame containing labels for the target variable predicted by the model. The predicted target will be a new column added to this DataFrame.
+  > - **prediction_method**: The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'. Default is `'predict'`.
+  > - **y_pred_col**: Column name for the predicted values. Default is `None`, in which case the name will be the name of `y.name + 'pred'`. If y does not have a name attribute, the name will be `'y_pred'`.
+  > - **sample_weight**: Sample weights for the training data.
+  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel.
+  
+  > ##### Returns
+  > **result_df, fitted_models:** Concatenated DataFrame containing predictions made by the model during cross-validation as well as a list containing fitted models for each fold.
+
+#### `cross_val_fit_transform(transformer, X, include_test_in_fit=False, transform_train=False)`
 Perform cross-validated transformation using a given transformer.
-  
+
 > ##### Parameters
 > - **transformer**: Transformer object.
 > - **X**: Features.
-> - **return_fitted_transformers**: Whether to return fitted transformers. Default is `False`.
-> - **include_test_in_fit**: Whether to include test data in fitting. Default is `False`.
+> - **include_test_in_fit**: *bool (default=False)*. Whether to include test data in fitting for each fold.
+> - **transform_train**: *bool (default=False)*. Whether to transform train set as well as the test set.
 
 > ##### Returns
 > DataFrame containing transformed values during cross-validation.
+> **result_df, fitted_transformers:** DataFrame containing transformed values during cross-validation as well as a list containing fitted transformers for each fold.
 
 ---
 
