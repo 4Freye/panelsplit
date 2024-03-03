@@ -8,7 +8,7 @@ from sklearn.base import clone
 import warnings
 
 class PanelSplit:
-    def __init__(self, periods, unique_periods= None, snapshots = None, n_splits = 5, gap = 0, test_size = 1, max_train_size=None, plot=False, drop_splits=False, y=None):
+    def __init__(self, periods, unique_periods= None, snapshots = None, n_splits = 5, gap = 0, test_size = 1, max_train_size=None, plot=False, drop_splits=False, y=None, progress_bar=False):
         """
         A class for performing time series cross-validation with custom train/test splits based on unique periods.
 
@@ -23,6 +23,7 @@ class PanelSplit:
         - plot: Flag to visualize time series splits.
         - drop_splits: Whether to drop splits with empty or single-value train or test sets.
         - y: Target variable to assess whether splits contain empty or single-value train or test sets. Required if drop_splits is True.
+        - progress_bar: Bool. Whether or not to use the tqdm progress bar.
         """
 
         if unique_periods is None:
@@ -40,13 +41,18 @@ class PanelSplit:
             raise ValueError("Cannot drop splits without specifying y values.")
         
         self.drop_splits = drop_splits
-
+        self.progress_bar = progress_bar
         self.n_splits = n_splits
         self.split(y=y, init=True)
 
         if plot:
             self._plot_time_series_splits(self.u_periods_cv)
         
+    def _split_wrapper(self, indices):
+        if self.progress_bar:
+            return tqdm(indices)
+        else:
+            return indices
     def _split_unique_periods(self, indices, unique_periods):
         """
         Split unique periods into train/test sets based on TimeSeriesSplit indices.
@@ -125,6 +131,10 @@ class PanelSplit:
             else:
                 snapshots.append(_data.loc[split_indices].assign(split = i))
         return pd.concat(snapshots)
+    
+    def gen_test_labels(self, labels):
+        test_indices = np.stack([split[1] for split in self.split()], axis=1).any(axis=1)
+        return labels.loc[test_indices].copy()
 
     def _predict_split(self, model, X_test, prediction_method='predict'):
         """
@@ -136,7 +146,6 @@ class PanelSplit:
         - y_train: pandas Series. The target variable for training.
         - X_test: pandas DataFrame. The input features for testing.
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-        - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
 
         Returns:
         pd.Series: Series containing predicted values.
@@ -145,9 +154,9 @@ class PanelSplit:
         if prediction_method == 'predict':
             return model.predict(X_test)
         elif prediction_method == 'predict_proba':
-            return model.predict_proba(X_test)[:, 1]
+            return model.predict_proba(X_test)
         elif prediction_method == 'predict_log_proba':
-            return model.predict_log_proba(X_test)[:, 1]
+            return model.predict_log_proba(X_test)
         else:
             raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
@@ -176,21 +185,19 @@ class PanelSplit:
 
         fitted_models = Parallel(n_jobs=n_jobs)(
             delayed(fit_split)(train_indices)
-            for train_indices, _ in tqdm(self.split())
+            for train_indices, _ in self._split_wrapper(self.split())
         )
         return fitted_models
 
-    def cross_val_predict(self, fitted_models, X, labels, prediction_method='predict', y_pred_col=None, n_jobs=1):
+    def cross_val_predict(self, fitted_models, X, prediction_method='predict', n_jobs=1):
         """
         Perform cross-validated predictions using a given predictor model.
 
         Parameters:
         - fitted_models: A list of machine learning models used for prediction.
         - X: pandas DataFrame. The input features for the predictor.
-        - y: pandas Series. The target variable to be predicted.
-        - labels: pandas DataFrame. Labels corresponding to the predicted values.
+        - labels: Optional pandas DataFrame. Labels to identify the predictions, if provided will be returned along with predictions.
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-        - y_pred_col: Optional str (default=None). The column name for the predicted values.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
 
         Returns:
@@ -198,17 +205,16 @@ class PanelSplit:
         """
         def predict_split(model, test_indices):
             X_test = X.loc[test_indices]
-            pred = labels.loc[test_indices].copy()
-            pred[y_pred_col] = self._predict_split(model, X_test, prediction_method)
-            return pred
+            return self._predict_split(model, X_test, prediction_method)
 
         predictions = Parallel(n_jobs=n_jobs)(
             delayed(predict_split)(fitted_models[i], test_indices)
-            for i, (_, test_indices) in tqdm(enumerate(self.split()))
+            for i, (_, test_indices) in enumerate(self.split())
         )
-        return pd.concat(predictions, axis=0)
 
-    def cross_val_fit_predict(self, estimator, X, y, labels, prediction_method='predict', y_pred_col=None, sample_weight=None, n_jobs=1):
+        return np.concatenate(predictions, axis = 0)
+
+    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1):
         """
         Fit the estimator using cross-validation and then make predictions.
 
@@ -216,9 +222,7 @@ class PanelSplit:
         - estimator: The machine learning model to be fitted.
         - X: pandas DataFrame. The input features for the estimator.
         - y: pandas Series. The target variable for the estimator.
-        - labels: pandas DataFrame. Labels corresponding to the predicted values.
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
-        - y_pred_col: Optional str (default=None). The column name for the predicted values.
         - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
 
@@ -227,7 +231,8 @@ class PanelSplit:
         list of fitted models: List containing fitted models for each split.
         """
         fitted_models = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
-        preds = self.cross_val_predict(fitted_models, X, labels, prediction_method, y_pred_col, n_jobs)
+        preds = self.cross_val_predict(fitted_models, X, prediction_method, n_jobs)
+
         return preds, fitted_models
             
     def _plot_time_series_splits(self, split_output):
@@ -251,7 +256,7 @@ class PanelSplit:
         ax.set_yticklabels([f'{i}' for i in range(splits)])  # Set custom labels for y-axi
         plt.show()
 
-    def _cross_val_fit(self, transformer, X, include_test_in_fit=False):
+    def _cross_val_fit(self, transformer, X, include_test_in_fit=False, n_jobs=1):
         """
         Perform cross-validated fitting using a given transformer.
 
@@ -265,24 +270,21 @@ class PanelSplit:
         """
         transformers = []
 
-        for train_indices, test_indices in self.split():
+        def fit_split(train_indices, test_indices):
             X_train = X.loc[train_indices]
-            X_test = X.loc[test_indices]
-
-            # create a copy of the transformer
-            transformer_train = clone(transformer)
-
-            # If include_test_in_fit, train on both the test and train. Otherwise train on the train.
-            if include_test_in_fit:    
-                transformer_train.fit(pd.concat([X_train, X_test]))
+            if include_test_in_fit:
+                return transformer.fit(X_train, X.loc[test_indices])
             else:
-                transformer_train.fit(X_train)
+                return transformer.fit(X_train)
 
-            transformers.append(transformer_train) # add to list of fitted transformers
+        fitted_transformers = Parallel(n_jobs=n_jobs)(
+            delayed(fit_split)(train_indices, test_indices)
+            for train_indices, test_indices in self._split_wrapper(self.split())
+        )
 
-        return transformers
+        return fitted_transformers
 
-    def cross_val_transform(self, transformers, X, transform_train = False):
+    def cross_val_transform(self, transformers, X, transform_train = False, n_jobs=1):
         """
         Perform cross-validated transformation using fitted transformers.
 
@@ -296,17 +298,25 @@ class PanelSplit:
         """
         _X = X.copy()
 
-        for i, (train_indices, test_indices) in enumerate(self.split()):
+        if transform_train:
+            if self.snapshots is None:
+                raise ValueError("Cannot transform training sets without providing snapshots.")
+
+        def transform_split(transformer, train_indices, test_indices):
             if transform_train:
-                if self.snapshots is None:
-                    raise ValueError("Cannot transform training sets without providing snapshots.")
                 train_or_test = pd.concat([train_indices, test_indices], axis = 1).any(axis = 1)
-                _X.loc[train_or_test] = transformers[i].transform(X.loc[train_or_test])
+                _X.loc[train_or_test] = transformer.transform(X.loc[train_or_test])
             else:
-                _X.loc[test_indices] = transformers[i].transform(X.loc[test_indices])
+                _X.loc[test_indices] = transformer.transform(X.loc[test_indices])
+            
+        Parallel(n_jobs=n_jobs)(
+            delayed(transform_split)(transformers[i], train_indices, test_indices)
+            for i, (train_indices, test_indices) in enumerate(self.split())
+        )
+
         return _X
 
-    def cross_val_fit_transform(self, transformer, X, include_test_in_fit=False, transform_train=False):
+    def cross_val_fit_transform(self, transformer, X, include_test_in_fit=False, transform_train=False, n_jobs = 1):
         """
         Perform cross-validated fitting and transformation using a given transformer.
 
@@ -320,7 +330,7 @@ class PanelSplit:
         pd.DataFrame: DataFrame containing transformed values during cross-validation.
         list of fitted transformers: List containing fitted transformers for each split.
         """
-        transformers = self._cross_val_fit(transformer, X, include_test_in_fit)
-        _X = self.cross_val_transform(transformers, X, transform_train)
+        transformers = self._cross_val_fit(transformer, X, include_test_in_fit, n_jobs)
+        _X = self.cross_val_transform(transformers, X, transform_train, n_jobs)
 
         return _X, transformers
