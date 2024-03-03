@@ -133,6 +133,15 @@ class PanelSplit:
         return pd.concat(snapshots)
     
     def gen_test_labels(self, labels):
+        """
+        Generate test labels using the DataFrame's labels.
+
+        Parameters:
+        - labels: Pandas Series or DataFrame. The labels used to identify observations.
+        
+        Returns:
+        The labels of each fold's test set as a single DataFrame.
+        """
         test_indices = np.stack([split[1] for split in self.split()], axis=1).any(axis=1)
         return labels.loc[test_indices].copy()
 
@@ -183,18 +192,18 @@ class PanelSplit:
                 sw = None
             return estimator.fit(X_train, y_train, sample_weight=sw)
 
-        fitted_models = Parallel(n_jobs=n_jobs)(
+        fitted_estimators = Parallel(n_jobs=n_jobs)(
             delayed(fit_split)(train_indices)
             for train_indices, _ in self._split_wrapper(self.split())
         )
-        return fitted_models
+        return fitted_estimators
 
-    def cross_val_predict(self, fitted_models, X, prediction_method='predict', n_jobs=1):
+    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1):
         """
         Perform cross-validated predictions using a given predictor model.
 
         Parameters:
-        - fitted_models: A list of machine learning models used for prediction.
+        - fitted_estimators: A list of machine learning models used for prediction.
         - X: pandas DataFrame. The input features for the predictor.
         - labels: Optional pandas DataFrame. Labels to identify the predictions, if provided will be returned along with predictions.
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
@@ -208,7 +217,7 @@ class PanelSplit:
             return self._predict_split(model, X_test, prediction_method)
 
         predictions = Parallel(n_jobs=n_jobs)(
-            delayed(predict_split)(fitted_models[i], test_indices)
+            delayed(predict_split)(fitted_estimators[i], test_indices)
             for i, (_, test_indices) in enumerate(self.split())
         )
 
@@ -230,10 +239,10 @@ class PanelSplit:
         pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
         list of fitted models: List containing fitted models for each split.
         """
-        fitted_models = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
-        preds = self.cross_val_predict(fitted_models, X, prediction_method, n_jobs)
+        fitted_estimators = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
+        preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs)
 
-        return preds, fitted_models
+        return preds, fitted_estimators
             
     def _plot_time_series_splits(self, split_output):
         """
