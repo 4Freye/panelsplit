@@ -7,7 +7,7 @@ PanelSplit is a Python package designed to facilitate time series cross-validati
 You can install PanelSplit using pip:
 
 ```bash
-pip install git+https://github.com/4Freye/panelsplit.git
+pip install panelsplit
 ```
 ---
 
