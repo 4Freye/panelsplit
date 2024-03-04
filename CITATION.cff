@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Frey"
+  given-names: "Eric"
+  orcid: "https://orcid.org/0009-0003-8931-3248"
+title: "panelsplit"
+version: 0.1.0
+date-released: 2024-03-04
+url: "https://github.com/4Freye/panelsplit"
