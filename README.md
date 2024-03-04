@@ -122,6 +122,9 @@ Perform cross-validated transformation using a given transformer.
 
 For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository.
 
+## Background
+Work on panelsplit started at [EconAI](https://www.linkedin.com/company/econ-ai/) in December 2023 and has been under active development since then.
+
 ## Contributing
 
 Contributions to PanelSplit are welcome! If you encounter any issues or have suggestions for improvements, please feel free to open an issue or submit a pull request on GitHub.
