@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/742040227.svg)](https://zenodo.org/doi/10.5281/zenodo.10777259)
+[![PyPI version](https://badge.fury.io/py/panelsplit.svg)](https://badge.fury.io/py/panelsplit) [![DOI](https://zenodo.org/badge/742040227.svg)](https://zenodo.org/doi/10.5281/zenodo.10777259)
 
 # PanelSplit: a tool for panel data analysis
 
