@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/742040227.svg)](https://zenodo.org/doi/10.5281/zenodo.10777259)
+
 # PanelSplit: a tool for panel data analysis
 
 PanelSplit is a Python package designed to facilitate time series cross-validation when working with multiple entities (aka panel data). This tool is useful for handling panel data in various stages throughout the data pipeline, including feature engineering, hyper-parameter tuning, and model estimation.
