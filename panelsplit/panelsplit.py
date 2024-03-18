@@ -169,7 +169,7 @@ class PanelSplit:
         else:
             raise ValueError("Invalid prediction_method. Supported values are 'predict', 'predict_proba', or 'predict_log_proba'.")
 
-    def cross_val_fit(self, estimator, X, y, sample_weight=None, n_jobs=1):
+    def cross_val_fit(self, estimator, X, y, sample_weight=None, n_jobs=1, parallel = True):
         """
         Fit the estimator using cross-validation.
 
@@ -179,6 +179,7 @@ class PanelSplit:
         - y: pandas Series. The target variable for the estimator.
         - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+        - parallel: Optional bool (default=True). Whether to use joblib for parallel processing.
 
         Returns:
         list of fitted models: List containing fitted models for each split.
@@ -192,13 +193,18 @@ class PanelSplit:
                 sw = None
             return estimator.fit(X_train, y_train, sample_weight=sw)
 
-        fitted_estimators = Parallel(n_jobs=n_jobs)(
-            delayed(fit_split)(train_indices)
-            for train_indices, _ in self._split_wrapper(self.split())
-        )
+        if parallel:
+            fitted_estimators = Parallel(n_jobs=n_jobs)(
+                delayed(fit_split)(train_indices)
+                for train_indices, _ in self._split_wrapper(self.split())
+            )
+
+        else:
+            fitted_estimators = [fit_split(train_indices) for train_indices, _ in self._split_wrapper(self.split())]
+
         return fitted_estimators
 
-    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1):
+    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1, parallel = True):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -208,6 +214,7 @@ class PanelSplit:
         - labels: Optional pandas DataFrame. Labels to identify the predictions, if provided will be returned along with predictions.
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+        - parallel: Optional bool (default=True). Whether to use joblib for parallel processing.
 
         Returns:
         pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original labels joined with the predicted values.
@@ -216,14 +223,17 @@ class PanelSplit:
             X_test = X.loc[test_indices]
             return self._predict_split(model, X_test, prediction_method)
 
-        predictions = Parallel(n_jobs=n_jobs)(
-            delayed(predict_split)(fitted_estimators[i], test_indices)
-            for i, (_, test_indices) in enumerate(self.split())
-        )
+        if parallel:
+            predictions = Parallel(n_jobs=n_jobs)(
+                delayed(predict_split)(fitted_estimators[i], test_indices)
+                for i, (_, test_indices) in enumerate(self.split())
+            )
+        else:
+            predictions = [predict_split(fitted_estimators[i], test_indices) for i, (_, test_indices) in enumerate(self.split())]
 
         return np.concatenate(predictions, axis = 0)
 
-    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1):
+    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1, parallel = True):
         """
         Fit the estimator using cross-validation and then make predictions.
 
@@ -234,13 +244,14 @@ class PanelSplit:
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
         - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+        - parallel: Optional bool (default=True). Whether to use joblib for parallel processing.
 
         Returns:
         pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
         list of fitted models: List containing fitted models for each split.
         """
-        fitted_estimators = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
-        preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs)
+        fitted_estimators = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs, parallel)
+        preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs, parallel)
 
         return preds, fitted_estimators
             
@@ -273,11 +284,11 @@ class PanelSplit:
         - transformer: The transformer object used for fitting.
         - X: pandas DataFrame. The input features for the transformer.
         - include_test_in_fit: Optional bool (default=False). If True, include test data in fitting the transformer.
+        - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
 
         Returns:
         list of fitted transformers: List containing fitted transformers for each split.
         """
-        transformers = []
 
         def fit_split(train_indices, test_indices):
             X_train = X.loc[train_indices]
@@ -285,7 +296,7 @@ class PanelSplit:
                 return transformer.fit(X_train, X.loc[test_indices])
             else:
                 return transformer.fit(X_train)
-
+            
         fitted_transformers = Parallel(n_jobs=n_jobs)(
             delayed(fit_split)(train_indices, test_indices)
             for train_indices, test_indices in self._split_wrapper(self.split())
@@ -301,6 +312,8 @@ class PanelSplit:
         - transformers: List of fitted transformers.
         - X: pandas DataFrame. The input features for the transformation.
         - transform_train: Optional bool (default=False). If True, transform train set as well as the test set.
+        - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+        - use_joblib: Optional bool (default=True). Whether to use joblib for parallel processing.
 
         Returns:
         pd.DataFrame: DataFrame containing transformed values during cross-validation.
@@ -317,7 +330,8 @@ class PanelSplit:
                 _X.loc[train_or_test] = transformer.transform(X.loc[train_or_test])
             else:
                 _X.loc[test_indices] = transformer.transform(X.loc[test_indices])
-            
+        
+
         Parallel(n_jobs=n_jobs)(
             delayed(transform_split)(transformers[i], train_indices, test_indices)
             for i, (train_indices, test_indices) in enumerate(self.split())
@@ -334,6 +348,7 @@ class PanelSplit:
         - X: pandas DataFrame. The input features for the transformer.
         - include_test_in_fit: Optional bool (default=False). If True, include test data in fitting the transformer.
         - transform_train: Optional bool (default=False). If True, transform train set as well as the test set.
+        - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
 
         Returns:
         pd.DataFrame: DataFrame containing transformed values during cross-validation.
