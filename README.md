@@ -75,7 +75,7 @@ Perform cross-validated predictions using a given predictor model.
   > - **X**: *Pandas DataFrame*. Features.
   > - **y**: *Pandas Series*. Target variable.
   > - **sample_weight**: *Pandas Series*. Sample weights for the training data.
-  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel.
+  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel. See the [n_jobs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) argument for the Parallel class in the joblib package for further details.
   
   > ##### Returns
   > **fitted_estimators:** A list containing fitted estimators for each split.
@@ -87,7 +87,7 @@ Perform cross-validated predictions using a list of fitted estimators.
   > - **fitted_estimators**: A list of fitted estimators, one for each split.
   > - **X**: *Pandas DataFrame*. Features.
   > - **prediction_method**: The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'. Default is `'predict'`.
-  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel.
+  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel. See the [n_jobs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) argument for the Parallel class in the joblib package for further details.
 
   > ##### Returns
   > **y:** *ndarray of shape (n_samples,) or (n_samples, n_outputs)*. The predicted values concatenated across folds.
@@ -101,7 +101,7 @@ Perform cross-validated predictions using a given predictor model.
   > - **y**: *Pandas Series*. Target variable.
   > - **prediction_method**: The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'. Default is `'predict'`.
   > - **sample_weight**: *Pandas Series*. Sample weights for the training data.
-  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel.
+  > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel. See the [n_jobs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) argument for the Parallel class in the joblib package for further details.
   
   > ##### Returns
   > **y, fitted_estimators:** The predicted values concatenated across folds as well as a list containing fitted estimators for each split.
