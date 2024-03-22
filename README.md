@@ -122,7 +122,7 @@ Perform cross-validated transformation using a given transformer.
 
 ## Examples
 
-For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository.
+For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository. Also feel free to check out [an article I wrote about PanelSplit](https://towardsdatascience.com/how-to-cross-validate-your-panel-data-in-python-9ad981ddd043).
 
 ## Background
 Work on panelsplit started at [EconAI](https://www.linkedin.com/company/econ-ai/) in December 2023 and has been under active development since then.
