@@ -4,8 +4,11 @@ authors:
 - family-names: "Frey"
   given-names: "Eric"
   orcid: "https://orcid.org/0009-0003-8931-3248"
+- family-names: "Seimon"
+  given-names: "Ben"
+  orcid: "https://orcid.org/0009-0006-2655-4097"
 title: "panelsplit"
 doi: 10.5281/zenodo.10777259
-version: 0.1.0
-date-released: 2024-03-04
+version: 0.2.0
+date-released: 2024-03-26
 url: "https://github.com/4Freye/panelsplit"
