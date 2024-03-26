@@ -58,8 +58,17 @@ Generate snapshots for each split.
   > ##### Returns
   > A pandas DataFrame where each split has its own set of observations.
 
+#### `gen_train_labels(labels)`
+Generate train labels for each split.
+
+  > ##### Parameters
+  > - **labels**:  *Pandas DataFrame or Series*. The labels used to identify observations.
+
+  > ##### Returns
+  > The labels of each fold's train set as a single DataFrame.
+
 #### `gen_test_labels(labels)`
-Generate snapshots for each split.
+Generate test labels for each split.
 
   > ##### Parameters
   > - **labels**:  *Pandas DataFrame or Series*. The labels used to identify observations.
