@@ -198,7 +198,7 @@ class PanelSplit:
         )
         return fitted_estimators
 
-    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1):
+    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1, return_train_preds=False):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -221,9 +221,19 @@ class PanelSplit:
             for i, (_, test_indices) in enumerate(self.split())
         )
 
-        return np.concatenate(predictions, axis = 0)
+        if return_train_preds:
+            train_preds = Parallel(n_jobs=n_jobs)(
+                delayed(predict_split)(fitted_estimators[i], train_indices)
+                for i, (train_indices, _) in enumerate(self.split())
+            )
+            return np.concatenate(predictions, axis = 0), np.concatenate(train_preds, axis = 0)
+        
+        else:
+            return np.concatenate(predictions, axis = 0)
 
-    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1):
+        
+
+    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1, return_train_preds=False):
         """
         Fit the estimator using cross-validation and then make predictions.
 
@@ -240,9 +250,13 @@ class PanelSplit:
         list of fitted models: List containing fitted models for each split.
         """
         fitted_estimators = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
-        preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs)
 
-        return preds, fitted_estimators
+        if return_train_preds:
+            preds, train_preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs, return_train_preds)
+            return preds, train_preds, fitted_estimators
+        else:
+            preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs)
+            return preds, fitted_estimators
             
     def _plot_time_series_splits(self, split_output):
         """
