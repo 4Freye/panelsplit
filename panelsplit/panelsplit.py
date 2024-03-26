@@ -198,7 +198,7 @@ class PanelSplit:
         )
         return fitted_estimators
 
-    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1):
+    def cross_val_predict(self, fitted_estimators, X, prediction_method='predict', n_jobs=1, return_train_preds=False):
         """
         Perform cross-validated predictions using a given predictor model.
 
@@ -208,6 +208,7 @@ class PanelSplit:
         - labels: Optional pandas DataFrame. Labels to identify the predictions, if provided will be returned along with predictions.
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+        - return_train_preds: Optional bool (default=False). If True, return predictions for the training set as well.
 
         Returns:
         pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original labels joined with the predicted values.
@@ -221,9 +222,19 @@ class PanelSplit:
             for i, (_, test_indices) in enumerate(self.split())
         )
 
-        return np.concatenate(predictions, axis = 0)
+        if return_train_preds:
+            train_preds = Parallel(n_jobs=n_jobs)(
+                delayed(predict_split)(fitted_estimators[i], train_indices)
+                for i, (train_indices, _) in enumerate(self.split())
+            )
+            return np.concatenate(predictions, axis = 0), np.concatenate(train_preds, axis = 0)
+        
+        else:
+            return np.concatenate(predictions, axis = 0)
 
-    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1):
+        
+
+    def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1, return_train_preds=False):
         """
         Fit the estimator using cross-validation and then make predictions.
 
@@ -234,15 +245,21 @@ class PanelSplit:
         - prediction_method: Optional str (default='predict'). The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'.
         - sample_weight: Optional pandas Series or numpy array (default=None). Sample weights for the training data.
         - n_jobs: Optional int (default=1). The number of jobs to run in parallel.
+        - return_train_preds: Optional bool (default=False). If True, return predictions for the training set as well.
 
         Returns:
         pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original indices joined with the predicted values.
+        (Optional) pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation for the training set. It includes the original indices joined with the predicted values.
         list of fitted models: List containing fitted models for each split.
         """
         fitted_estimators = self.cross_val_fit(estimator, X, y, sample_weight, n_jobs)
-        preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs)
 
-        return preds, fitted_estimators
+        if return_train_preds:
+            preds, train_preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs, return_train_preds)
+            return preds, train_preds, fitted_estimators
+        else:
+            preds = self.cross_val_predict(fitted_estimators, X, prediction_method, n_jobs)
+            return preds, fitted_estimators
             
     def _plot_time_series_splits(self, split_output):
         """
