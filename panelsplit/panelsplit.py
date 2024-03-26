@@ -132,6 +132,19 @@ class PanelSplit:
                 snapshots.append(_data.loc[split_indices].assign(split = i))
         return pd.concat(snapshots)
     
+    def gen_train_labels(self, labels):
+        """
+        Generate test labels using the DataFrame's labels.
+
+        Parameters:
+        - labels: Pandas Series or DataFrame. The labels used to identify observations.
+        
+        Returns:
+        The labels of each fold's train set as a single DataFrame.
+        """
+        train_indices = np.stack([split[0] for split in self.split()], axis=1).any(axis=1)
+        return labels.loc[train_indices].copy()
+
     def gen_test_labels(self, labels):
         """
         Generate test labels using the DataFrame's labels.
