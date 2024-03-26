@@ -1,14 +1,18 @@
 from setuptools import setup, find_packages
 
+# Read the contents of the README file
+with open('README.md', 'r') as f:
+    long_description = f.read()
+
 setup(
     name='panelsplit',  # Replace with the desired name of your package
-    version='0.1.0',
+    version='0.2.0',
     packages=find_packages(include=['panelsplit', 'panelsplit.*']),  # Include only packages within the "panelsplit" folder
 
     # Metadata
-    author='Eric Frey',
-    author_email='eric.frey@bse.eu',
-    description='A custom toolkit for working with panel data.',
+    author='Eric Frey, Ben Seimon',
+    author_email='eric.frey@bse.eu, benjamin.seimon@bse.eu',
+    description='A tool for panel data analysis.',
     url='https://github.com/4Freye/panelsplit',  # URL to your GitHub repository
     license='MIT',
 
@@ -22,6 +26,9 @@ setup(
         'numpy'  # for numerical operations
     ],
 
+    # README file content
+    long_description=long_description,
+    long_description_content_type='text/markdown',
 
     # Other configurations
     classifiers=[
