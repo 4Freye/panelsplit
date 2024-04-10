@@ -224,13 +224,24 @@ class PanelSplit:
         - return_train_preds: Optional bool (default=False). If True, return predictions for the training set as well.
 
         Returns:
-        pd.DataFrame: Concatenated DataFrame containing predictions made by the model during cross-validation. It includes the original labels joined with the predicted values.
+        - test_preds: NumPy array containing test predictions made by the model during cross-validation. If return_train_preds is True, train predictions will also be returned.
+        - train_preds: NumPy array containing train predictions made by the model during cross-validation.
         """
+
+        def prediction_order_to_original_order(indices): 
+            """
+            To convert the concatenated predictions back to original order provided
+            """
+            indices = np.concatenate([np.where(indices_)[0] for indices_ in indices])
+            return np.argsort(indices)
+
         def predict_split(model, test_indices):
             X_test = X.loc[test_indices]
             return self._predict_split(model, X_test, prediction_method)
 
-        predictions = Parallel(n_jobs=n_jobs)(
+        test_indices = prediction_order_to_original_order([split[1] for split in self.split()])
+
+        test_preds = Parallel(n_jobs=n_jobs)(
             delayed(predict_split)(fitted_estimators[i], test_indices)
             for i, (_, test_indices) in enumerate(self.split())
         )
@@ -240,12 +251,10 @@ class PanelSplit:
                 delayed(predict_split)(fitted_estimators[i], train_indices)
                 for i, (train_indices, _) in enumerate(self.split())
             )
-            return np.concatenate(predictions, axis = 0), np.concatenate(train_preds, axis = 0)
-        
+            train_indices = prediction_order_to_original_order([split[0] for split in self.split()])
+            return np.concatenate(test_preds, axis = 0)[test_indices], np.concatenate(train_preds, axis = 0)[train_indices]
         else:
-            return np.concatenate(predictions, axis = 0)
-
-        
+            return np.concatenate(test_preds, axis=0)[test_indices]
 
     def cross_val_fit_predict(self, estimator, X, y, prediction_method='predict', sample_weight=None, n_jobs=1, return_train_preds=False):
         """
