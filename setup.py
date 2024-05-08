@@ -5,8 +5,8 @@ with open('README.md', 'r') as f:
     long_description = f.read()
 
 setup(
-    name='panelsplit',  # Replace with the desired name of your package
-    version='0.2.0',
+    name='panelsplit',
+    version='0.3.0',
     packages=find_packages(include=['panelsplit', 'panelsplit.*']),  # Include only packages within the "panelsplit" folder
 
     # Metadata
