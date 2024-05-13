@@ -1,6 +1,7 @@
 # this is still under development
 import unittest
 import pandas as pd
+import numpy as np
 from panelsplit import PanelSplit
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
