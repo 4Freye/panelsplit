@@ -2,6 +2,8 @@
 import unittest
 import pandas as pd
 from panelsplit import PanelSplit
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
 
 class TestPanelSplit(unittest.TestCase):
 
@@ -33,6 +35,26 @@ class TestPanelSplit(unittest.TestCase):
         labels = pd.Series(vals, index=vals)
         test_labels = self.panel_split.gen_test_labels(pd.Series(range(len(self.periods))))
         pd.testing.assert_series_equal(test_labels, labels)  # Assuming one split has no test data
+
+    def test_parallel_prediction(self):
+        # Test if the predictions are the same in parallel and non-parallel
+        np.random.seed(1)
+        df = pd.DataFrame(np.random.random((40, 10)))
+        df['entity'] = np.repeat(['A','B','C', 'D'], 10)
+        df['time'] = list(range(10)) * 4
+        df.set_index(['entity', 'time'], inplace=True)
+
+        # Specify model 
+        model = RandomForestRegressor(n_estimators=10, random_state=1)
+
+        # Run panel split: initialize, generate test labels, and fit and predict on data with and without parallel
+        ps = PanelSplit(periods=pd.Series(df.index.get_level_values('time')), n_splits=5)
+        pred_df = ps.gen_test_labels(df.iloc[:, 0].reset_index())
+        pred_df['pred'], _ = ps.cross_val_fit_predict(model, X=df.iloc[:, 1:], y=df.iloc[:, 0])
+        pred_df['pred_parallel'], _ = ps.cross_val_fit_predict(model, X=df.iloc[:, 1:], y=df.iloc[:, 0], n_jobs=-1)
+
+        # Assert whether the mean squared errors are equal
+        self.assertTrue(np.isclose(mean_squared_error(pred_df[0], pred_df['pred']), mean_squared_error(pred_df[0], pred_df['pred_parallel'])))
 
 if __name__ == '__main__':
     unittest.main()
