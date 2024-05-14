@@ -197,13 +197,14 @@ class PanelSplit:
         list of fitted models: List containing fitted models for each split.
         """
         def fit_split(train_indices):
+            local_estimator = clone(estimator)
             y_train = y.loc[train_indices].dropna()
             X_train = X.loc[y_train.index]
             if sample_weight is not None:
                 sw = sample_weight.loc[y_train.index]
             else:
                 sw = None
-            return estimator.fit(X_train, y_train, sample_weight=sw)
+            return local_estimator.fit(X_train, y_train, sample_weight=sw)
 
         fitted_estimators = Parallel(n_jobs=n_jobs)(
             delayed(fit_split)(train_indices)
