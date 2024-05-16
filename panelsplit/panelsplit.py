@@ -321,10 +321,11 @@ class PanelSplit:
 
         def fit_split(train_indices, test_indices):
             X_train = X.loc[train_indices]
+            local_transformer = clone(transformer)
             if include_test_in_fit:
-                return transformer.fit(X_train, X.loc[test_indices])
+                return local_transformer.fit(X_train, X.loc[test_indices])
             else:
-                return transformer.fit(X_train)
+                return local_transformer.fit(X_train)
 
         fitted_transformers = Parallel(n_jobs=n_jobs)(
             delayed(fit_split)(train_indices, test_indices)
