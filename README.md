@@ -130,7 +130,34 @@ Perform cross-validated transformation using a given transformer.
 
 ---
 
-## Examples
+### Example Usage
+
+```python
+import pandas as pd
+from panelsplit import PanelSplit
+
+# Generate example data
+num_countries = 2
+years = range(2001, 2004)
+num_years = len(years)
+
+data_dict = {
+    'country_id': [c for c in range(1, num_countries + 1) for _ in years],
+    'year': [year for _ in range(num_countries) for year in years],
+    'y': np.random.normal(0, 1, num_countries * num_years),
+    'x1': np.random.normal(0, 1, num_countries * num_years),
+    'x2': np.random.normal(0, 1, num_countries * num_years)
+}
+
+panel_data = pd.DataFrame(data_dict)
+panel_split = PanelSplit(periods = panel_data.year, n_splits =2)
+
+splits = panel_split.split()
+
+for train_idx, test_idx in splits:
+    print("Train:"); display(panel_data.loc[train_idx]) 
+    print("Test:"); display(panel_data.loc[test_idx])
+```
 
 For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository. Also feel free to check out [an article I wrote about PanelSplit](https://towardsdatascience.com/how-to-cross-validate-your-panel-data-in-python-9ad981ddd043).
 
