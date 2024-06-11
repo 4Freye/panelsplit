@@ -202,9 +202,9 @@ class PanelSplit:
             X_train = X.loc[y_train.index]
             if sample_weight is not None:
                 sw = sample_weight.loc[y_train.index]
+                return local_estimator.fit(X_train, y_train, sample_weight=sw)
             else:
-                sw = None
-            return local_estimator.fit(X_train, y_train, sample_weight=sw)
+                return local_estimator.fit(X_train, y_train)
 
         fitted_estimators = Parallel(n_jobs=n_jobs)(
             delayed(fit_split)(train_indices)
