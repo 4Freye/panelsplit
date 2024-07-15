@@ -1,5 +1,4 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/panelsplit)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/panelsplit)
 [![DOI](https://zenodo.org/badge/742040227.svg)](https://zenodo.org/doi/10.5281/zenodo.10777259)
 
 # PanelSplit: a tool for panel data analysis
