@@ -95,7 +95,7 @@ Perform cross-validated predictions using a list of fitted estimators.
   > - **fitted_estimators**: A list of fitted estimators, one for each split.
   > - **X**: *Pandas DataFrame*. Features.
   > - **prediction_method**: The prediction method to use. It can be 'predict', 'predict_proba', or 'predict_log_proba'. Default is `'predict'`.
-  > - **return_train_preds**: **Optional bool (default=False)*. If True, return predictions for the training set as well.
+  > - **return_train_preds**: *Optional bool (default=False)*. If True, return predictions for the training set as well.
   > - **n_jobs**: *Optional int (default=1)*. The number of jobs to run in parallel. See the [n_jobs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) argument for the Parallel class in the joblib package for further details.
 
   > ##### Returns
