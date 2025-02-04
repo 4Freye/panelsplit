@@ -47,13 +47,15 @@ class PanelSplit:
 
         if unique_periods is None:
             unique_periods = pd.Series(periods.unique()).sort_values()
+        else:
+            unique_periods = check_periods(unique_periods, obj_name='unique_periods')
 
         self.tss = TimeSeriesSplit(
             n_splits=n_splits, gap=gap, test_size=test_size, max_train_size=max_train_size
         )
         indices = self.tss.split(unique_periods.reset_index(drop=True))
         self.u_periods_cv = self._split_unique_periods(indices, unique_periods)
-        self.all_periods = periods
+        self.periods = periods
         self.snapshots = snapshots
         self.n_splits = n_splits
         self.train_test_splits = self._gen_splits()
@@ -108,11 +110,11 @@ class PanelSplit:
                         ),
                         stacklevel=2,
                     )
-                train_indices = self.all_periods.isin(train_periods).values & (self.snapshots == snapshot_val)
-                test_indices = self.all_periods.isin(test_periods).values & (self.snapshots == snapshot_val)
+                train_indices = self.periods.isin(train_periods).values & (self.snapshots == snapshot_val)
+                test_indices = self.periods.isin(test_periods).values & (self.snapshots == snapshot_val)
             else:
-                train_indices = self.all_periods.isin(train_periods).values
-                test_indices = self.all_periods.isin(test_periods).values
+                train_indices = self.periods.isin(train_periods).values
+                test_indices = self.periods.isin(test_periods).values
 
             train_test_splits.append((train_indices, test_indices))
 
