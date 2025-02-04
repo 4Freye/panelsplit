@@ -6,7 +6,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='panelsplit',
-    version='0.4.2',
+    version='1.0.0',
     packages=find_packages(include=['panelsplit', 'panelsplit.*']),  # Include only packages within the "panelsplit" folder
 
     # Metadata
