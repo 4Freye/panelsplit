@@ -37,19 +37,19 @@ def get_index_or_col_from_df(df, name):
         raise KeyError(f"'{name}' was not found in the DataFrame's columns or index names.")
 
 
-def check_periods(periods):
+def check_periods(periods, obj_name = 'periods'):
     if isinstance(periods, pd.Series):
         return periods
     elif isinstance(periods, pd.MultiIndex):
-        raise ValueError('periods must be a level of an index. Got a pd.MultiIndex instead.')
+        raise ValueError(f'{obj_name} must be a level of an index. Got a pd.MultiIndex instead.')
     elif isinstance(periods, pd.Index):
         return pd.Series(periods)
     elif isinstance(periods, np.ndarray):
         if len(periods.shape) > 1:
-            raise ValueError(f'periods array must be one-dimensional. Got an array of shape {periods.shape} instead')
+            raise ValueError(f'{obj_name} array must be one-dimensional. Got an array of shape {periods.shape} instead')
         return pd.Series(periods)
     else:
-        raise ValueError('periods type not supported.')
+        raise ValueError(f'{obj_name} type not supported.')
     
 def check_labels(labels):
     if not isinstance(labels, (pd.Series, pd.DataFrame, pd.Index, np.ndarray)):

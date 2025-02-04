@@ -3,6 +3,7 @@ import unittest
 import pandas as pd
 import numpy as np
 from panelsplit import PanelSplit
+from panelsplit.prediction import cross_val_fit_predict
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
@@ -51,8 +52,8 @@ class TestPanelSplit(unittest.TestCase):
         # Run panel split: initialize, generate test labels, and fit and predict on data with and without parallel
         ps = PanelSplit(periods=pd.Series(df.index.get_level_values('time')), n_splits=5)
         pred_df = ps.gen_test_labels(df.iloc[:, 0].reset_index())
-        pred_df['pred'], _ = ps.cross_val_fit_predict(model, X=df.iloc[:, 1:], y=df.iloc[:, 0])
-        pred_df['pred_parallel'], _ = ps.cross_val_fit_predict(model, X=df.iloc[:, 1:], y=df.iloc[:, 0], n_jobs=-1)
+        pred_df['pred'], _ = cross_val_fit_predict(model, X=df.iloc[:, 1:], y=df.iloc[:, 0], cv=ps)
+        pred_df['pred_parallel'], _ = cross_val_fit_predict(model, X=df.iloc[:, 1:], y=df.iloc[:, 0],cv =  ps, n_jobs=-1)
 
         # Assert whether the mean squared errors are equal
         self.assertTrue(np.isclose(mean_squared_error(pred_df[0], pred_df['pred']), mean_squared_error(pred_df[0], pred_df['pred_parallel'])))

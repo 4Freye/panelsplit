@@ -6,12 +6,12 @@ with open('README.md', 'r') as f:
 
 setup(
     name='panelsplit',
-    version='0.4.2',
+    version='1.0.0',
     packages=find_packages(include=['panelsplit', 'panelsplit.*']),  # Include only packages within the "panelsplit" folder
 
     # Metadata
-    author='Eric Frey, Ben Seimon',
-    author_email='eric.frey@bse.eu, benjamin.seimon@bse.eu',
+    author='Eric Frey',
+    author_email='eric.frey@bse.eu',
     description='A tool for panel data analysis.',
     url='https://github.com/4Freye/panelsplit',  # URL to your GitHub repository
     license='MIT',
