@@ -136,6 +136,23 @@ class PanelSplit:
         list of tuple of np.ndarray
             A list of tuples, where each tuple contains:
             (train_indices, test_indices) as boolean arrays.
+
+        Examples
+        --------
+        >>> period = pd.Series([1, 2, 3])
+        >>> y = pd.Series([0, np.nan, 1])
+        >>> ps = PanelSplit(periods=period, n_splits=2)
+        >>> splits = ps.split()
+        >>> for train, test in splits:
+        ...     print("Train:", train, "Test:", test)
+        Train: [ True False False] Test: [False  True False]
+        Train: [ True  True False] Test: [False False  True]
+        >>> ps_modified = drop_splits(ps, y)
+        >>> splits_modified = ps_modified.split()
+        Dropping split 0 as either the test or train set is either empty or contains only one unique value.
+        >>> for train, test in splits_modified:
+        ...    print("Train:", train, "Test:", test)
+        Train: [ True  True False] Test: [False False  True]
         """
         return self.train_test_splits
 
@@ -156,6 +173,14 @@ class PanelSplit:
         -------
         int
             The number of splits.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> periods = pd.Series([1, 2, 3, 4, 5, 6])
+        >>> ps = PanelSplit(periods=periods, n_splits=3)
+        >>> ps.get_n_splits()
+        3
         """
         return self.n_splits
 
@@ -200,6 +225,16 @@ class PanelSplit:
         -------
         Same type as `labels`
             The labels for the training set.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> periods = pd.Series([1, 2, 3])
+        >>> labels = np.array(['a', 'b', 'c'])
+        >>> ps = PanelSplit(periods=periods, n_splits=2)
+        >>> train_labels = ps.gen_train_labels(labels)
+        >>> train_labels
+        array(['a', 'b'], dtype='<U1')
         """
         return self._gen_labels(labels=labels, fold_idx=0)
 
@@ -222,15 +257,12 @@ class PanelSplit:
         Examples
         --------
         >>> import pandas as pd
-        >>> from panelsplit import PanelSplit
-        >>> periods = pd.Series(list(range(3)) * 2, name='period')
-        >>> ps = PanelSplit(periods=periods)
-        >>> ps.gen_test_labels(periods)
-        1    1
-        2    2
-        4    1
-        5    2
-        Name: period, dtype: int64
+        >>> periods = pd.Series([1, 2, 3])
+        >>> labels = np.array(['a', 'b', 'c'])
+        >>> ps = PanelSplit(periods=periods, n_splits=2)
+        >>> test_labels = ps.gen_test_labels(labels)
+        >>> test_labels
+        array(['b', 'c'], dtype='<U1')
         """
         return self._gen_labels(labels=labels, fold_idx=1)
 
@@ -252,6 +284,23 @@ class PanelSplit:
             A concatenated DataFrame containing snapshots for each split. Each snapshot includes
             a 'split' column (indicating the split number) and, if `period_col` is provided, a
             'snapshot_period' column.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> data = pd.DataFrame({
+        ... 'value': [10, pd.NA, 30],
+        ... 'period': [1, 2, 3],
+        ... }).astype('Int32')
+        >>> ps = PanelSplit(periods=data['period'], n_splits=2)
+        >>> snapshots = ps.gen_snapshots(data, period_col='period')
+        >>> print(snapshots)
+           value  period  split  snapshot_period
+        0     10       1      0                2
+        1   <NA>       2      0                2
+        0     10       1      1                3
+        1   <NA>       2      1                3
+        2     30       3      1                3
         """
         periods = get_index_or_col_from_df(data, period_col)
         periods = check_periods(periods)
@@ -286,18 +335,24 @@ def drop_splits(cv, y):
     list
         The modified list of splits with the problematic splits removed.
 
-    Notes
-    -----
-    For each split, if either the training or testing set is empty or if the number of unique
-    values in `y` for the training or testing set equals 1, that split is dropped.
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> data = pd.DataFrame({
+    ... 'value': [10, pd.NA, 30],
+    ... 'period': [1, 2, 3],
+    ... }).astype('Int32')
+    >>> ps = PanelSplit(periods=periods, n_splits=2)
+    >>> drop_splits(ps, data['value'])
+    Dropping split 0 as either the test or train set is either empty or contains only one unique value.
     """
-    for i, (train_indices, test_indices) in enumerate(cv.split):
+    for i, (train_indices, test_indices) in enumerate(cv.split()):
         if (
             (len(train_indices) == 0 or len(test_indices) == 0)
             or (y.loc[train_indices].nunique() == 1 or y.loc[test_indices].nunique() == 1)
         ):
             cv.n_splits -= 1
-            cv.pop(i)
+            cv.train_test_splits.pop(i)
             print(
                 f"Dropping split {i} as either the test or train set is either empty or contains only one unique value."
             )
