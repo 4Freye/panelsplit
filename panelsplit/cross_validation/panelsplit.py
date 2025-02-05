@@ -3,7 +3,7 @@ from sklearn.model_selection import TimeSeriesSplit
 import pandas as pd
 import numpy as np
 import warnings
-from .utils.validation import check_periods, check_labels, get_index_or_col_from_df
+from ..utils.validation import check_periods, check_labels, get_index_or_col_from_df
 
 class PanelSplit:
     """
