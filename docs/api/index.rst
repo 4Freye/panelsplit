@@ -2,17 +2,17 @@ API
 ============================
 Full API documentation for panelsplit.
 
-panelsplit
+cross_validation
 .. toctree::
    :maxdepth: 1
 
-   panelsplit/index
+   cross_validation/index
 
-prediction
+application
 .. toctree::
    :maxdepth: 1
 
-   prediction/index
+   application/index
 
 plot
 .. toctree::

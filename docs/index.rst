@@ -6,7 +6,7 @@
 panelsplit
 ========================================
 
-A tool for panel data analysis
+A library for panel data analysis.
 
 Table of contents
 ========================================
