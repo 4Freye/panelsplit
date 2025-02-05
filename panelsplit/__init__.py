@@ -1,1 +1,1 @@
-from .panelsplit import PanelSplit
+from .cross_validation.panelsplit import PanelSplit
