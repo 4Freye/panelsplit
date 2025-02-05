@@ -2,21 +2,16 @@
    sphinx-quickstart on Tue Feb  4 13:18:19 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
-PanelSplit
 
-A tool for panel data analysis
+panelsplit
 ========================================
 
+A tool for panel data analysis
+
+Table of contents
+========================================
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-   api
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   api/index
 
