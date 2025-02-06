@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.base import clone
 from joblib import Parallel, delayed
 from ..utils.utils import _split_wrapper
-from ..utils.validation import check_method, check_fitted_estimators
+from ..utils.validation import check_method, check_fitted_estimators, check_cv
 from typing import List, Union
 
 def _predict_split(model, X_test: pd.DataFrame, method: str = 'predict') -> np.ndarray:
@@ -95,8 +95,8 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
         The input features for the estimator.
     y : pd.Series
         The target variable for the estimator.
-    cv : object
-        Cross-validation splitter; an object that generates train/test splits.
+    cv : object or iterable
+        Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
     sample_weight : pd.Series or np.ndarray, optional
         Sample weights for the training data. Default is None.
     n_jobs : int, optional
@@ -109,10 +109,13 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
     list
         List containing fitted models for each split.
     """
+    splits = check_cv(cv)
+
     fitted_estimators = Parallel(n_jobs=n_jobs)(
         delayed(_fit_split)(estimator, X, y, train_indices, sample_weight)
-        for train_indices, _ in _split_wrapper(indices=cv.split(), progress_bar=progress_bar)
+        for train_indices, _ in _split_wrapper(indices=splits, progress_bar=progress_bar)
     )
+    
     return fitted_estimators
 
 
@@ -127,8 +130,8 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
         List of fitted machine learning models used for prediction.
     X : pd.DataFrame
         The input features for prediction.
-    cv : object
-        Cross-validation splitter; an object that generates train/test splits.
+    cv : object or iterable
+        Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
     method : str, optional
         The method to use for prediction. It can be 'predict', 'predict_proba',
         or 'predict_log_proba'. Default is 'predict'.
@@ -146,8 +149,9 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
         Returned only if `return_train_preds` is True.
     """
     check_fitted_estimators(fitted_estimators)
+    splits = check_cv(cv)
 
-    test_splits = [split[1] for split in cv.split()]
+    test_splits = [split[1] for split in splits]
     test_indices = _prediction_order_to_original_order(test_splits)
 
     test_preds = Parallel(n_jobs=n_jobs)(
@@ -156,7 +160,7 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
     )
 
     if return_train_preds:
-        train_splits = [split[0] for split in cv.split()]
+        train_splits = [split[0] for split in splits]
         train_indices = _prediction_order_to_original_order(train_splits)
 
         train_preds = Parallel(n_jobs=n_jobs)(

@@ -3,6 +3,7 @@ import numpy as np
 import warnings
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
+from collections.abc import Iterable
 
 def get_index_or_col_from_df(df, name):
     # Check if the DataFrame's index is a MultiIndex.
@@ -35,6 +36,15 @@ def get_index_or_col_from_df(df, name):
     # If the name is not found in either, raise an error.
     else:
         raise KeyError(f"'{name}' was not found in the DataFrame's columns or index names.")
+
+def check_cv(cv):
+    if hasattr(cv, "split"):  # If cv is a class with split() method
+        splits = cv.split()
+    elif isinstance(cv, Iterable):  # If cv is an iterable
+        splits = cv
+    else:
+        raise ValueError("cv should be a cross-validation splitter or an iterable of splits.")
+    return splits
 
 
 def check_periods(periods, obj_name = 'periods'):
