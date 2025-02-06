@@ -1,33 +1,46 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+from datetime import datetime
 
-project = 'panelsplit'
-copyright = '2025, panelsplit developers'
-author = 'panesplit developers'
-release = '1.0.0'
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+# sys.path.insert(0, os.path.abspath("."))
+# sys.path.insert(0, os.path.abspath("../"))
+sys.path.insert(1, os.path.dirname(os.path.abspath("../")) + os.sep + "panelsplit")
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+# -- General configuration ------------------------------------------------
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',  # Optional: for Google/NumPy style docstrings
+    'sphinx.ext.napoleon',  # for Google/NumPy style docstrings
+    'sphinx_autodoc_typehints',  # optional, for improved type hint handling
 ]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"
-html_static_path = ['_static']
+
+# General information about the project.
+project = "panelsplit"
+copyright = f"2024-{datetime.now().year}, panelsplit developers"
+author = "panelsplit developers"
+
+# Add any paths that contain templates here, relative to this directory.
+templates_path = ["_templates"]
+
+# -- Options for autodoc ------------------------------------------------------
+
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "exclude-members": "set_output",
+}
+
+# generate autosummary even if no references
+autosummary_generate = True
+
+# -- Options for numpydoc -----------------------------------------------------
+
+# this is needed for some reason...
+# see https://github.com/numpy/numpydoc/issues/69
+numpydoc_show_class_members = False
