@@ -2,7 +2,7 @@
 import unittest
 import pandas as pd
 import numpy as np
-from panelsplit import PanelSplit
+from panelsplit.cross_validation import PanelSplit
 from panelsplit.application import cross_val_fit_predict
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
