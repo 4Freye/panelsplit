@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from joblib import Parallel, delayed
-from ..utils.utils import _split_wrapper
-from ..utils.validation import check_method, check_fitted_estimators, check_cv
+from .utils.utils import _split_wrapper
+from .utils.validation import check_method, check_fitted_estimators, check_cv
 from typing import List, Union
 
 def _predict_split(model, X_test: pd.DataFrame, method: str = 'predict') -> np.ndarray:

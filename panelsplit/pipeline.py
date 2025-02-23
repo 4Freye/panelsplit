@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import time
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from ..utils.validation import check_cv
+from .utils.validation import check_cv
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
     """Log messages similar to scikit-learn's Pipeline verbose output."""
