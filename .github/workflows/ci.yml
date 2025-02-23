@@ -9,7 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -21,20 +20,38 @@ jobs:
 
       - name: Install dependencies
         run: |
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt # Install requirements to run tests
-            pip install -e .
-            pip install pytest  # Installing pytest explicitly
-            pip install pdoc
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest
 
       - name: Run tests
-        run: |
-            pytest tests/test_cross_validation.py
-      
-      - name: Create documentation
-        run: |
-            pdoc panelsplit/application/application.py  -o docs/ --docformat numpy
-            pdoc panelsplit/cross_validation/panelsplit.py  -o docs/ --docformat numpy
-            # pdoc panelsplit/model_selection/search.py  -o docs/ --docformat numpy
-            pdoc panelsplit/pipeline/pipeline.py  -o docs/ --docformat numpy
+        run: pytest
 
+  docs:
+    needs: test  # Only build docs if tests pass
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies for docs
+        run: |
+          pip install -e .
+          pip install pdoc
+
+      - name: Generate API documentation with pdoc
+        run: |
+          rm -rf docs  # Remove old docs directory if it exists
+          pdoc panelsplit -o docs -d numpy
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
