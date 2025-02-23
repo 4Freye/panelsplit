@@ -15,7 +15,7 @@ pip install panelsplit
 ---
 ## Documentation
 
-To read the documentation, visit here.
+To read the documentation, visit [here](https://4freye.github.io/panelsplit/panelsplit.html).
 
 
 ### Example Usage
