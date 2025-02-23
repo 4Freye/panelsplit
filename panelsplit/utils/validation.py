@@ -37,15 +37,20 @@ def get_index_or_col_from_df(df, name):
     else:
         raise KeyError(f"'{name}' was not found in the DataFrame's columns or index names.")
 
-def check_cv(cv):
+def check_cv(cv, X= None, y =None, groups=None):
     if hasattr(cv, "split"):  # If cv is a class with split() method
-        splits = cv.split()
+        splits = cv.split(X=X, y=y, groups=groups)
     elif isinstance(cv, Iterable):  # If cv is an iterable
         splits = cv
     else:
         raise ValueError("cv should be a cross-validation splitter or an iterable of splits.")
     return splits
 
+# def check_y(y):
+#     if y.isna().any():
+#         warnings.warn('y contains observations that are NA and will be dropped in order to fit the estimator.')
+#     y_train = y.loc[train_indices].dropna()
+#     return y_train
 
 def check_periods(periods, obj_name = 'periods'):
     if isinstance(periods, pd.Series):

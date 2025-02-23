@@ -25,7 +25,16 @@ jobs:
             pip install -r requirements.txt # Install requirements to run tests
             pip install -e .
             pip install pytest  # Installing pytest explicitly
+            pip install pdoc
 
       - name: Run tests
         run: |
-            pytest tests/test_panelsplit.py
+            pytest tests/test_cross_validation.py
+      
+      - name: Create documentation
+        run: |
+            pdoc panelsplit/application/application.py  -o docs/ --docformat numpy
+            pdoc panelsplit/cross_validation/panelsplit.py  -o docs/ --docformat numpy
+            # pdoc panelsplit/model_selection/search.py  -o docs/ --docformat numpy
+            pdoc panelsplit/pipeline/pipeline.py  -o docs/ --docformat numpy
+

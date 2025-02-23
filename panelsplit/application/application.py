@@ -30,7 +30,8 @@ def _predict_split(model, X_test: pd.DataFrame, method: str = 'predict') -> np.n
 
 
 def _fit_split(estimator, X: pd.DataFrame, y: pd.Series, train_indices: List[bool],
-               sample_weight: Union[pd.Series, np.ndarray] = None):
+               sample_weight: Union[pd.Series, np.ndarray] = None,
+               drop_na_in_y=False):
     """
     Fit a cloned estimator on the given training indices.
 
@@ -53,14 +54,16 @@ def _fit_split(estimator, X: pd.DataFrame, y: pd.Series, train_indices: List[boo
         A fitted estimator.
     """
     local_estimator = clone(estimator)
-    y_train = y.loc[train_indices].dropna()
-    X_train = X.loc[y_train.index]
+
+    if drop_na_in_y:
+        y = y.loc[train_indices].dropna()
+        X = X.loc[y.index]
 
     if sample_weight is not None:
-        sw = sample_weight.loc[y_train.index]
-        return local_estimator.fit(X_train, y_train, sample_weight=sw)
+        sw = sample_weight.loc[y.index]
+        return local_estimator.fit(X, y, sample_weight=sw)
     else:
-        return local_estimator.fit(X_train, y_train)
+        return local_estimator.fit(X, y)
 
 
 def _prediction_order_to_original_order(indices: List[bool]) -> List[int]:
@@ -83,7 +86,7 @@ def _prediction_order_to_original_order(indices: List[bool]) -> List[int]:
 
 def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv, 
                   sample_weight: Union[pd.Series, np.ndarray] = None, n_jobs: int = 1, 
-                  progress_bar: bool = False):
+                  progress_bar: bool = False, drop_na_in_y=False):
     """
     Fit the estimator using cross-validation.
 
@@ -103,6 +106,8 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
         The number of jobs to run in parallel. Default is 1.
     progress_bar : bool, optional
         Whether to display a progress bar. Default is False.
+    drop_na_in_y : bool, optional
+        Whether to drop observations where y is na. Default is False.
 
     Returns
     -------
@@ -112,7 +117,7 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
     splits = check_cv(cv)
 
     fitted_estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_split)(estimator, X, y, train_indices, sample_weight)
+        delayed(_fit_split)(estimator, X, y, train_indices, sample_weight, drop_na_in_y = drop_na_in_y)
         for train_indices, _ in _split_wrapper(indices=splits, progress_bar=progress_bar)
     )
     
@@ -175,7 +180,8 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
 
 def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: str = 'predict',
                             sample_weight: Union[pd.Series, np.ndarray] = None, n_jobs: int = 1,
-                            return_train_preds: bool = False) -> np.ndarray:
+                            return_train_preds: bool = False,
+                            drop_na_in_y=False) -> np.ndarray:
     """
     Fit the estimator using cross-validation and then make predictions.
 
@@ -198,6 +204,8 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
         The number of jobs to run in parallel. Default is 1.
     return_train_preds : bool, optional
         If True, return predictions for the training set as well. Default is False.
+    drop_na_in_y : bool, optional
+        Whether to drop observations where y is na. Default is False.
 
     Returns
     -------
@@ -210,7 +218,7 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
             - train_preds (np.ndarray): Array containing train predictions made by the model during cross-validation.
             - fitted_estimators (list): List containing fitted models for each split.
     """
-    fitted_estimators = cross_val_fit(estimator, X, y, cv, sample_weight, n_jobs)
+    fitted_estimators = cross_val_fit(estimator, X, y, cv, sample_weight, n_jobs,  drop_na_in_y = drop_na_in_y)
 
     if return_train_preds:
         preds, train_preds = cross_val_predict(fitted_estimators, X, cv, method, n_jobs, return_train_preds)

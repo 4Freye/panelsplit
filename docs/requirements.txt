@@ -1,3 +1,0 @@
-sphinx
-pydata-sphinx-theme
-sphinx_autodoc_typehints>=1.11.1,<=1.21.3
