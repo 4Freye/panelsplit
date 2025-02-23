@@ -26,6 +26,8 @@ class PanelSplit:
         Size of the test set. Default is 1.
     max_train_size : int, optional
         Maximum size for a single training set. Default is None.
+    include_first_train_in_test : bool, optional
+        Whether to include the first split's training set in the test set. Useful in the context of transforming data. Default is False.
 
     Notes
     -----
@@ -42,6 +44,7 @@ class PanelSplit:
         gap: int = 0,
         test_size: int = 1,
         max_train_size: int = None,
+        include_first_train_in_test = False
     ) -> None:
         periods = check_periods(periods)
 
@@ -54,6 +57,7 @@ class PanelSplit:
             n_splits=n_splits, gap=gap, test_size=test_size, max_train_size=max_train_size
         )
         indices = self.tss.split(unique_periods.reset_index(drop=True))
+        self.include_first_train_in_test = include_first_train_in_test
         self.u_periods_cv = self._split_unique_periods(indices, unique_periods)
         self.periods = periods
         self.snapshots = snapshots
@@ -78,9 +82,11 @@ class PanelSplit:
             (unique_train_periods, unique_test_periods) for each split.
         """
         u_periods_cv = []
-        for i, (train_index, test_index) in enumerate(indices):
+        for i, (train_index, test_index) in enumerate(indices):                    
             unique_train_periods = unique_periods.iloc[train_index].values
             unique_test_periods = unique_periods.iloc[test_index].values
+            if (i == 0) & self.include_first_train_in_test:
+                unique_test_periods = np.concatenate([unique_train_periods, unique_test_periods])
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
