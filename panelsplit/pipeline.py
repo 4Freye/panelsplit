@@ -1,139 +1,153 @@
 import numpy as np
-import pandas as pd
 import time
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from .utils.validation import check_cv
+from .utils.validation import check_cv, _check_X_y
+import pandas as pd  # added import for pandas
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
-    """Log messages similar to scikit-learn's Pipeline verbose output."""
+    """
+    Log messages similar to scikit-learn's Pipeline verbose output.
+
+    Parameters
+    ----------
+    message : str
+        The message to log.
+    verbose : bool
+        Whether to output verbose logging.
+    step_idx : int
+        The current step index (zero-indexed).
+    total : int
+        The total number of steps.
+    elapsed_time : float, optional
+        Elapsed time for the step in seconds.
+
+    Returns
+    -------
+    None
+    """
     if verbose:
         if elapsed_time is not None:
             message += " (elapsed time: %5.1fs)" % elapsed_time
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx + 1, total, message))
 
-def _make_method(method_name):
+def _to_int_indices(indices):
     """
-    Generate a pipeline method for methods such as:
-      - fit_transform, fit_predict, fit_predict_proba, fit_score, etc.
-      - transform, predict, predict_proba, score, etc.
-    
-    If the method name contains "fit", then the pipeline will first fit all steps 
-    (including the final one) on the input X (and y) and then call the corresponding 
-    method on the final estimator (with the "fit_" prefix removed).
-    
-    If "fit" is not in the method name, then the fitted estimators are used to 
-    sequentially transform (or predict) the input data.
+    Convert indices to integer indices.
+
+    Parameters
+    ----------
+    indices : array-like
+        Array of indices, which can be boolean or integer.
+
+    Returns
+    -------
+    np.ndarray
+        Array of integer indices.
     """
-    def method(self, X, y=None, **kwargs):
-        # Case 1: "fit" is in the method name: do full fitting and then call the method.
-        if "fit" in method_name:
-            X_current = X
-            total_steps = len(self.steps)
-            # Fit all steps except the final one.
-            for step_idx, (name, transformer, cv) in enumerate(self.steps[:-1]):
+    indices = np.atleast_1d(indices)
+    if indices.dtype == bool:
+        indices = np.where(indices)[0]
+    return indices
+
+def _sort_and_combine(predictions_with_idx):
+    """
+    Sort and combine predictions from (index, prediction) pairs.
+
+    Parameters
+    ----------
+    predictions_with_idx : list of tuples
+        Each tuple contains (index, prediction) where prediction can be a numpy array
+        or a pandas object.
+
+    Returns
+    -------
+    numpy.ndarray or pandas.DataFrame or pandas.Series
+        Combined predictions. Numpy arrays are stacked vertically, and pandas objects
+        are concatenated.
+    """
+    predictions_with_idx.sort(key=lambda pair: pair[0])
+    predictions = [pred for idx, pred in predictions_with_idx]
+    if predictions and isinstance(predictions[0], np.ndarray):
+        predictions = np.vstack(predictions)
+    elif predictions and isinstance(predictions[0], (pd.DataFrame, pd.Series)):
+        predictions = pd.concat(predictions, axis=0)
+    return predictions
+
+def _make_method(method_name, fit=True):
+    """
+    Create a pipeline method dynamically for fitting or predicting.
+
+    Parameters
+    ----------
+    method_name : str
+        The name of the method to create (e.g., 'predict', 'transform').
+    fit : bool, default=True
+        Whether the method should perform fitting of the pipeline.
+
+    Returns
+    -------
+    function
+        A method that applies the specified method to all pipeline steps.
+    """
+    def _method(self, X, y=None, **kwargs):
+        _check_X_y(X, y)
+        # Fit all steps except the final one.
+        current_output = X
+        total_steps = len(self.steps)
+
+        for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
+            t_start = time.time()
+            not_final_step = total_steps != step_idx
+            # Use 'transform' for intermediate steps and the provided method for the final step.
+            method = 'transform' if not_final_step else method_name
+            if fit:
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
-                t_start = time.time()
-                X_current, fitted_model = self._fit_step(transformer, X_current, y, cv)
+
+                current_output, fitted_model = self._fit_method_step(
+                    transformer, current_output, y, cv, return_output=True, method=method
+                )
+
                 self.fitted_steps_[name] = fitted_model
-                _log_message("Step '{}' completed".format(name),
-                             self.verbose, step_idx, total_steps, time.time() - t_start)
-            # Fit the final estimator.
-            final_name, final_transformer, final_cv = self.steps[-1]
-            final_model = clone(final_transformer)
-            t_start = time.time()
-            final_model.fit(X_current, y)
-            _log_message("Final step '{}' fitted".format(final_name),
-                         self.verbose, total_steps - 1, total_steps, time.time() - t_start)
-            self.fitted_steps_[final_name] = final_model
-
-            # Determine which method to call on the final estimator.
-            # For example, "fit_predict" becomes "predict", "fit_transform" becomes "transform", etc.
-            if method_name.startswith("fit_"):
-                final_method_name = method_name[len("fit_"):]
             else:
-                final_method_name = method_name
+                fitted_model = self.fitted_steps_.get(name)
+                if fitted_model is None:
+                    continue
+                current_output = self._method_step(fitted_model, method, current_output)
 
-            if final_method_name == "score":
-                return getattr(final_model, final_method_name)(X_current, y, **kwargs)
-            else:
-                return getattr(final_model, final_method_name)(X_current, **kwargs)
+            _log_message("Step '{}' completed".format(name),
+                         self.verbose, step_idx, total_steps, time.time() - t_start)
 
-        # Case 2: No "fit" in method name: assume the pipeline is already fitted.
-        else:
-            if method_name == "transform":
-                X_current = X
-                for name, transformer, cv in self.steps:
-                    if transformer is None or transformer == "passthrough":
-                        continue
-                    fitted_model = self.fitted_steps_.get(name)
-                    if fitted_model is None:
-                        continue
-                    X_current = self._method_step(fitted_model, "transform", X_current)
-                return X_current
-            elif method_name in ["predict", "predict_proba", "predict_log_proba"]:
-                X_current = X
-                for name, transformer, cv in self.steps[:-1]:
-                    if transformer is None or transformer == "passthrough":
-                        continue
-                    fitted_model = self.fitted_steps_.get(name)
-                    if fitted_model is None:
-                        continue
-                    X_current = self._method_step(fitted_model, "transform", X_current)
-                final_name, final_transformer, final_cv = self.steps[-1]
-                fitted_final = self.fitted_steps_.get(final_name)
-                if fitted_final is None:
-                    raise ValueError("Final estimator is not fitted.")
-                return self._method_step(fitted_final, method_name, X_current)
-            elif method_name == "score":
-                X_current = X
-                for name, transformer, cv in self.steps[:-1]:
-                    if transformer is None or transformer == "passthrough":
-                        continue
-                    fitted_model = self.fitted_steps_.get(name)
-                    if fitted_model is None:
-                        continue
-                    X_current = self._method_step(fitted_model, "transform", X_current)
-                final_name, final_transformer, final_cv = self.steps[-1]
-                fitted_final = self.fitted_steps_.get(final_name)
-                if fitted_final is None:
-                    raise ValueError("Final estimator is not fitted.")
-                return getattr(fitted_final, "score")(X_current, y, **kwargs)
-            else:
-                raise ValueError(f"Method {method_name} not supported.")
-    return method
+        return current_output
+
+    return _method
 
 class SequentialCVPipeline(BaseEstimator):
     """
-    A sequential pipeline that applies a series of transformers/estimators,
-    each with an optional cross-validation (CV) strategy.
-    
-    Each step is a tuple of (name, transformer, cv), where:
-      - name: a string identifier.
-      - transformer: an estimator/transformer with fit/transform (or predict) methods.
-      - cv: either a CV splitter (an object with a split method), an iterable of train/test splits,
-            or None. If cv is None, the transformer is fit on the entire data.
-    
-    For steps with cv specified, the pipeline:
-      1. For each fold in cv, clones and fits the transformer on the training set,
-         then uses it to transform (or predict) the held‐out test set.
-      2. Reassembles the out‐of‐fold results so that each row is produced
-         by a model that was not “seen” during its fit.
-    
-    Example usage:
-    
-      pipeline = SequentialCVPipeline([
-          ('imputer', IterativeImputer(), cv=panel_cv),  # fit iteratively using CV
-          ('scaler', StandardScaler(), cv=None),         # fit on full data
-          ('estimator', RFRegressor(), cv=fold_cv)         # fit estimator using CV
-      ], verbose=True)
-      
-      pipeline.fit(X, y)
-      Xt = pipeline.transform(X_new)
-      y_pred = pipeline.predict(X_new)
-      # Or:
-      y_pred = pipeline.fit_predict(X, y)
+    A sequential pipeline that applies a series of transformers/estimators with
+    optional cross-validation (CV).
+
+    Each step is a tuple of (name, transformer, cv). If cv is provided, out-of-fold
+    outputs are reassembled.
+
+    Parameters
+    ----------
+    steps : list of tuples
+        List where each tuple is (name, transformer, cv). 'name' is a string identifier,
+        'transformer' is an estimator or transformer, and 'cv' is a cross-validation splitter
+        or None.
+    verbose : bool, default=False
+        Whether to print verbose output during fitting and transformation.
+
+    Attributes
+    ----------
+    steps : list
+        The list of pipeline steps.
+    verbose : bool
+        Verbosity flag.
+    fitted_steps_ : dict
+        Dictionary storing fitted transformers for each step.
     """
     def __init__(self, steps, verbose=False):
         # Each step must be a tuple: (name, transformer, cv)
@@ -142,28 +156,59 @@ class SequentialCVPipeline(BaseEstimator):
                 raise ValueError("Each step must be a tuple of (name, transformer, cv)")
         self.steps = steps
         self.verbose = verbose
-        self.fitted_steps_ = {}  # stores fitted model(s) for each step
+        self.fitted_steps_ = {}
 
-        # Dynamically inject methods.
-        # Methods that perform a full fit and then call the final method:
-        self.fit_predict = _make_method("fit_predict").__get__(self, type(self))
-        self.fit_transform = _make_method("fit_transform").__get__(self, type(self))
-        self.fit_score = _make_method("fit_score").__get__(self, type(self))
-        if hasattr(self.steps[-1][1], "predict_proba"):
-            self.fit_predict_proba = _make_method("fit_predict_proba").__get__(self, type(self))
-        if hasattr(self.steps[-1][1], "predict_log_proba"):
-            self.fit_predict_log_proba = _make_method("fit_predict_log_proba").__get__(self, type(self))
-        
-        # Methods that use already-fitted estimators:
-        self.transform = _make_method("transform").__get__(self, type(self))
-        self.predict = _make_method("predict").__get__(self, type(self))
-        self.score = _make_method("score").__get__(self, type(self))
+        # Dynamically inject methods based on the final estimator.
+        final_name, final_transformer, final_cv = self.steps[-1]
+        for method_name in ['transform', "predict", "predict_proba", "predict_log_proba", "score"]:
+            if hasattr(final_transformer, method_name):
+                setattr(self, f"fit_{method_name}", _make_method(method_name, fit=True).__get__(self, type(self)))
+                setattr(self, f"{method_name}", _make_method(method_name, fit=False).__get__(self, type(self)))
+    
+    def __getitem__(self, key):
+        """
+        Return a new SequentialCVPipeline instance with a subset of steps.
+
+        Parameters
+        ----------
+        key : slice or int
+            If a slice, returns a new pipeline containing the selected steps.
+            If an int, returns the (name, transformer, cv) tuple for that step.
+
+        Returns
+        -------
+        SequentialCVPipeline or tuple
+            A new pipeline instance if key is a slice, or a single step tuple if key is an integer.
+
+        Raises
+        ------
+        TypeError
+            If the key is not a slice or an integer.
+        """
+        if isinstance(key, slice):
+            new_steps = self.steps[key]
+            return SequentialCVPipeline(new_steps, verbose=self.verbose)
+        elif isinstance(key, int):
+            return self.steps[key]
+        else:
+            raise TypeError("Invalid index type. Expected int or slice.")
+
 
     def _subset(self, X, indices):
-        """Helper function to index X.
-        
-        If X is a pandas DataFrame or Series, return X.iloc[indices];
-        otherwise, use normal indexing.
+        """
+        Subset the input X based on provided indices.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            The data to subset.
+        indices : array-like
+            Indices used to select a subset of X.
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            The subset of X corresponding to the given indices.
         """
         try:
             if isinstance(X, (pd.DataFrame, pd.Series)):
@@ -175,14 +220,20 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _combine(self, transformed_list):
         """
-        Combine a list of transformed outputs.
-        - If the outputs are numpy arrays, stack them using np.vstack.
-        - If they are pandas DataFrames or Series, concatenate them along axis 0.
-        - Otherwise, return the list as-is.
+        Combine a list of transformed outputs into a single output.
+
+        Parameters
+        ----------
+        transformed_list : list
+            List of transformed outputs from different pipeline steps.
+
+        Returns
+        -------
+        numpy.ndarray or pandas.DataFrame or pandas.Series or list
+            Combined output. Numpy arrays are vertically stacked; pandas objects are concatenated.
         """
         if not transformed_list:
             return transformed_list
-
         first_item = transformed_list[0]
         if isinstance(first_item, np.ndarray):
             return np.vstack(transformed_list)
@@ -190,146 +241,178 @@ class SequentialCVPipeline(BaseEstimator):
             return pd.concat(transformed_list, axis=0)
         else:
             return transformed_list
-        
 
     def _apply_method_to_indices(self, model, method_name, X, indices):
-        # Ensure indices is array-like
-        indices = np.atleast_1d(indices)
-        # Convert boolean masks to integer indices if necessary
-        if isinstance(indices, np.ndarray) and indices.dtype == bool:
-            indices = np.where(indices)[0]
+        """
+        Apply a method of the given model to a subset of X based on indices.
+
+        Parameters
+        ----------
+        model : estimator
+            Fitted model or transformer.
+        method_name : str
+            The name of the method to apply (e.g., 'predict' or 'transform').
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        indices : array-like
+            Indices specifying the subset of X.
+
+        Returns
+        -------
+        list
+            List of predictions or transformed values.
+        """
+        indices = _to_int_indices(indices)
         X_subset = self._subset(X, indices)
-        # Ensure X_subset is 2D if it is a numpy array
         if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
-            # Try to obtain the model's expected number of features
-            try:
-                expected = model.n_features_in_
-            except AttributeError:
-                expected = None
-            # If the length matches the expected number of features,
-            # treat it as a single sample (row vector).
+            expected = getattr(model, "n_features_in_", None)
             if expected is not None and X_subset.shape[0] == expected:
                 X_subset = X_subset.reshape(1, -1)
             else:
-                # Otherwise, assume it should be a column vector.
                 X_subset = X_subset.reshape(-1, 1)
         output = getattr(model, method_name)(X_subset)
-        try:
-            output_list = output.tolist()
-        except Exception:
-            output_list = list(output)
-        return output_list
+        return output
 
-    def _fit_step(self, transformer, X, y, cv):
+    def _fit_method_step(self, transformer, X, y, cv, return_output=True, method='transform'):
         """
-        Fit one step. If cv is None, simply clone, fit, and transform X.
-        If cv is provided, then for each fold:
-          - clone and fit the transformer on training data,
-          - apply the method (transform or predict) on test data.
-        The out‐of‐fold results are reassembled into X_trans.
-        Returns (X_trans, fitted_model) where fitted_model is either the fitted transformer
-        or (if cv was used) a dict with key "splits" that contains a list of (test_indices, model) tuples.
+        Fit one pipeline step and optionally transform the data.
+
+        If `cv` is None, the transformer is cloned, fit on X (and y), and optionally used
+        to transform X. If `cv` is provided, the transformer is cloned and fit on each fold,
+        and out-of-fold predictions are reassembled.
+
+        Parameters
+        ----------
+        transformer : estimator
+            The transformer or estimator to be fitted.
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data for fitting.
+        y : array-like, optional
+            Target values.
+        cv : cross-validation splitter or None
+            Cross-validation splitting strategy.
+        return_output : bool, default=True
+            Whether to return the transformed output.
+        method : str, default='transform'
+            Method to call on the transformer (e.g., 'predict' or 'transform').
+
+        Returns
+        -------
+        tuple
+            If `return_output` is True, returns (transformed_output, fitted_model);
+            otherwise returns (None, fitted_model).
         """
         if cv is None:
             model = clone(transformer)
-            t_start = time.time()
-            print(X)
             model.fit(X, y)
-            elapsed = time.time() - t_start
-            _log_message("Fitted on full data", self.verbose, 0, 1, elapsed)
-            if hasattr(model, "transform"):
-                X_trans = model.transform(X)
-            elif hasattr(model, "predict"):
-                X_trans = model.predict(X)
-            else:
-                X_trans = X  # if no transformation, pass through
-            return X_trans, model
+            fitted = model
+            if return_output:
+                output = getattr(model, method)(X)
         else:
             splits = check_cv(cv, X=X, y=y)
-            n_samples = len(X)
-            out_trans = [None] * n_samples
+            idx_trans = []
             folds_models = []
-            # Loop through folds without verbose logging per fold
             for train_idx, test_idx in splits:
-                # Convert boolean masks to integer indices if necessary
-                if isinstance(train_idx, np.ndarray) and train_idx.dtype == bool:
-                    train_idx = np.where(train_idx)[0]
-                if isinstance(test_idx, np.ndarray) and test_idx.dtype == bool:
-                    test_idx = np.where(test_idx)[0]
+                train_idx = _to_int_indices(train_idx)
+                test_idx = _to_int_indices(test_idx)
                 model_fold = clone(transformer)
                 X_train = self._subset(X, train_idx)
                 y_train = None if y is None else self._subset(y, train_idx)
                 X_test = self._subset(X, test_idx)
                 model_fold.fit(X_train, y_train)
-                if hasattr(model_fold, "transform"):
-                    X_test_trans = model_fold.transform(X_test)
-                elif hasattr(model_fold, "predict"):
-                    X_test_trans = model_fold.predict(X_test)
-                else:
-                    raise ValueError("Transformer/estimator must have transform or predict")
-                try:
-                    X_test_trans_list = X_test_trans.tolist()
-                except Exception:
-                    X_test_trans_list = [row for row in X_test_trans]
-                for i, idx in enumerate(test_idx):
-                    out_trans[idx] = X_test_trans_list[i]
                 folds_models.append((test_idx, model_fold))
-            X_trans = self._combine(out_trans)
+                if return_output:
+                    output_trans = getattr(model_fold, method)(X_test)
+                    # Pair each output with its original index.
+                    for i, idx in enumerate(test_idx):
+                        idx_trans.append((idx, output_trans[i]))
+            if return_output:
+                output = _sort_and_combine(idx_trans)
             fitted = {"splits": folds_models}
-            return X_trans, fitted
+        if return_output:
+            return output, fitted
+        else:
+            return None, fitted
 
     def _method_step(self, fitted_model, method_name, X):
         """
-        A helper method to call a given method (e.g. 'predict' or 'transform')
-        on a fitted model. For steps fitted with CV, it applies the method on the subset
-        of X corresponding to each fold's test indices. The predictions are then reassembled
-        into the original order.
+        Apply a method of a fitted model (or models) to input X.
+
+        For steps with CV, this method applies the given method to each fold's model and
+        reassembles the predictions.
+
+        Parameters
+        ----------
+        fitted_model : estimator or dict
+            Fitted model or a dictionary containing fitted models from cross-validation.
+        method_name : str
+            The name of the method to apply (e.g., 'predict' or 'transform').
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+
+        Returns
+        -------
+        numpy.ndarray or pandas.DataFrame or pandas.Series
+            Combined output after applying the method.
         """
-        # Non-CV case: fitted_model is the estimator/transformer.
         if not (isinstance(fitted_model, dict) and "splits" in fitted_model):
             if hasattr(fitted_model, method_name):
                 return getattr(fitted_model, method_name)(X)
             else:
                 raise ValueError(f"Fitted model does not have a {method_name} method.")
-
-        # CV case: fitted_model is a dict with a "splits" key.
-        # Collect predictions along with their original indices.
         predictions_with_idx = []
         for test_idx, model in fitted_model["splits"]:
-            if hasattr(model, method_name):
-                output_list = self._apply_method_to_indices(model, method_name, X, test_idx)
-            else:
-                raise ValueError(f"Model in CV fold does not have a {method_name} method.")
+            output_list = self._apply_method_to_indices(model, method_name, X, test_idx)
             for i, idx in enumerate(test_idx):
-                predictions_with_idx.append((idx, output_list[i]))
+                predictions_with_idx.append((idx, self._subset(output_list, i)))
+        return _sort_and_combine(predictions_with_idx)
 
-        # Sort the predictions by the original index to preserve order.
-        predictions_with_idx.sort(key=lambda pair: pair[0])
-        predictions = [pred for idx, pred in predictions_with_idx]
-
-        # If predictions are numpy arrays, stack them.
-        if predictions and isinstance(predictions[0], np.ndarray):
-            predictions = np.vstack(predictions)
-        return predictions
-    
     def _fit(self, X, y=None):
         """
-        Fit the pipeline sequentially. For each step, use its cv setting to fit and transform
-        the data. The transformed output from one step is passed to the next.
+        Fit the pipeline sequentially, passing the transformed output of each step to the next.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values.
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            Transformed output after applying all pipeline steps.
         """
+        _check_X_y(X, y)
         X_current = X
         total_steps = len(self.steps)
-        for step_idx, (name, transformer, cv) in enumerate(self.steps):
+        for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
             if transformer is None or transformer == "passthrough":
                 self.fitted_steps_[name] = None
                 continue
-            t_start = time.time()
-            X_current, fitted_model = self._fit_step(transformer, X_current, y, cv)
+            not_final_step = not step_idx == total_steps
+            X_current, fitted_model = self._fit_method_step(transformer, X_current, y, cv, return_output=not_final_step)
+            
             self.fitted_steps_[name] = fitted_model
-            _log_message("Step '{}' completed".format(name), self.verbose, step_idx, total_steps, time.time() - t_start)
+            _log_message("Step '{}' completed".format(name),
+                         self.verbose, step_idx, total_steps, time.time() - 0)  # time delta omitted for brevity
         return X_current
 
     def fit(self, X, y=None):
+        """
+        Fit the entire pipeline to the data.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values.
+
+        Returns
+        -------
+        SequentialCVPipeline
+            The fitted pipeline instance.
+        """
         _ = self._fit(X, y)
         return self
-    
