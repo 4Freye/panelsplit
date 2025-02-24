@@ -28,7 +28,7 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run: pytest tests/test_cross_validation.py
+        run: pytest
 
   docs:
     needs: test  # Only build docs if tests pass
