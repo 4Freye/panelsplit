@@ -81,3 +81,33 @@ def check_fitted_estimators(fitted_estimators):
             check_is_fitted(estimator)
         except NotFittedError as exc:
             print(f"One or more of the estimators haven't been fitted yet. Please fit all estimators before using cross_val_predict.")
+
+
+def _check_X_y(X, y = None):
+    """
+    Validate that X and y are either numpy arrays, pandas DataFrames, or pandas Series.
+
+    Parameters
+    ----------
+    X : array-like, pandas.DataFrame, or pandas.Series
+        Input features.
+    y : array-like, pandas.DataFrame, or pandas.Series
+        Target values.
+
+    Returns
+    -------
+    tuple
+        The validated inputs (X, y).
+
+    Raises
+    ------
+    TypeError
+        If X or y is not a numpy array, pandas DataFrame, or pandas Series.
+    """
+    valid_types = (np.ndarray, pd.DataFrame, pd.Series)
+    
+    if not isinstance(X, valid_types):
+        raise TypeError("X should be a numpy array, pandas DataFrame, or pandas Series")
+    if y is not None and not isinstance(y, valid_types):
+        raise TypeError("y should be a numpy array, pandas DataFrame, or pandas Series")
+    
