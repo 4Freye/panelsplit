@@ -123,7 +123,7 @@ def _make_method(method_name, fit=True):
 
     return _method
 
-__pdoc__dict = {
+pdoc_dict = {
     "fit_predict": """Fit the pipeline and predict target values.
 
 This method dynamically fits the pipeline on the provided data and then applies the final estimator's
@@ -286,7 +286,6 @@ This method is dynamically injected based on the final estimator's capabilities.
 
 
 class SequentialCVPipeline(BaseEstimator):
-    __pdoc__ = __pdoc__dict
     """
     A sequential pipeline that applies a series of transformers/estimators with
     optional cross-validation (CV).
@@ -324,6 +323,8 @@ class SequentialCVPipeline(BaseEstimator):
     >>> print(pipeline.steps)
     [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
+    __pdoc__ = pdoc_dict
+
     def __init__(self, steps, verbose=False):
         """
         Initialize the SequentialCVPipeline with the given steps.
