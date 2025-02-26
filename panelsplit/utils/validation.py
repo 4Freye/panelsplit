@@ -5,6 +5,17 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 from collections.abc import Iterable
 
+
+__pdoc__ = {
+    'get_index_or_col_from_df': False,
+    'check_cv': False,
+    'check_periods':False,
+    'check_labels':False,
+    'check_fitted_estimators':False,
+    'check_method':False,
+    '_check_X_y':False
+}
+
 def get_index_or_col_from_df(df, name):
     # Check if the DataFrame's index is a MultiIndex.
     is_multi = isinstance(df.index, pd.MultiIndex)
