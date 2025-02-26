@@ -319,25 +319,11 @@ class SequentialCVPipeline(BaseEstimator):
     >>> pipeline = SequentialCVPipeline([
     ...     ('scaler', StandardScaler(), None),
     ...     ('classifier', LogisticRegression(), None))
-    ... ])
+    ... ], verbose = False)
     >>> print(pipeline.steps)
     [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
-   
-
     def __init__(self, steps, verbose=False):
-        """
-        Initialize the SequentialCVPipeline with the given steps.
-
-        Parameters
-        ----------
-        steps : list of tuples
-            List where each tuple is (name, transformer, cv). 'name' is a string identifier,
-            'transformer' is an estimator or transformer, and 'cv' is a cross-validation splitter
-            or None.
-        verbose : bool, default=False
-            Whether to print verbose output during fitting and transformation.
-        """
         # Each step must be a tuple: (name, transformer, cv)
         for step in steps:
             if not (isinstance(step, tuple) and len(step) == 3):
@@ -346,13 +332,23 @@ class SequentialCVPipeline(BaseEstimator):
         self.verbose = verbose
         self.fitted_steps_ = {}
 
+        method_names = ['transform', "predict", "predict_proba", "predict_log_proba", "score"]
+
         # Dynamically inject methods based on the final estimator.
         final_name, final_transformer, final_cv = self.steps[-1]
-        for method_name in ['transform', "predict", "predict_proba", "predict_log_proba", "score"]:
+        for method_name in method_names:
+            fit_method_name = f"fit_{method_name}"
             if hasattr(final_transformer, method_name):
-                setattr(self, f"fit_{method_name}", _make_method(method_name, fit=True).__get__(self, type(self)))
-                setattr(self, f"{method_name}", _make_method(method_name, fit=False).__get__(self, type(self)))
-    
+                setattr(self, fit_method_name, _make_method(method_name, fit=True).__get__(self, type(self)))
+                setattr(self, method_name, _make_method(method_name, fit=False).__get__(self, type(self)))
+            else:
+                # Remove the method if it exists
+                if hasattr(self, fit_method_name):
+                    delattr(self, fit_method_name)
+                if hasattr(self, method_name):
+                    delattr(self, method_name)
+
+
     def __getitem__(self, key):
         """
         Return a new SequentialCVPipeline instance with a subset of steps.
@@ -637,3 +633,91 @@ class SequentialCVPipeline(BaseEstimator):
         """
         _ = self._fit(X, y)
         return self
+    
+    def transform(self, X):
+        """
+        Transform the input data using the fitted pipeline.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def fit_transform(self, X, y=None):
+        """
+        Fit the pipeline and transform the input data.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def predict(self, X):
+        """
+        Predict target values using the fitted pipeline.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def fit_predict(self, X, y=None):
+        """
+        Fit the pipeline and predict target values.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def predict_proba(self, X):
+        """
+        Predict class probabilities using the fitted pipeline.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def fit_predict_proba(self, X, y=None):
+        """
+        Fit the pipeline and predict class probabilities.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def score(self, X, y):
+        """
+        Compute the performance score of the fitted pipeline.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
+
+    def fit_score(self, X, y=None):
+        """
+        Fit the pipeline and compute the performance score.
+
+        Note:
+        -----
+        This is a placeholder method for documentation purposes only.
+        The actual method is dynamically generated based on the final estimator's capabilities.
+        """
+        pass
