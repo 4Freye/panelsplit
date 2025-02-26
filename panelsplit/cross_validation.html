@@ -34,15 +34,6 @@
                     <a class="class" href="#PanelSplit">PanelSplit</a>
                             <ul class="memberlist">
                         <li>
-                                <a class="function" href="#PanelSplit.__init__">PanelSplit</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#PanelSplit.n_splits">n_splits</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#PanelSplit.train_test_splits">train_test_splits</a>
-                        </li>
-                        <li>
                                 <a class="function" href="#PanelSplit.split">split</a>
                         </li>
                         <li>
@@ -848,72 +839,6 @@ temporal ordering.</p>
 </div>
 
 
-                            <div id="PanelSplit.__init__" class="classattr">
-                                        <input id="PanelSplit.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr function">
-            
-        <span class="name">PanelSplit</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">periods</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">series</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">indexes</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Index</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>,</span><span class="param">	<span class="n">unique_periods</span><span class="o">=</span><span class="kc">None</span>,</span><span class="param">	<span class="n">snapshots</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">series</span><span class="o">.</span><span class="n">Series</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">n_splits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>,</span><span class="param">	<span class="n">gap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">test_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>,</span><span class="param">	<span class="n">max_train_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">include_first_train_in_test</span><span class="o">=</span><span class="kc">False</span></span>)</span>
-
-                <label class="view-source-button" for="PanelSplit.__init__-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#PanelSplit.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="PanelSplit.__init__-48"><a href="#PanelSplit.__init__-48"><span class="linenos">48</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="PanelSplit.__init__-49"><a href="#PanelSplit.__init__-49"><span class="linenos">49</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-50"><a href="#PanelSplit.__init__-50"><span class="linenos">50</span></a>        <span class="n">periods</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
-</span><span id="PanelSplit.__init__-51"><a href="#PanelSplit.__init__-51"><span class="linenos">51</span></a>        <span class="n">unique_periods</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-52"><a href="#PanelSplit.__init__-52"><span class="linenos">52</span></a>        <span class="n">snapshots</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-53"><a href="#PanelSplit.__init__-53"><span class="linenos">53</span></a>        <span class="n">n_splits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-54"><a href="#PanelSplit.__init__-54"><span class="linenos">54</span></a>        <span class="n">gap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-55"><a href="#PanelSplit.__init__-55"><span class="linenos">55</span></a>        <span class="n">test_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-56"><a href="#PanelSplit.__init__-56"><span class="linenos">56</span></a>        <span class="n">max_train_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="PanelSplit.__init__-57"><a href="#PanelSplit.__init__-57"><span class="linenos">57</span></a>        <span class="n">include_first_train_in_test</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="PanelSplit.__init__-58"><a href="#PanelSplit.__init__-58"><span class="linenos">58</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="PanelSplit.__init__-59"><a href="#PanelSplit.__init__-59"><span class="linenos">59</span></a>        <span class="n">periods</span> <span class="o">=</span> <span class="n">check_periods</span><span class="p">(</span><span class="n">periods</span><span class="p">)</span>
-</span><span id="PanelSplit.__init__-60"><a href="#PanelSplit.__init__-60"><span class="linenos">60</span></a>
-</span><span id="PanelSplit.__init__-61"><a href="#PanelSplit.__init__-61"><span class="linenos">61</span></a>        <span class="k">if</span> <span class="n">unique_periods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="PanelSplit.__init__-62"><a href="#PanelSplit.__init__-62"><span class="linenos">62</span></a>            <span class="n">unique_periods</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">periods</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
-</span><span id="PanelSplit.__init__-63"><a href="#PanelSplit.__init__-63"><span class="linenos">63</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="PanelSplit.__init__-64"><a href="#PanelSplit.__init__-64"><span class="linenos">64</span></a>            <span class="n">unique_periods</span> <span class="o">=</span> <span class="n">check_periods</span><span class="p">(</span><span class="n">unique_periods</span><span class="p">,</span> <span class="n">obj_name</span><span class="o">=</span><span class="s1">&#39;unique_periods&#39;</span><span class="p">)</span>
-</span><span id="PanelSplit.__init__-65"><a href="#PanelSplit.__init__-65"><span class="linenos">65</span></a>
-</span><span id="PanelSplit.__init__-66"><a href="#PanelSplit.__init__-66"><span class="linenos">66</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_tss</span> <span class="o">=</span> <span class="n">TimeSeriesSplit</span><span class="p">(</span>
-</span><span id="PanelSplit.__init__-67"><a href="#PanelSplit.__init__-67"><span class="linenos">67</span></a>            <span class="n">n_splits</span><span class="o">=</span><span class="n">n_splits</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">gap</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_size</span><span class="p">,</span> <span class="n">max_train_size</span><span class="o">=</span><span class="n">max_train_size</span>
-</span><span id="PanelSplit.__init__-68"><a href="#PanelSplit.__init__-68"><span class="linenos">68</span></a>        <span class="p">)</span>
-</span><span id="PanelSplit.__init__-69"><a href="#PanelSplit.__init__-69"><span class="linenos">69</span></a>        <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tss</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">unique_periods</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-</span><span id="PanelSplit.__init__-70"><a href="#PanelSplit.__init__-70"><span class="linenos">70</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_include_first_train_in_test</span> <span class="o">=</span> <span class="n">include_first_train_in_test</span>
-</span><span id="PanelSplit.__init__-71"><a href="#PanelSplit.__init__-71"><span class="linenos">71</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_u_periods_cv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_unique_periods</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">unique_periods</span><span class="p">)</span>
-</span><span id="PanelSplit.__init__-72"><a href="#PanelSplit.__init__-72"><span class="linenos">72</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_periods</span> <span class="o">=</span> <span class="n">periods</span>
-</span><span id="PanelSplit.__init__-73"><a href="#PanelSplit.__init__-73"><span class="linenos">73</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_snapshots</span> <span class="o">=</span> <span class="n">snapshots</span>
-</span><span id="PanelSplit.__init__-74"><a href="#PanelSplit.__init__-74"><span class="linenos">74</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span> <span class="o">=</span> <span class="n">n_splits</span>
-</span><span id="PanelSplit.__init__-75"><a href="#PanelSplit.__init__-75"><span class="linenos">75</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">train_test_splits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_splits</span><span class="p">()</span>
-</span></pre></div>
-
-
-    
-
-                            </div>
-                            <div id="PanelSplit.n_splits" class="classattr">
-                                <div class="attr variable">
-            <span class="name">n_splits</span>
-
-        
-    </div>
-    <a class="headerlink" href="#PanelSplit.n_splits"></a>
-    
-    
-
-                            </div>
-                            <div id="PanelSplit.train_test_splits" class="classattr">
-                                <div class="attr variable">
-            <span class="name">train_test_splits</span>
-
-        
-    </div>
-    <a class="headerlink" href="#PanelSplit.train_test_splits"></a>
-    
-    
-
-                            </div>
                             <div id="PanelSplit.split" class="classattr">
                                         <input id="PanelSplit.split-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
