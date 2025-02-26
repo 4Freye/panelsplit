@@ -123,167 +123,7 @@ def _make_method(method_name, fit=True):
 
     return _method
 
-__pdoc__ = {
-    "SequentialCVPipeline.fit_predict": """Fit the pipeline and predict target values.
-
-This method dynamically fits the pipeline on the provided data and then applies the final estimator's
-predict method to generate predictions.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-y : array-like, optional
-    Target values (used during fitting).
-
-Returns
--------
-array-like or pandas.DataFrame or pandas.Series
-    Predicted target values.
-
-Note
-----
-This method is dynamically injected based on the final step of the pipeline.
-""",
-    "SequentialCVPipeline.transform": """Transform the input data.
-
-This method applies the sequence of transformation steps in the pipeline to the input data.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-
-Returns
--------
-array-like or pandas.DataFrame or pandas.Series
-    Transformed data.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-""",
-    "SequentialCVPipeline.fit_transform": """Fit the pipeline and transform the input data.
-
-This method fits the pipeline on the provided data and then applies the transformation steps,
-returning the transformed output.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-y : array-like, optional
-    Target values (used during fitting).
-
-Returns
--------
-array-like or pandas.DataFrame or pandas.Series
-    Transformed output.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-""",
-    "SequentialCVPipeline.predict": """Predict target values.
-
-This method applies the final estimator's predict method on the transformed data to generate predictions.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-
-Returns
--------
-array-like or pandas.DataFrame or pandas.Series
-    Predicted target values.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-""",
-    "SequentialCVPipeline.fit_predict_proba": """Fit the pipeline and predict class probabilities.
-
-This method fits the pipeline on the provided data and then applies the final estimator's
-predict_proba method to compute class probabilities.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-y : array-like, optional
-    Target values (used during fitting).
-
-Returns
--------
-array-like or pandas.DataFrame or pandas.Series
-    Predicted class probabilities.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-""",
-    "SequentialCVPipeline.predict_proba": """Predict class probabilities.
-
-This method applies the final estimator's predict_proba method on the transformed data to compute class probabilities.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-
-Returns
--------
-array-like or pandas.DataFrame or pandas.Series
-    Predicted class probabilities.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-""",
-    "SequentialCVPipeline.fit_score": """Fit the pipeline and compute the score.
-
-This method fits the pipeline on the provided data and then computes a performance score using the final estimator's
-score method.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-y : array-like, optional
-    Target values (used during fitting and scoring).
-
-Returns
--------
-float
-    Computed performance score.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-""",
-    "SequentialCVPipeline.score": """Compute the score.
-
-This method applies the final estimator's score method on the transformed data to compute a performance score.
-
-Parameters
-----------
-X : array-like or pandas.DataFrame or pandas.Series
-    Input data.
-y : array-like
-    True target values.
-
-Returns
--------
-float
-    Computed performance score.
-
-Note
-----
-This method is dynamically injected based on the final estimator's capabilities.
-"""
-}
-
+__pdoc__ = {}
 
 class SequentialCVPipeline(BaseEstimator):
     """
@@ -638,10 +478,20 @@ class SequentialCVPipeline(BaseEstimator):
         """
         Transform the input data using the fitted pipeline.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method applies the transformation steps on the data,
+        returning the transformed output.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values (used during fitting).
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            Transformed output.
         """
         pass
 
@@ -649,39 +499,95 @@ class SequentialCVPipeline(BaseEstimator):
         """
         Fit the pipeline and transform the input data.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method fits the pipeline on the provided data and then applies the transformation steps,
+        returning the transformed output.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values (used during fitting).
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            Transformed output.
+
+        Note
+        ----
+        This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
     def predict(self, X):
         """
-        Predict target values using the fitted pipeline.
+        Transform the data and predict the class.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method fits the pipeline on the provided data and then applies the final estimator's
+        predict method to predict the class.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values (used during fitting).
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            Predicted class.
+
+        Note
+        ----
+        This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
     def fit_predict(self, X, y=None):
-        """
-        Fit the pipeline and predict target values.
+       """
+       Fit the pipeline and predict target values.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+        predict method to generate predictions.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values (used during fitting).
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            Predicted target values.
+
+        Note
+        ----
+        This method is dynamically injected based on the final step of the pipeline.
         """
-        pass
+       pass
 
     def predict_proba(self, X):
         """
         Predict class probabilities using the fitted pipeline.
+        
+        This method applies the final estimator's predict_proba method on the transformed data to predict class probabilities.
 
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like
+            True target values.
+
+        Returns
+        -------
+        float
+            Predicted class probability.
+        
         Note:
         -----
         This is a placeholder method for documentation purposes only.
@@ -693,31 +599,72 @@ class SequentialCVPipeline(BaseEstimator):
         """
         Fit the pipeline and predict class probabilities.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method fits the pipeline on the provided data and then applies the final estimator's
+        predict_proba method to compute class probabilities.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values (used during fitting).
+
+        Returns
+        -------
+        array-like or pandas.DataFrame or pandas.Series
+            Predicted class probabilities.
+
+        Note
+        ----
+        This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
     def score(self, X, y):
         """
-        Compute the performance score of the fitted pipeline.
+        Compute the score.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method applies the final estimator's score method on the transformed data to compute a performance score.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like
+            True target values.
+
+        Returns
+        -------
+        float
+            Computed performance score.
+
+        Note
+        ----
+        This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
     def fit_score(self, X, y=None):
         """
-        Fit the pipeline and compute the performance score.
+        Fit the pipeline and compute the score.
 
-        Note:
-        -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method fits the pipeline on the provided data and then computes a performance score using the final estimator's
+        score method.
+
+        Parameters
+        ----------
+        X : array-like or pandas.DataFrame or pandas.Series
+            Input data.
+        y : array-like, optional
+            Target values (used during fitting and scoring).
+
+        Returns
+        -------
+        float
+            Computed performance score.
+
+        Note
+        ----
+        This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
