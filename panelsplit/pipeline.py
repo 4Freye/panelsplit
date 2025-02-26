@@ -28,7 +28,7 @@ def _log_message(message, verbose, step_idx, total, elapsed_time=None):
     if verbose:
         if elapsed_time is not None:
             message += " (elapsed time: %5.1fs)" % elapsed_time
-        print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx + 1, total, message))
+        print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
 
 def _to_int_indices(indices):
     """
@@ -123,6 +123,168 @@ def _make_method(method_name, fit=True):
 
     return _method
 
+pdoc_dict = {
+    "fit_predict": """Fit the pipeline and predict target values.
+
+This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+predict method to generate predictions.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).
+
+Returns
+-------
+array-like or pandas.DataFrame or pandas.Series
+    Predicted target values.
+
+Note
+----
+This method is dynamically injected based on the final step of the pipeline.
+""",
+    "transform": """Transform the input data.
+
+This method applies the sequence of transformation steps in the pipeline to the input data.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+
+Returns
+-------
+array-like or pandas.DataFrame or pandas.Series
+    Transformed data.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+""",
+    "fit_transform": """Fit the pipeline and transform the input data.
+
+This method fits the pipeline on the provided data and then applies the transformation steps,
+returning the transformed output.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).
+
+Returns
+-------
+array-like or pandas.DataFrame or pandas.Series
+    Transformed output.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+""",
+    "predict": """Predict target values.
+
+This method applies the final estimator's predict method on the transformed data to generate predictions.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+
+Returns
+-------
+array-like or pandas.DataFrame or pandas.Series
+    Predicted target values.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+""",
+    "fit_predict_proba": """Fit the pipeline and predict class probabilities.
+
+This method fits the pipeline on the provided data and then applies the final estimator's
+predict_proba method to compute class probabilities.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).
+
+Returns
+-------
+array-like or pandas.DataFrame or pandas.Series
+    Predicted class probabilities.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+""",
+    "predict_proba": """Predict class probabilities.
+
+This method applies the final estimator's predict_proba method on the transformed data to compute class probabilities.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+
+Returns
+-------
+array-like or pandas.DataFrame or pandas.Series
+    Predicted class probabilities.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+""",
+    "fit_score": """Fit the pipeline and compute the score.
+
+This method fits the pipeline on the provided data and then computes a performance score using the final estimator's
+score method.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting and scoring).
+
+Returns
+-------
+float
+    Computed performance score.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+""",
+    "score": """Compute the score.
+
+This method applies the final estimator's score method on the transformed data to compute a performance score.
+
+Parameters
+----------
+X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like
+    True target values.
+
+Returns
+-------
+float
+    Computed performance score.
+
+Note
+----
+This method is dynamically injected based on the final estimator's capabilities.
+"""
+}
+
+
 class SequentialCVPipeline(BaseEstimator):
     """
     A sequential pipeline that applies a series of transformers/estimators with
@@ -148,8 +310,34 @@ class SequentialCVPipeline(BaseEstimator):
         Verbosity flag.
     fitted_steps_ : dict
         Dictionary storing fitted transformers for each step.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.model_selection import KFold
+    >>> pipeline = SequentialCVPipeline([
+    ...     ('scaler', StandardScaler(), None),
+    ...     ('classifier', LogisticRegression(), None))
+    ... ])
+    >>> print(pipeline.steps)
+    [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
+    __pdoc__ = pdoc_dict
+
     def __init__(self, steps, verbose=False):
+        """
+        Initialize the SequentialCVPipeline with the given steps.
+
+        Parameters
+        ----------
+        steps : list of tuples
+            List where each tuple is (name, transformer, cv). 'name' is a string identifier,
+            'transformer' is an estimator or transformer, and 'cv' is a cross-validation splitter
+            or None.
+        verbose : bool, default=False
+            Whether to print verbose output during fitting and transformation.
+        """
         # Each step must be a tuple: (name, transformer, cv)
         for step in steps:
             if not (isinstance(step, tuple) and len(step) == 3):
@@ -184,6 +372,22 @@ class SequentialCVPipeline(BaseEstimator):
         ------
         TypeError
             If the key is not a slice or an integer.
+
+        Examples
+        --------
+        >>> from sklearn.preprocessing import StandardScaler
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> pipeline = SequentialCVPipeline([
+        ...     ('scaler', StandardScaler(), None),
+        ...     ('classifier', LogisticRegression(), None)
+        ... ])
+        >>> # Get a specific step by index
+        >>> pipeline[0]
+        ('scaler', StandardScaler(), None)
+        >>> # Get a sub-pipeline using a slice
+        >>> sub_pipeline = pipeline[:1]
+        >>> sub_pipeline.steps
+        [('scaler', StandardScaler(), None)]
         """
         if isinstance(key, slice):
             new_steps = self.steps[key]
@@ -192,7 +396,6 @@ class SequentialCVPipeline(BaseEstimator):
             return self.steps[key]
         else:
             raise TypeError("Invalid index type. Expected int or slice.")
-
 
     def _subset(self, X, indices):
         """
@@ -413,6 +616,24 @@ class SequentialCVPipeline(BaseEstimator):
         -------
         SequentialCVPipeline
             The fitted pipeline instance.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from panelsplit.cross_validation import PanelSplit
+        >>> from sklearn.preprocessing import StandardScaler
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> # For demonstration, we use a simple dataset
+        >>> period = np.array([1, 2, 3, 4])
+        >>> X = np.array([[4, 1], [1, 3], [5, 7], [6, 7]])
+        >>> y = np.array([0, 1, 1, 0])
+        >>> ps_1 = PanelSplit(periods=period, n_splits=2, include_first_train_in_test = True)
+        >>> ps_2 = PanelSplit(periods=period, n_splits=2)
+        >>> pipeline = SequentialCVPipeline([
+        ...     ('scaler', StandardScaler(), ps_1),
+        ...     ('classifier', LogisticRegression(), ps_2)
+        ... ])
+        >>> pipeline.fit(X, y)
         """
         _ = self._fit(X, y)
         return self

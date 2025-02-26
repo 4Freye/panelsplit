@@ -29,6 +29,15 @@ class PanelSplit:
     include_first_train_in_test : bool, optional
         Whether to include the first split's training set in the test set. Useful in the context of transforming data. Default is False.
 
+    Attributes
+    ----------
+    n_splits : int
+        The number of splits for cross-validation.
+    train_test_splits : list of tuples
+        A list of train/test splits for the panel data. Each tuple has the form
+        (train_indices, test_indices), representing the indices for the training and testing sets
+        for that split.    
+
     Notes
     -----
     This class is designed for panel data where cross-validation splits must respect
@@ -53,14 +62,14 @@ class PanelSplit:
         else:
             unique_periods = check_periods(unique_periods, obj_name='unique_periods')
 
-        self.tss = TimeSeriesSplit(
+        self._tss = TimeSeriesSplit(
             n_splits=n_splits, gap=gap, test_size=test_size, max_train_size=max_train_size
         )
-        indices = self.tss.split(unique_periods.reset_index(drop=True))
-        self.include_first_train_in_test = include_first_train_in_test
-        self.u_periods_cv = self._split_unique_periods(indices, unique_periods)
-        self.periods = periods
-        self.snapshots = snapshots
+        indices = self._tss.split(unique_periods.reset_index(drop=True))
+        self._include_first_train_in_test = include_first_train_in_test
+        self._u_periods_cv = self._split_unique_periods(indices, unique_periods)
+        self._periods = periods
+        self._snapshots = snapshots
         self.n_splits = n_splits
         self.train_test_splits = self._gen_splits()
 
@@ -85,7 +94,7 @@ class PanelSplit:
         for i, (train_index, test_index) in enumerate(indices):                    
             unique_train_periods = unique_periods.iloc[train_index].values
             unique_test_periods = unique_periods.iloc[test_index].values
-            if (i == 0) & self.include_first_train_in_test:
+            if (i == 0) & self._include_first_train_in_test:
                 unique_test_periods = np.concatenate([unique_train_periods, unique_test_periods])
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
@@ -102,25 +111,25 @@ class PanelSplit:
         """
         train_test_splits = []
 
-        for i, (train_periods, test_periods) in enumerate(self.u_periods_cv):
-            if self.snapshots is not None:
-                if test_periods.max() >= self.snapshots.min():
+        for i, (train_periods, test_periods) in enumerate(self._u_periods_cv):
+            if self._snapshots is not None:
+                if test_periods.max() >= self._snapshots.min():
                     snapshot_val = test_periods.max()
                 else:
-                    snapshot_val = self.snapshots.min()
+                    snapshot_val = self._snapshots.min()
                     warnings.warn(
                         (
                             f"The maximum period value {test_periods.max()} for split {i} is less than "
-                            f"the minimum snapshot value {self.snapshots.min()}. Defaulting to minimum "
+                            f"the minimum snapshot value {self._snapshots.min()}. Defaulting to minimum "
                             f"snapshot value for split {i}."
                         ),
                         stacklevel=2,
                     )
-                train_indices = self.periods.isin(train_periods).values & (self.snapshots == snapshot_val)
-                test_indices = self.periods.isin(test_periods).values & (self.snapshots == snapshot_val)
+                train_indices = self._periods.isin(train_periods).values & (self._snapshots == snapshot_val)
+                test_indices = self._periods.isin(test_periods).values & (self._snapshots == snapshot_val)
             else:
-                train_indices = self.periods.isin(train_periods).values
-                test_indices = self.periods.isin(test_periods).values
+                train_indices = self._periods.isin(train_periods).values
+                test_indices = self._periods.isin(test_periods).values
 
             train_test_splits.append((train_indices, test_indices))
 
