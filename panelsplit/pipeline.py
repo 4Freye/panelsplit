@@ -3,6 +3,7 @@ import time
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from .utils.validation import check_cv, _check_X_y
 import pandas as pd  # added import for pandas
+import copy
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
     """
@@ -123,7 +124,7 @@ def _make_method(method_name, fit=True):
 
     return _method
 
-__pdoc__ = {}
+
 
 class SequentialCVPipeline(BaseEstimator):
     """
@@ -163,6 +164,25 @@ class SequentialCVPipeline(BaseEstimator):
     >>> print(pipeline.steps)
     [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
+    def _inject_dynamic_methods(self):
+        """Inject dynamic pipeline methods based on the final step's transformer."""
+        method_names = ['transform', "predict", "predict_proba", "predict_log_proba", "score"]
+        final_transformer = self.steps[-1][1]
+        for method_name in method_names:
+            fit_method_name = f"fit_{method_name}"
+            if hasattr(final_transformer, method_name):
+                # Attach the methods to the instance.
+                setattr(self, fit_method_name, _make_method(method_name, fit=True).__get__(self, type(self)))
+                setattr(self, method_name, _make_method(method_name, fit=False).__get__(self, type(self)))
+                print(f'adding methods {method_name} and {fit_method_name}')
+            else:
+                # Remove these methods if they exist on the instance.
+                if fit_method_name in self.__dict__:
+                    del self.__dict__[fit_method_name]
+                if method_name in self.__dict__:
+                    del self.__dict__[method_name]
+                print(f'deleting methods {method_name} and {fit_method_name}')
+
     def __init__(self, steps, verbose=False):
         # Each step must be a tuple: (name, transformer, cv)
         for step in steps:
@@ -171,63 +191,15 @@ class SequentialCVPipeline(BaseEstimator):
         self.steps = steps
         self.verbose = verbose
         self.fitted_steps_ = {}
-
-        method_names = ['transform', "predict", "predict_proba", "predict_log_proba", "score"]
-
-        # Dynamically inject methods based on the final estimator.
-        final_name, final_transformer, final_cv = self.steps[-1]
-        for method_name in method_names:
-            fit_method_name = f"fit_{method_name}"
-            if hasattr(final_transformer, method_name):
-                setattr(self, fit_method_name, _make_method(method_name, fit=True).__get__(self, type(self)))
-                setattr(self, method_name, _make_method(method_name, fit=False).__get__(self, type(self)))
-            else:
-                # Remove the method if it exists
-                if hasattr(self, fit_method_name):
-                    delattr(self, fit_method_name)
-                if hasattr(self, method_name):
-                    delattr(self, method_name)
-
+        self._inject_dynamic_methods()
 
     def __getitem__(self, key):
-        """
-        Return a new SequentialCVPipeline instance with a subset of steps.
-
-        Parameters
-        ----------
-        key : slice or int
-            If a slice, returns a new pipeline containing the selected steps.
-            If an int, returns the (name, transformer, cv) tuple for that step.
-
-        Returns
-        -------
-        SequentialCVPipeline or tuple
-            A new pipeline instance if key is a slice, or a single step tuple if key is an integer.
-
-        Raises
-        ------
-        TypeError
-            If the key is not a slice or an integer.
-
-        Examples
-        --------
-        >>> from sklearn.preprocessing import StandardScaler
-        >>> from sklearn.linear_model import LogisticRegression
-        >>> pipeline = SequentialCVPipeline([
-        ...     ('scaler', StandardScaler(), None),
-        ...     ('classifier', LogisticRegression(), None)
-        ... ])
-        >>> # Get a specific step by index
-        >>> pipeline[0]
-        ('scaler', StandardScaler(), None)
-        >>> # Get a sub-pipeline using a slice
-        >>> sub_pipeline = pipeline[:1]
-        >>> sub_pipeline.steps
-        [('scaler', StandardScaler(), None)]
-        """
         if isinstance(key, slice):
-            new_steps = self.steps[key]
-            return SequentialCVPipeline(new_steps, verbose=self.verbose)
+            # Create a deep copy to include the fitted state.
+            new_pipe = copy.deepcopy(self)
+            new_pipe.steps = self.steps[key]
+            new_pipe._inject_dynamic_methods()
+            return new_pipe
         elif isinstance(key, int):
             return self.steps[key]
         else:
