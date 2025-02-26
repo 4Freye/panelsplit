@@ -1,7 +1,4 @@
 """
-Below is an enhanced landing page draft that breaks down each module with clear sections, bullet points, and hyperlinks (using anchor links) to help users quickly navigate the documentation. It also highlights key features such as compatibility with numpy and pandas and seamless integration with scikit-learn and feature-engine.
-
----
 
 # panelsplit: A tool for panel data analysis
 
@@ -44,7 +41,7 @@ Explore the modules in detail by clicking on the links below to see full documen
 - **Dynamic method injection:** Automatically creates methods (like `predict` and `score`) based on the final estimator’s capabilities.
 - **Out-of-fold predictions:** Supports cross-validation based predictions with reassembled outputs.
 
-### [Plot](#plot-module)
+### `panelsplit.plot`
 - Visualize time series splits easily.
 """
 
