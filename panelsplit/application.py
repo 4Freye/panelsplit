@@ -99,7 +99,8 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
     y : pd.Series
         The target variable for the estimator.
     cv : object or iterable
-        Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
+        Cross-validation splitter; either an object that generates train/test splits (e.g., an instance of PanelSplit)
+        or an iterable of splits.
     sample_weight : pd.Series or np.ndarray, optional
         Sample weights for the training data. Default is None.
     n_jobs : int, optional
@@ -113,6 +114,24 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
     -------
     list
         List containing fitted models for each split.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from panelsplit.cross_validation import PanelSplit
+    >>> # Create sample data
+    >>> df = pd.DataFrame({
+    ...     'feature': [1, 2, 3, 4, 5, 6],
+    ...     'period': [1, 1, 2, 2, 3, 3]
+    ... })
+    >>> X = df[['feature']]
+    >>> y = pd.Series([2, 4, 6, 8, 10, 12])
+    >>> # Create a PanelSplit instance for cross-validation
+    >>> ps = PanelSplit(periods=df['period'], n_splits=2)
+    >>> fitted_models = cross_val_fit(LinearRegression(), X, y, ps)
+    >>> len(fitted_models)
+    2
     """
     splits = check_cv(cv)
 
@@ -217,7 +236,27 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
             - preds (np.ndarray): Array containing test predictions made by the model during cross-validation.
             - train_preds (np.ndarray): Array containing train predictions made by the model during cross-validation.
             - fitted_estimators (list): List containing fitted models for each split.
+   
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from panelsplit.cross_validation import PanelSplit  # assuming PanelSplit is imported from your module
+    >>> # Create sample data
+    >>> df = pd.DataFrame({
+    ...     'feature': [1, 2, 3, 4, 5, 6],
+    ...     'period': [1, 1, 2, 2, 3, 3]
+    ... })
+    >>> X = df[['feature']]
+    >>> y = pd.Series([2, 4, 6, 8, 10, 12])
+    >>> # Create a PanelSplit instance for cross-validation
+    >>> ps = PanelSplit(periods=df['period'], n_splits=2)
+    >>> # Get test predictions and fitted models
+    >>> preds, models = cross_val_fit_predict(LinearRegression(), X, y, ps)
+    >>> preds.shape
+    (2,)
     """
+
     fitted_estimators = cross_val_fit(estimator, X, y, cv, sample_weight, n_jobs,  drop_na_in_y = drop_na_in_y)
 
     if return_train_preds:
