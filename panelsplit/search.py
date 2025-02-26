@@ -111,13 +111,3 @@
 #             print("Best parameters:", best_params)
 #             print("Best score:", best_score)
 #         return self
-
-#     def predict(self, X):
-#         if self.best_estimator_ is None:
-#             raise ValueError("No estimator found. Please call fit() before predict().")
-#         return self.best_estimator_.predict(X)
-    
-#     def score(self, X, y):
-#         if self.best_estimator_ is None:
-#             raise ValueError("No estimator found. Please call fit() before score().")
-#         return self.best_estimator_.score(X, y)
