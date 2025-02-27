@@ -72,6 +72,8 @@ def _sort_and_combine(predictions_with_idx):
         predictions = np.vstack(predictions)
     elif predictions and isinstance(predictions[0], (pd.DataFrame, pd.Series)):
         predictions = pd.concat(predictions, axis=0)
+    else:
+        predictions = np.array(predictions)
     return predictions
 
 def _make_method(method_name, fit=True):
@@ -174,14 +176,12 @@ class SequentialCVPipeline(BaseEstimator):
                 # Attach the methods to the instance.
                 setattr(self, fit_method_name, _make_method(method_name, fit=True).__get__(self, type(self)))
                 setattr(self, method_name, _make_method(method_name, fit=False).__get__(self, type(self)))
-                print(f'adding methods {method_name} and {fit_method_name}')
             else:
                 # Remove these methods if they exist on the instance.
                 if fit_method_name in self.__dict__:
                     del self.__dict__[fit_method_name]
                 if method_name in self.__dict__:
                     del self.__dict__[method_name]
-                print(f'deleting methods {method_name} and {fit_method_name}')
 
     def __init__(self, steps, verbose=False):
         # Each step must be a tuple: (name, transformer, cv)
