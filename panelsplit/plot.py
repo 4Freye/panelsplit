@@ -38,7 +38,7 @@ def plot_splits(PanelSplit, show=True):
         >>> ax.set_title("A custom plot of cross-validation splits")
         >>> plt.show()
     """
-    split_output = PanelSplit.u_periods_cv
+    split_output = PanelSplit._u_periods_cv
     splits = len(split_output)
     fig, ax = plt.subplots()
     
