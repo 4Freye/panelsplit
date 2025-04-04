@@ -157,8 +157,8 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
     cv : object or iterable
         Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
     method : str, optional
-        The method to use for prediction. It can be 'predict', 'predict_proba',
-        or 'predict_log_proba'. Default is 'predict'.
+        The method to use for prediction. It can be whatever methods are available to the estimator 
+        (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
     n_jobs : int, optional
         The number of jobs to run in parallel. Default is 1.
     return_train_preds : bool, optional
@@ -214,9 +214,9 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
         The target variable for the estimator.
     cv : object
         Cross-validation splitter; an object that generates train/test splits.
-    method : str, optional
-        The method to use for prediction (e.g., 'predict', 'predict_proba', or 'predict_log_proba').
-        Default is 'predict'.
+     method : str, optional
+        The method to use for prediction. It can be whatever methods are available to the estimator 
+        (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
     sample_weight : pd.Series or np.ndarray, optional
         Sample weights for the training data. Default is None.
     n_jobs : int, optional
