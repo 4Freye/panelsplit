@@ -23,7 +23,8 @@ setup(
         'pandas',  # for DataFrame and Series
         'matplotlib',  # for plotting
         'joblib',  # for parallel computing
-        'numpy'  # for numerical operations
+        'numpy',  # for numerical operations
+        'narwhals>=1.43.1',  # for dataframe-agnostic operations
     ],
 
     # README file content

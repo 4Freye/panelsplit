@@ -2,7 +2,8 @@ import numpy as np
 import time
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from .utils.validation import check_cv, _check_X_y
-import pandas as pd  # added import for pandas
+import narwhals as nw
+from narwhals.typing import IntoDataFrame, IntoSeries
 import copy
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
@@ -70,8 +71,9 @@ def _sort_and_combine(predictions_with_idx):
     predictions = [pred for idx, pred in predictions_with_idx]
     if predictions and isinstance(predictions[0], np.ndarray):
         predictions = np.vstack(predictions)
-    elif predictions and isinstance(predictions[0], (pd.DataFrame, pd.Series)):
-        predictions = pd.concat(predictions, axis=0)
+    elif predictions and hasattr(predictions[0], 'pipe'):
+        # Use narwhals for dataframe-agnostic concatenation
+        predictions = nw.concat(predictions)
     else:
         predictions = np.array(predictions)
     return predictions
@@ -211,23 +213,30 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             The data to subset.
         indices : array-like
             Indices used to select a subset of X.
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             The subset of X corresponding to the given indices.
         """
         try:
-            if isinstance(X, (pd.DataFrame, pd.Series)):
-                return X.iloc[indices]
+            # Convert boolean indices to row numbers if needed
+            if isinstance(indices, np.ndarray) and indices.dtype == bool:
+                row_indices = np.where(indices)[0]
             else:
-                return X[indices]
+                row_indices = indices
+                
+            # Use narwhals for dataframe-agnostic operations
+            X_nw = nw.from_native(X, pass_through=True)
+            from ..application import _safe_to_native
+            return _safe_to_native(X_nw[row_indices])
         except Exception:
-            return np.array([X[i] for i in indices])
+            # Fallback for non-narwhals compatible data
+            return X[indices] if hasattr(X, '__getitem__') else np.array([X[i] for i in indices])
 
     def _combine(self, transformed_list):
         """
@@ -240,16 +249,17 @@ class SequentialCVPipeline(BaseEstimator):
 
         Returns
         -------
-        numpy.ndarray or pandas.DataFrame or pandas.Series or list
-            Combined output. Numpy arrays are vertically stacked; pandas objects are concatenated.
+        numpy.ndarray or IntoDataFrame or IntoSeries or list
+            Combined output. Numpy arrays are vertically stacked; dataframe objects are concatenated.
         """
         if not transformed_list:
             return transformed_list
         first_item = transformed_list[0]
         if isinstance(first_item, np.ndarray):
             return np.vstack(transformed_list)
-        elif isinstance(first_item, (pd.DataFrame, pd.Series)):
-            return pd.concat(transformed_list, axis=0)
+        elif hasattr(first_item, 'pipe'):
+            # Use narwhals for dataframe-agnostic concatenation
+            return nw.concat(transformed_list)
         else:
             return transformed_list
 
@@ -263,7 +273,7 @@ class SequentialCVPipeline(BaseEstimator):
             Fitted model or transformer.
         method_name : str
             The name of the method to apply (e.g., 'predict' or 'transform').
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         indices : array-like
             Indices specifying the subset of X.
@@ -296,7 +306,7 @@ class SequentialCVPipeline(BaseEstimator):
         ----------
         transformer : estimator
             The transformer or estimator to be fitted.
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data for fitting.
         y : array-like, optional
             Target values.
@@ -358,12 +368,12 @@ class SequentialCVPipeline(BaseEstimator):
             Fitted model or a dictionary containing fitted models from cross-validation.
         method_name : str
             The name of the method to apply (e.g., 'predict' or 'transform').
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
 
         Returns
         -------
-        numpy.ndarray or pandas.DataFrame or pandas.Series
+        numpy.ndarray or IntoDataFrame or IntoSeries
             Combined output after applying the method.
         """
         if not (isinstance(fitted_model, dict) and "splits" in fitted_model):
@@ -384,14 +394,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values.
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Transformed output after applying all pipeline steps.
         """
         _check_X_y(X, y)
@@ -415,7 +425,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values.
@@ -455,14 +465,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Transformed output.
         """
         pass
@@ -476,14 +486,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Transformed output.
 
         Note
@@ -501,14 +511,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Predicted class.
 
         Note
@@ -526,14 +536,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Predicted target values.
 
         Note
@@ -550,7 +560,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like
             True target values.
@@ -576,14 +586,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Predicted class probabilities.
 
         Note
@@ -600,7 +610,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like
             True target values.
@@ -625,7 +635,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting and scoring).
