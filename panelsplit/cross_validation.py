@@ -9,6 +9,7 @@ from .utils.validation import check_periods, check_labels, get_index_or_col_from
 # Keep pandas import for type annotations and fallback compatibility
 try:
     import pandas as pd
+
     _PANDAS_AVAILABLE = True
 except ImportError:
     pd = None
@@ -22,18 +23,21 @@ def _nunique_subset(data, indices):
     """
     try:
         data_nw = nw.from_native(data, pass_through=True)
-        if hasattr(data_nw, 'filter') and hasattr(data_nw, 'n_unique'):
+        if hasattr(data_nw, "filter") and hasattr(data_nw, "n_unique"):
             return data_nw.filter(indices).n_unique()
         else:
             # Fallback to numpy operations
-            subset_data = data[indices] if hasattr(data, '__getitem__') else data.loc[indices]
+            subset_data = (
+                data[indices] if hasattr(data, "__getitem__") else data.loc[indices]
+            )
             return len(np.unique(subset_data))
     except:
         # Final fallback for pandas-specific operations
-        if hasattr(data, 'loc'):
+        if hasattr(data, "loc"):
             return data.loc[indices].nunique()
         else:
             return len(np.unique(data[indices]))
+
 
 class PanelSplit:
     """
@@ -68,7 +72,7 @@ class PanelSplit:
     train_test_splits : list of tuples
         A list of train/test splits for the panel data. Each tuple has the form
         (train_indices, test_indices), representing the indices for the training and testing sets
-        for that split.    
+        for that split.
 
     Notes
     -----
@@ -85,26 +89,29 @@ class PanelSplit:
         gap: int = 0,
         test_size: int = 1,
         max_train_size: int = None,
-        include_first_train_in_test : bool = False,
-        include_train_in_test : bool = False
+        include_first_train_in_test: bool = False,
+        include_train_in_test: bool = False,
     ) -> None:
         periods = check_periods(periods)
 
         if unique_periods is None:
             periods_nw = nw.from_native(periods, pass_through=True)
-            if hasattr(periods_nw, 'unique'):
+            if hasattr(periods_nw, "unique"):
                 unique_vals = periods_nw.unique().sort().to_numpy()
             else:
                 unique_vals = np.unique(periods)
             unique_periods = unique_vals
         else:
-            unique_periods = check_periods(unique_periods, obj_name='unique_periods')
+            unique_periods = check_periods(unique_periods, obj_name="unique_periods")
 
         self._tss = TimeSeriesSplit(
-            n_splits=n_splits, gap=gap, test_size=test_size, max_train_size=max_train_size
+            n_splits=n_splits,
+            gap=gap,
+            test_size=test_size,
+            max_train_size=max_train_size,
         )
         # Convert to numpy array for TimeSeriesSplit
-        if hasattr(unique_periods, 'to_numpy'):
+        if hasattr(unique_periods, "to_numpy"):
             unique_periods_array = unique_periods.to_numpy()
         else:
             unique_periods_array = np.array(unique_periods)
@@ -139,16 +146,20 @@ class PanelSplit:
         """
         u_periods_cv = []
         for i, (train_index, test_index) in enumerate(indices):
-            if hasattr(unique_periods, 'to_numpy'):
+            if hasattr(unique_periods, "to_numpy"):
                 unique_periods_array = unique_periods.to_numpy()
             else:
                 unique_periods_array = np.array(unique_periods)
             unique_train_periods = unique_periods_array[train_index]
             unique_test_periods = unique_periods_array[test_index]
             if (i == 0) & self._include_first_train_in_test:
-                unique_test_periods = np.concatenate([unique_train_periods, unique_test_periods])
+                unique_test_periods = np.concatenate(
+                    [unique_train_periods, unique_test_periods]
+                )
             elif (i > 0) & self._include_train_in_test:
-                unique_test_periods = np.concatenate([unique_train_periods, unique_test_periods])
+                unique_test_periods = np.concatenate(
+                    [unique_train_periods, unique_test_periods]
+                )
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
@@ -181,15 +192,19 @@ class PanelSplit:
                 # Use numpy operations for boolean masking - simpler and more reliable
                 train_period_mask = np.isin(self._periods, train_periods)
                 test_period_mask = np.isin(self._periods, test_periods)
-                
+
                 # Handle snapshots
-                snapshots_array = self._snapshots.to_numpy() if hasattr(self._snapshots, 'to_numpy') else np.array(self._snapshots)
+                snapshots_array = (
+                    self._snapshots.to_numpy()
+                    if hasattr(self._snapshots, "to_numpy")
+                    else np.array(self._snapshots)
+                )
                 snapshot_mask = snapshots_array == snapshot_val
-                
+
                 train_indices = train_period_mask & snapshot_mask
                 test_indices = test_period_mask & snapshot_mask
             else:
-                # Use numpy operations for boolean masking - simpler and more reliable  
+                # Use numpy operations for boolean masking - simpler and more reliable
                 train_indices = np.isin(self._periods, train_periods)
                 test_indices = np.isin(self._periods, test_periods)
 
@@ -280,15 +295,19 @@ class PanelSplit:
             The labels corresponding to the specified fold.
         """
         check_labels(labels)
-        indices = np.stack([split[fold_idx] for split in self.split()], axis=1).any(axis=1)
+        indices = np.stack([split[fold_idx] for split in self.split()], axis=1).any(
+            axis=1
+        )
 
         # Use narwhals slice operation for clean dataframe-agnostic subsetting
         try:
             labels_nw = nw.from_native(labels, pass_through=True)
             # Convert boolean indices to row numbers
             row_indices = np.where(indices)[0]
-            labels_subset = labels_nw[row_indices]
-            from .application import _safe_to_native
+            from .application import _safe_to_native, _safe_positional_indexing
+
+            labels_subset = _safe_positional_indexing(labels_nw, row_indices)
+
             return _safe_to_native(labels_subset)
         except:
             # Direct numpy/array indexing fallback
@@ -392,37 +411,42 @@ class PanelSplit:
         # Use narwhals for dataframe-agnostic operations
         data_nw = nw.from_native(data, pass_through=True)
         periods_nw = nw.from_native(periods, pass_through=True)
-        
+
         splits = self.split()
         snapshots = []
         for i, split in enumerate(splits):
             split_indices = np.array([split[0], split[1]]).any(axis=0)
-            
+
             # Convert boolean indices to row numbers for narwhals indexing
             row_indices = np.where(split_indices)[0]
-            
-            # Use narwhals indexing operation
-            split_data = data_nw[row_indices]
-            
+
+            # Use safe position-based indexing
+            from .application import _safe_to_native, _safe_positional_indexing
+
+            split_data = _safe_positional_indexing(data_nw, row_indices)
+
             if period_col is not None:
                 # Get periods for this split and find max
-                split_periods = periods_nw[row_indices]
-                from .application import _safe_to_native
+                split_periods = _safe_positional_indexing(periods_nw, row_indices)
+
                 periods_array = _safe_to_native(split_periods)
                 last_period = np.max(np.unique(periods_array))
-                
+
                 # Add columns using narwhals
-                split_data = split_data.with_columns([
-                    nw.lit(i).alias('split'),
-                    nw.lit(last_period).alias('snapshot_period')
-                ])
+                split_data = split_data.with_columns(
+                    [
+                        nw.lit(i).alias("split"),
+                        nw.lit(last_period).alias("snapshot_period"),
+                    ]
+                )
             else:
-                split_data = split_data.with_columns([nw.lit(i).alias('split')])
-            
+                split_data = split_data.with_columns([nw.lit(i).alias("split")])
+
             snapshots.append(split_data)
-        
+
         # Concatenate results using narwhals
         from .application import _safe_to_native
+
         return _safe_to_native(nw.concat(snapshots))
 
 
@@ -455,9 +479,9 @@ def drop_splits(cv, y):
     Dropping split 0 as either the test or train set is either empty or contains only one unique value.
     """
     for i, (train_indices, test_indices) in enumerate(cv.split()):
-        if (
-            (len(train_indices) == 0 or len(test_indices) == 0)
-            or (_nunique_subset(y, train_indices) == 1 or _nunique_subset(y, test_indices) == 1)
+        if (len(train_indices) == 0 or len(test_indices) == 0) or (
+            _nunique_subset(y, train_indices) == 1
+            or _nunique_subset(y, test_indices) == 1
         ):
             cv.n_splits -= 1
             cv.train_test_splits.pop(i)

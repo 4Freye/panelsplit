@@ -1,10 +1,12 @@
-import numpy as np
-import time
-from sklearn.base import BaseEstimator, TransformerMixin, clone
-from .utils.validation import check_cv, _check_X_y
-import narwhals as nw
-from narwhals.typing import IntoDataFrame, IntoSeries
 import copy
+import time
+
+import narwhals as nw
+import numpy as np
+from sklearn.base import BaseEstimator, clone
+
+from .utils.validation import _check_X_y, check_cv
+
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
     """
@@ -32,6 +34,7 @@ def _log_message(message, verbose, step_idx, total, elapsed_time=None):
             message += " (elapsed time: %5.1fs)" % elapsed_time
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
 
+
 def _to_int_indices(indices):
     """
     Convert indices to integer indices.
@@ -50,6 +53,7 @@ def _to_int_indices(indices):
     if indices.dtype == bool:
         indices = np.where(indices)[0]
     return indices
+
 
 def _sort_and_combine(predictions_with_idx):
     """
@@ -71,12 +75,80 @@ def _sort_and_combine(predictions_with_idx):
     predictions = [pred for idx, pred in predictions_with_idx]
     if predictions and isinstance(predictions[0], np.ndarray):
         predictions = np.vstack(predictions)
-    elif predictions and hasattr(predictions[0], 'pipe'):
+    elif predictions and hasattr(predictions[0], "pipe"):
         # Use narwhals for dataframe-agnostic concatenation
         predictions = nw.concat(predictions)
     else:
         predictions = np.array(predictions)
     return predictions
+
+# Fix to: https://github.com/4Freye/panelsplit/issues/59
+def _call_method_with_correct_args(model, method_name, X, y=None):
+    """
+    Call a method on a model with the correct arguments.
+    
+    Dynamically inspects the method signature to determine if y parameter is required.
+
+    Parameters
+    ----------
+    model : estimator
+        The fitted model
+    method_name : str
+        The name of the method to call
+    X : array-like
+        Input features
+    y : array-like, optional
+        Target values
+
+    Returns
+    -------
+    output
+        Result of calling the method
+    """
+    import inspect
+    
+    method = getattr(model, method_name)
+    
+    # Inspect the method signature to see if it requires y
+    try:
+        signature = inspect.signature(method)
+        params = signature.parameters
+        
+        # Check if 'y' is a parameter and how to handle it
+        if 'y' in params:
+            y_param = params['y']
+            # If y has no default value, it's required
+            if y_param.default is inspect.Parameter.empty:
+                if y is None:
+                    raise ValueError(
+                        f"Method '{method_name}' requires y parameter but y is None"
+                    )
+                return method(X, y)
+            else:
+                # y is optional, pass it if provided
+                if y is not None:
+                    return method(X, y)
+                else:
+                    return method(X)
+        
+        # If y is not a parameter, call with just X
+        return method(X)
+        
+    except (ValueError, TypeError) as inspection_error:
+        # If our ValueError was raised (y required but None), re-raise it
+        if isinstance(inspection_error, ValueError) and "requires y parameter" in str(inspection_error):
+            raise
+            
+        # Fallback: if inspection fails, try calling with X only first
+        try:
+            return method(X)
+        except TypeError as e:
+            # If that fails and we have y, try with both X and y
+            if y is not None and "positional argument" in str(e):
+                return method(X, y)
+            else:
+                raise
+
 
 def _make_method(method_name, fit=True):
     """
@@ -94,6 +166,7 @@ def _make_method(method_name, fit=True):
     function
         A method that applies the specified method to all pipeline steps.
     """
+
     def _method(self, X, y=None, **kwargs):
         _check_X_y(X, y)
         # Fit all steps except the final one.
@@ -104,14 +177,19 @@ def _make_method(method_name, fit=True):
             t_start = time.time()
             not_final_step = total_steps != step_idx
             # Use 'transform' for intermediate steps and the provided method for the final step.
-            method = 'transform' if not_final_step else method_name
+            method = "transform" if not_final_step else method_name
             if fit:
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
 
                 current_output, fitted_model = self._fit_method_step(
-                    transformer, current_output, y, cv, return_output=True, method=method
+                    transformer,
+                    current_output,
+                    y,
+                    cv,
+                    return_output=True,
+                    method=method,
                 )
 
                 self.fitted_steps_[name] = fitted_model
@@ -119,15 +197,21 @@ def _make_method(method_name, fit=True):
                 fitted_model = self.fitted_steps_.get(name)
                 if fitted_model is None:
                     continue
-                current_output = self._method_step(fitted_model, method, current_output)
+                current_output = self._method_step(
+                    fitted_model, method, current_output, y
+                )
 
-            _log_message("Step '{}' completed".format(name),
-                         self.verbose, step_idx, total_steps, time.time() - t_start)
+            _log_message(
+                "Step '{}' completed".format(name),
+                self.verbose,
+                step_idx,
+                total_steps,
+                time.time() - t_start,
+            )
 
         return current_output
 
     return _method
-
 
 
 class SequentialCVPipeline(BaseEstimator):
@@ -168,16 +252,31 @@ class SequentialCVPipeline(BaseEstimator):
     >>> print(pipeline.steps)
     [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
+
     def _inject_dynamic_methods(self):
         """Inject dynamic pipeline methods based on the final step's transformer."""
-        method_names = ['transform', "predict", "predict_proba", "predict_log_proba", "score"]
+        method_names = [
+            "transform",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "score",
+        ]
         final_transformer = self.steps[-1][1]
         for method_name in method_names:
             fit_method_name = f"fit_{method_name}"
             if hasattr(final_transformer, method_name):
                 # Attach the methods to the instance.
-                setattr(self, fit_method_name, _make_method(method_name, fit=True).__get__(self, type(self)))
-                setattr(self, method_name, _make_method(method_name, fit=False).__get__(self, type(self)))
+                setattr(
+                    self,
+                    fit_method_name,
+                    _make_method(method_name, fit=True).__get__(self, type(self)),
+                )
+                setattr(
+                    self,
+                    method_name,
+                    _make_method(method_name, fit=False).__get__(self, type(self)),
+                )
             else:
                 # Remove these methods if they exist on the instance.
                 if fit_method_name in self.__dict__:
@@ -229,14 +328,19 @@ class SequentialCVPipeline(BaseEstimator):
                 row_indices = np.where(indices)[0]
             else:
                 row_indices = indices
-                
+
             # Use narwhals for dataframe-agnostic operations
             X_nw = nw.from_native(X, pass_through=True)
-            from ..application import _safe_to_native
-            return _safe_to_native(X_nw[row_indices])
+            from .application import _safe_positional_indexing, _safe_to_native
+
+            return _safe_to_native(_safe_positional_indexing(X_nw, row_indices))
         except Exception:
             # Fallback for non-narwhals compatible data
-            return X[indices] if hasattr(X, '__getitem__') else np.array([X[i] for i in indices])
+            return (
+                X[indices]
+                if hasattr(X, "__getitem__")
+                else np.array([X[i] for i in indices])
+            )
 
     def _combine(self, transformed_list):
         """
@@ -257,13 +361,13 @@ class SequentialCVPipeline(BaseEstimator):
         first_item = transformed_list[0]
         if isinstance(first_item, np.ndarray):
             return np.vstack(transformed_list)
-        elif hasattr(first_item, 'pipe'):
+        elif hasattr(first_item, "pipe"):
             # Use narwhals for dataframe-agnostic concatenation
             return nw.concat(transformed_list)
         else:
             return transformed_list
 
-    def _apply_method_to_indices(self, model, method_name, X, indices):
+    def _apply_method_to_indices(self, model, method_name, X, indices, y=None):
         """
         Apply a method of the given model to a subset of X based on indices.
 
@@ -277,6 +381,8 @@ class SequentialCVPipeline(BaseEstimator):
             Input data.
         indices : array-like
             Indices specifying the subset of X.
+        y : array-like, optional
+            Target values (required for some methods like 'score').
 
         Returns
         -------
@@ -285,16 +391,19 @@ class SequentialCVPipeline(BaseEstimator):
         """
         indices = _to_int_indices(indices)
         X_subset = self._subset(X, indices)
+        y_subset = None if y is None else self._subset(y, indices)
         if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
             expected = getattr(model, "n_features_in_", None)
             if expected is not None and X_subset.shape[0] == expected:
                 X_subset = X_subset.reshape(1, -1)
             else:
                 X_subset = X_subset.reshape(-1, 1)
-        output = getattr(model, method_name)(X_subset)
+        output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
         return output
 
-    def _fit_method_step(self, transformer, X, y, cv, return_output=True, method='transform'):
+    def _fit_method_step(
+        self, transformer, X, y, cv, return_output=True, method="transform"
+    ):
         """
         Fit one pipeline step and optionally transform the data.
 
@@ -328,7 +437,7 @@ class SequentialCVPipeline(BaseEstimator):
             model.fit(X, y)
             fitted = model
             if return_output:
-                output = getattr(model, method)(X)
+                output = _call_method_with_correct_args(model, method, X, y)
         else:
             splits = check_cv(cv, X=X, y=y)
             idx_trans = []
@@ -340,13 +449,22 @@ class SequentialCVPipeline(BaseEstimator):
                 X_train = self._subset(X, train_idx)
                 y_train = None if y is None else self._subset(y, train_idx)
                 X_test = self._subset(X, test_idx)
+                y_test = None if y is None else self._subset(y, test_idx)
                 model_fold.fit(X_train, y_train)
                 folds_models.append((test_idx, model_fold))
                 if return_output:
-                    output_trans = getattr(model_fold, method)(X_test)
-                    # Pair each output with its original index.
-                    for i, idx in enumerate(test_idx):
-                        idx_trans.append((idx, output_trans[i]))
+                    output_trans = _call_method_with_correct_args(
+                        model_fold, method, X_test, y_test
+                    )
+                    # Handle scalar outputs (like score) vs array outputs
+                    if np.isscalar(output_trans):
+                        # For scalar outputs, assign the same value to all test indices
+                        for idx in test_idx:
+                            idx_trans.append((idx, output_trans))
+                    else:
+                        # For array outputs, pair each output with its original index
+                        for i, idx in enumerate(test_idx):
+                            idx_trans.append((idx, output_trans[i]))
             if return_output:
                 output = _sort_and_combine(idx_trans)
             fitted = {"splits": folds_models}
@@ -355,7 +473,7 @@ class SequentialCVPipeline(BaseEstimator):
         else:
             return None, fitted
 
-    def _method_step(self, fitted_model, method_name, X):
+    def _method_step(self, fitted_model, method_name, X, y=None):
         """
         Apply a method of a fitted model (or models) to input X.
 
@@ -370,6 +488,8 @@ class SequentialCVPipeline(BaseEstimator):
             The name of the method to apply (e.g., 'predict' or 'transform').
         X : array-like or IntoDataFrame or IntoSeries
             Input data.
+        y : array-like, optional
+            Target values (required for some methods like 'score').
 
         Returns
         -------
@@ -378,14 +498,23 @@ class SequentialCVPipeline(BaseEstimator):
         """
         if not (isinstance(fitted_model, dict) and "splits" in fitted_model):
             if hasattr(fitted_model, method_name):
-                return getattr(fitted_model, method_name)(X)
+                return _call_method_with_correct_args(fitted_model, method_name, X, y)
             else:
                 raise ValueError(f"Fitted model does not have a {method_name} method.")
         predictions_with_idx = []
         for test_idx, model in fitted_model["splits"]:
-            output_list = self._apply_method_to_indices(model, method_name, X, test_idx)
-            for i, idx in enumerate(test_idx):
-                predictions_with_idx.append((idx, self._subset(output_list, i)))
+            output_list = self._apply_method_to_indices(
+                model, method_name, X, test_idx, y
+            )
+            # Handle scalar outputs vs array outputs
+            if np.isscalar(output_list):
+                # For scalar outputs, assign the same value to all test indices
+                for idx in test_idx:
+                    predictions_with_idx.append((idx, output_list))
+            else:
+                # For array outputs, pair each output with its original index
+                for i, idx in enumerate(test_idx):
+                    predictions_with_idx.append((idx, self._subset(output_list, i)))
         return _sort_and_combine(predictions_with_idx)
 
     def _fit(self, X, y=None):
@@ -412,11 +541,18 @@ class SequentialCVPipeline(BaseEstimator):
                 self.fitted_steps_[name] = None
                 continue
             not_final_step = not step_idx == total_steps
-            X_current, fitted_model = self._fit_method_step(transformer, X_current, y, cv, return_output=not_final_step)
-            
+            X_current, fitted_model = self._fit_method_step(
+                transformer, X_current, y, cv, return_output=not_final_step
+            )
+
             self.fitted_steps_[name] = fitted_model
-            _log_message("Step '{}' completed".format(name),
-                         self.verbose, step_idx, total_steps, time.time() - 0)  # time delta omitted for brevity
+            _log_message(
+                "Step '{}' completed".format(name),
+                self.verbose,
+                step_idx,
+                total_steps,
+                time.time() - 0,
+            )  # time delta omitted for brevity
         return X_current
 
     def fit(self, X, y=None):
@@ -455,7 +591,7 @@ class SequentialCVPipeline(BaseEstimator):
         """
         _ = self._fit(X, y)
         return self
-    
+
     def transform(self, X):
         """
         Transform the input data using the fitted pipeline.
@@ -528,34 +664,34 @@ class SequentialCVPipeline(BaseEstimator):
         pass
 
     def fit_predict(self, X, y=None):
-       """
-       Fit the pipeline and predict target values.
-
-        This method dynamically fits the pipeline on the provided data and then applies the final estimator's
-        predict method to generate predictions.
-
-        Parameters
-        ----------
-        X : array-like or IntoDataFrame or IntoSeries
-            Input data.
-        y : array-like, optional
-            Target values (used during fitting).
-
-        Returns
-        -------
-        array-like or IntoDataFrame or IntoSeries
-            Predicted target values.
-
-        Note
-        ----
-        This method is dynamically injected based on the final step of the pipeline.
         """
-       pass
+        Fit the pipeline and predict target values.
+
+         This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+         predict method to generate predictions.
+
+         Parameters
+         ----------
+         X : array-like or IntoDataFrame or IntoSeries
+             Input data.
+         y : array-like, optional
+             Target values (used during fitting).
+
+         Returns
+         -------
+         array-like or IntoDataFrame or IntoSeries
+             Predicted target values.
+
+         Note
+         ----
+         This method is dynamically injected based on the final step of the pipeline.
+        """
+        pass
 
     def predict_proba(self, X):
         """
         Predict class probabilities using the fitted pipeline.
-        
+
         This method applies the final estimator's predict_proba method on the transformed data to predict class probabilities.
 
         Parameters
@@ -569,7 +705,7 @@ class SequentialCVPipeline(BaseEstimator):
         -------
         float
             Predicted class probability.
-        
+
         Note:
         -----
         This is a placeholder method for documentation purposes only.
