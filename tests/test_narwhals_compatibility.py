@@ -467,21 +467,23 @@ class TestNarwhalsCompatibility(unittest.TestCase):
         """Test that dynamic method inspection works correctly for custom estimators."""
         from sklearn.base import BaseEstimator
         from panelsplit.pipeline import _call_method_with_correct_args
-        
+
         class CustomEstimator(BaseEstimator):
             def fit(self, X, y=None):
                 return self
-                
+
             def predict(self, X):
                 return np.ones(len(X))
-                
+
             def score(self, X, y):  # Requires y
                 return 0.95
-                
-            def transform(self, X):  # Doesn't require y  
+
+            def transform(self, X):  # Doesn't require y
                 return X * 2
-                
-            def custom_score(self, X, y, sample_weight=None):  # y required, sample_weight optional
+
+            def custom_score(
+                self, X, y, sample_weight=None
+            ):  # y required, sample_weight optional
                 return 0.8
 
         estimator = CustomEstimator()
@@ -489,22 +491,22 @@ class TestNarwhalsCompatibility(unittest.TestCase):
         y = np.array([0, 1])
 
         # Test methods that don't require y
-        pred = _call_method_with_correct_args(estimator, 'predict', X)
+        pred = _call_method_with_correct_args(estimator, "predict", X)
         self.assertEqual(pred.shape, (2,))
-        
-        transform = _call_method_with_correct_args(estimator, 'transform', X)
+
+        transform = _call_method_with_correct_args(estimator, "transform", X)
         self.assertEqual(transform.shape, (2, 2))
-        
+
         # Test methods that require y
-        score = _call_method_with_correct_args(estimator, 'score', X, y)
+        score = _call_method_with_correct_args(estimator, "score", X, y)
         self.assertEqual(score, 0.95)
-        
-        custom_score = _call_method_with_correct_args(estimator, 'custom_score', X, y)
+
+        custom_score = _call_method_with_correct_args(estimator, "custom_score", X, y)
         self.assertEqual(custom_score, 0.8)
-        
+
         # Test error case: method requires y but y is None
         with self.assertRaises(ValueError) as cm:
-            _call_method_with_correct_args(estimator, 'score', X, None)
+            _call_method_with_correct_args(estimator, "score", X, None)
         self.assertIn("requires y parameter but y is None", str(cm.exception))
 
 

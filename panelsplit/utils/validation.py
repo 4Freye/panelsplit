@@ -25,9 +25,14 @@ def _is_valid_data_type(data, data_name="data"):
     """Unified data type validation for narwhals compatibility."""
     try:
         data_nw = nw.from_native(data, pass_through=True)
-        return hasattr(data_nw, "to_numpy") or hasattr(data_nw, "shape") or isinstance(data, np.ndarray)
+        return (
+            hasattr(data_nw, "to_numpy")
+            or hasattr(data_nw, "shape")
+            or isinstance(data, np.ndarray)
+        )
     except Exception:
         import pandas as pd
+
         valid_types = (np.ndarray, pd.DataFrame, pd.Series)
         return isinstance(data, valid_types) or hasattr(data, "__array__")
 
@@ -53,7 +58,9 @@ def get_index_or_col_from_df(df, name):
         if hasattr(df_nw, "columns") and name in df_nw.columns:
             # Use get_column instead of select().to_series()
             column = df_nw.get_column(name)
-            return nw.to_native(column) if hasattr(column, "_compliant_series") else column
+            return (
+                nw.to_native(column) if hasattr(column, "_compliant_series") else column
+            )
 
         # For index operations, we still need pandas-specific logic as narwhals doesn't support index access
         # This is a limitation but necessary for backward compatibility
@@ -95,7 +102,9 @@ def get_index_or_col_from_df(df, name):
         try:
             df_nw = nw.from_native(df, pass_through=True)
             column = df_nw.get_column(name)
-            return nw.to_native(column) if hasattr(column, "_compliant_series") else column
+            return (
+                nw.to_native(column) if hasattr(column, "_compliant_series") else column
+            )
         except:
             raise KeyError(f"'{name}' was not found in the DataFrame's columns.")
 
@@ -220,6 +229,6 @@ def _check_X_y(X, y=None):
     """
     if not _is_valid_data_type(X, "X"):
         raise TypeError("X should be a dataframe, series, or array-like object")
-    
+
     if y is not None and not _is_valid_data_type(y, "y"):
         raise TypeError("y should be a dataframe, series, or array-like object")

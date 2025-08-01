@@ -27,34 +27,30 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_check_is_fitted_unfitted_pipeline(self):
         """Test that check_is_fitted raises NotFittedError for unfitted pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+
         # Should not have fitted_steps_ attribute before fitting
-        self.assertFalse(hasattr(pipeline, 'fitted_steps_'))
-        
+        self.assertFalse(hasattr(pipeline, "fitted_steps_"))
+
         # check_is_fitted should raise NotFittedError
         with self.assertRaises(NotFittedError) as context:
             check_is_fitted(pipeline)
-        
+
         self.assertIn("not fitted yet", str(context.exception))
         self.assertIn("SequentialCVPipeline", str(context.exception))
 
     def test_check_is_fitted_fitted_pipeline(self):
         """Test that check_is_fitted passes for fitted pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+
         # Fit the pipeline
         pipeline.fit(self.X, self.y)
-        
+
         # Should now have fitted_steps_ attribute
-        self.assertTrue(hasattr(pipeline, 'fitted_steps_'))
+        self.assertTrue(hasattr(pipeline, "fitted_steps_"))
         self.assertIsInstance(pipeline.fitted_steps_, dict)
-        self.assertIn('regressor', pipeline.fitted_steps_)
-        
+        self.assertIn("regressor", pipeline.fitted_steps_)
+
         # check_is_fitted should pass without raising
         try:
             check_is_fitted(pipeline)
@@ -64,15 +60,17 @@ class TestCheckFittedFix(unittest.TestCase):
     def test_check_is_fitted_with_cv_pipeline(self):
         """Test check_is_fitted with CV pipeline."""
         # Use a pipeline without CV for the final step to avoid dimension issues
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),  # No CV to avoid dimension mismatch
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),  # No CV to avoid dimension mismatch
+                ("regressor", RandomForestRegressor(), None),
+            ]
+        )
+
         # Should fail before fitting
         with self.assertRaises(NotFittedError):
             check_is_fitted(pipeline)
-        
+
         # Fit and should pass
         pipeline.fit(self.X, self.y)
         try:
@@ -82,64 +80,62 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_dynamic_methods_unfitted_pipeline(self):
         """Test that dynamic methods raise NotFittedError for unfitted pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+
         # Dynamic predict method should raise NotFittedError
         with self.assertRaises(NotFittedError) as context:
             pipeline.predict(self.X)
-        
+
         self.assertIn("not fitted yet", str(context.exception))
 
     def test_dynamic_methods_fitted_pipeline(self):
         """Test that dynamic methods work after fitting."""
-        pipeline = SequentialCVPipeline([
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+
         # Fit first
         pipeline.fit(self.X, self.y)
-        
+
         # Now predict should work
         predictions = pipeline.predict(self.X)
         self.assertEqual(len(predictions), len(self.X))
 
     def test_check_is_fitted_with_specific_attribute(self):
         """Test check_is_fitted with specific attribute name."""
-        pipeline = SequentialCVPipeline([
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+
         # Should fail with specific attribute check
         with self.assertRaises(NotFittedError):
-            check_is_fitted(pipeline, 'fitted_steps_')
-        
+            check_is_fitted(pipeline, "fitted_steps_")
+
         # Fit and should pass
         pipeline.fit(self.X, self.y)
         try:
-            check_is_fitted(pipeline, 'fitted_steps_')
+            check_is_fitted(pipeline, "fitted_steps_")
         except NotFittedError:
             self.fail("check_is_fitted with 'fitted_steps_' failed after fitting")
 
     def test_sklearn_convention_compliance(self):
         """Test that the pipeline follows sklearn's fitted attribute conventions."""
-        pipeline = SequentialCVPipeline([
-            ('regressor', RandomForestRegressor(), None)
-        ])
-        
+        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+
         # Before fitting: no attributes ending with '_' should exist
-        fitted_attrs_before = [attr for attr in dir(pipeline) 
-                              if attr.endswith('_') and not attr.startswith('_')]
+        fitted_attrs_before = [
+            attr
+            for attr in dir(pipeline)
+            if attr.endswith("_") and not attr.startswith("_")
+        ]
         # fitted_steps_ should not be in the list
-        self.assertNotIn('fitted_steps_', fitted_attrs_before)
-        
+        self.assertNotIn("fitted_steps_", fitted_attrs_before)
+
         # After fitting: fitted_steps_ should exist
         pipeline.fit(self.X, self.y)
-        fitted_attrs_after = [attr for attr in dir(pipeline) 
-                             if attr.endswith('_') and not attr.startswith('_')]
-        self.assertIn('fitted_steps_', fitted_attrs_after)
+        fitted_attrs_after = [
+            attr
+            for attr in dir(pipeline)
+            if attr.endswith("_") and not attr.startswith("_")
+        ]
+        self.assertIn("fitted_steps_", fitted_attrs_after)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

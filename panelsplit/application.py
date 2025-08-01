@@ -4,14 +4,19 @@ from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.base import clone
 from joblib import Parallel, delayed
 from .utils.utils import _split_wrapper
-from .utils.validation import check_method, check_fitted_estimators, check_cv, _to_numpy_array
+from .utils.validation import (
+    check_method,
+    check_fitted_estimators,
+    check_cv,
+    _to_numpy_array,
+)
 from typing import List, Union
 
 
 def _safe_indexing(obj, indices=None, to_native=False):
     """
     Unified safe indexing and conversion function for dataframe-agnostic operations.
-    
+
     Parameters
     ----------
     obj : pandas.DataFrame/Series or narwhals-compliant object
@@ -20,7 +25,7 @@ def _safe_indexing(obj, indices=None, to_native=False):
         Integer positions to select. If None, no indexing is performed
     to_native : bool, optional
         Whether to convert to native format. Default is False
-    
+
     Returns
     -------
     obj : same type as input or native format
@@ -31,23 +36,24 @@ def _safe_indexing(obj, indices=None, to_native=False):
         result = obj.iloc[indices] if hasattr(obj, "iloc") else obj[indices]
     else:
         result = obj
-    
+
     # Handle conversion if needed
-    if to_native and (hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")):
+    if to_native and (
+        hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")
+    ):
         return nw.to_native(result)
     return result
 
 
 def _get_non_null_mask(data):
     """Get non-null mask for any data type."""
-    for method in ['isnull', 'is_null']:
+    for method in ["isnull", "is_null"]:
         if hasattr(data, method):
             return ~getattr(data, method)()
     # Fallback for numpy arrays
     import pandas as pd
+
     return ~pd.isnull(data)
-
-
 
 
 def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.ndarray:

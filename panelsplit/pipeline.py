@@ -82,11 +82,12 @@ def _sort_and_combine(predictions_with_idx):
         predictions = np.array(predictions)
     return predictions
 
+
 # Fix to: https://github.com/4Freye/panelsplit/issues/59
 def _call_method_with_correct_args(model, method_name, X, y=None):
     """
     Call a method on a model with the correct arguments.
-    
+
     Dynamically inspects the method signature to determine if y parameter is required.
 
     Parameters
@@ -106,17 +107,17 @@ def _call_method_with_correct_args(model, method_name, X, y=None):
         Result of calling the method
     """
     import inspect
-    
+
     method = getattr(model, method_name)
-    
+
     # Inspect the method signature to see if it requires y
     try:
         signature = inspect.signature(method)
         params = signature.parameters
-        
+
         # Check if 'y' is a parameter and how to handle it
-        if 'y' in params:
-            y_param = params['y']
+        if "y" in params:
+            y_param = params["y"]
             # If y has no default value, it's required
             if y_param.default is inspect.Parameter.empty:
                 if y is None:
@@ -130,15 +131,17 @@ def _call_method_with_correct_args(model, method_name, X, y=None):
                     return method(X, y)
                 else:
                     return method(X)
-        
+
         # If y is not a parameter, call with just X
         return method(X)
-        
+
     except (ValueError, TypeError) as inspection_error:
         # If our ValueError was raised (y required but None), re-raise it
-        if isinstance(inspection_error, ValueError) and "requires y parameter" in str(inspection_error):
+        if isinstance(inspection_error, ValueError) and "requires y parameter" in str(
+            inspection_error
+        ):
             raise
-            
+
         # Fallback: if inspection fails, try calling with X only first
         try:
             return method(X)
@@ -180,9 +183,9 @@ def _make_method(method_name, fit=True):
             method = "transform" if not_final_step else method_name
             if fit:
                 # Initialize fitted_steps_ if not already done (for dynamic methods)
-                if not hasattr(self, 'fitted_steps_'):
+                if not hasattr(self, "fitted_steps_"):
                     self.fitted_steps_ = {}
-                    
+
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
@@ -199,11 +202,14 @@ def _make_method(method_name, fit=True):
                 self.fitted_steps_[name] = fitted_model
             else:
                 # Check if pipeline has been fitted
-                if not hasattr(self, 'fitted_steps_'):
+                if not hasattr(self, "fitted_steps_"):
                     from sklearn.exceptions import NotFittedError
-                    raise NotFittedError(f"This {type(self).__name__} instance is not fitted yet. "
-                                       "Call 'fit' with appropriate arguments before using this estimator.")
-                
+
+                    raise NotFittedError(
+                        f"This {type(self).__name__} instance is not fitted yet. "
+                        "Call 'fit' with appropriate arguments before using this estimator."
+                    )
+
                 fitted_model = self.fitted_steps_.get(name)
                 if fitted_model is None:
                     continue
