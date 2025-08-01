@@ -180,9 +180,9 @@ class TestNarwhalsCompatibility(unittest.TestCase):
         self.assertTrue(hasattr(series_nw, "to_numpy"))
 
         # Convert back to native (check if it's already native first)
-        from panelsplit.application import _safe_to_native
+        from panelsplit.application import _safe_indexing
 
-        series_native = _safe_to_native(series_nw)
+        series_native = _safe_indexing(series_nw, to_native=True)
         pd.testing.assert_series_equal(series_native, self.y_pandas)
 
     def test_snapshots_generation_with_pandas(self):

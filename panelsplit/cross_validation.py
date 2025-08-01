@@ -4,7 +4,7 @@ import narwhals as nw
 from narwhals.typing import IntoDataFrame, IntoSeries
 import numpy as np
 import warnings
-from .utils.validation import check_periods, check_labels, get_index_or_col_from_df
+from .utils.validation import check_periods, check_labels, get_index_or_col_from_df, _to_numpy_array
 
 # Keep pandas import for type annotations and fallback compatibility
 try:
@@ -97,7 +97,7 @@ class PanelSplit:
         if unique_periods is None:
             periods_nw = nw.from_native(periods, pass_through=True)
             if hasattr(periods_nw, "unique"):
-                unique_vals = periods_nw.unique().sort().to_numpy()
+                unique_vals = _to_numpy_array(periods_nw.unique().sort())
             else:
                 unique_vals = np.unique(periods)
             unique_periods = unique_vals
@@ -111,10 +111,7 @@ class PanelSplit:
             max_train_size=max_train_size,
         )
         # Convert to numpy array for TimeSeriesSplit
-        if hasattr(unique_periods, "to_numpy"):
-            unique_periods_array = unique_periods.to_numpy()
-        else:
-            unique_periods_array = np.array(unique_periods)
+        unique_periods_array = _to_numpy_array(unique_periods)
         indices = self._tss.split(unique_periods_array)
         self._include_train_in_test = include_train_in_test
         if not self._include_train_in_test:
@@ -146,10 +143,7 @@ class PanelSplit:
         """
         u_periods_cv = []
         for i, (train_index, test_index) in enumerate(indices):
-            if hasattr(unique_periods, "to_numpy"):
-                unique_periods_array = unique_periods.to_numpy()
-            else:
-                unique_periods_array = np.array(unique_periods)
+            unique_periods_array = _to_numpy_array(unique_periods)
             unique_train_periods = unique_periods_array[train_index]
             unique_test_periods = unique_periods_array[test_index]
             if (i == 0) & self._include_first_train_in_test:
@@ -194,11 +188,7 @@ class PanelSplit:
                 test_period_mask = np.isin(self._periods, test_periods)
 
                 # Handle snapshots
-                snapshots_array = (
-                    self._snapshots.to_numpy()
-                    if hasattr(self._snapshots, "to_numpy")
-                    else np.array(self._snapshots)
-                )
+                snapshots_array = _to_numpy_array(self._snapshots)
                 snapshot_mask = snapshots_array == snapshot_val
 
                 train_indices = train_period_mask & snapshot_mask
@@ -304,11 +294,11 @@ class PanelSplit:
             labels_nw = nw.from_native(labels, pass_through=True)
             # Convert boolean indices to row numbers
             row_indices = np.where(indices)[0]
-            from .application import _safe_to_native, _safe_positional_indexing
+            from .application import _safe_indexing
 
-            labels_subset = _safe_positional_indexing(labels_nw, row_indices)
+            labels_subset = _safe_indexing(labels_nw, row_indices)
 
-            return _safe_to_native(labels_subset)
+            return _safe_indexing(labels_subset, to_native=True)
         except:
             # Direct numpy/array indexing fallback
             return labels[indices]
@@ -421,15 +411,15 @@ class PanelSplit:
             row_indices = np.where(split_indices)[0]
 
             # Use safe position-based indexing
-            from .application import _safe_to_native, _safe_positional_indexing
+            from .application import _safe_indexing
 
-            split_data = _safe_positional_indexing(data_nw, row_indices)
+            split_data = _safe_indexing(data_nw, row_indices)
 
             if period_col is not None:
                 # Get periods for this split and find max
-                split_periods = _safe_positional_indexing(periods_nw, row_indices)
+                split_periods = _safe_indexing(periods_nw, row_indices)
 
-                periods_array = _safe_to_native(split_periods)
+                periods_array = _safe_indexing(split_periods, to_native=True)
                 last_period = np.max(np.unique(periods_array))
 
                 # Add columns using narwhals
@@ -445,9 +435,9 @@ class PanelSplit:
             snapshots.append(split_data)
 
         # Concatenate results using narwhals
-        from .application import _safe_to_native
+        from .application import _safe_indexing
 
-        return _safe_to_native(nw.concat(snapshots))
+        return _safe_indexing(nw.concat(snapshots), to_native=True)
 
 
 def drop_splits(cv, y):

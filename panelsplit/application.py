@@ -4,40 +4,50 @@ from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.base import clone
 from joblib import Parallel, delayed
 from .utils.utils import _split_wrapper
-from .utils.validation import check_method, check_fitted_estimators, check_cv
+from .utils.validation import check_method, check_fitted_estimators, check_cv, _to_numpy_array
 from typing import List, Union
 
 
-def _safe_to_native(obj):
-    """Safely convert narwhals object to native, handling already native objects."""
-    if hasattr(obj, "_compliant_frame") or hasattr(obj, "_compliant_series"):
-        return nw.to_native(obj)
-    else:
-        return obj
-
-
-def _safe_positional_indexing(obj, indices):
+def _safe_indexing(obj, indices=None, to_native=False):
     """
-    Safely perform position-based indexing that works with both pandas and narwhals objects.
-
+    Unified safe indexing and conversion function for dataframe-agnostic operations.
+    
     Parameters
     ----------
     obj : pandas.DataFrame/Series or narwhals-compliant object
-        The object to index
-    indices : array-like
-        Integer positions to select
-
+        The object to index and/or convert
+    indices : array-like, optional
+        Integer positions to select. If None, no indexing is performed
+    to_native : bool, optional
+        Whether to convert to native format. Default is False
+    
     Returns
     -------
-    obj : same type as input
-        Subset of the input object
+    obj : same type as input or native format
+        Processed object (indexed and/or converted)
     """
-    # Check if this is a pandas object (has iloc)
-    if hasattr(obj, "iloc"):
-        return obj.iloc[indices]
+    # Handle indexing if indices provided
+    if indices is not None:
+        result = obj.iloc[indices] if hasattr(obj, "iloc") else obj[indices]
     else:
-        # For narwhals-compliant objects, use direct indexing
-        return obj[indices]
+        result = obj
+    
+    # Handle conversion if needed
+    if to_native and (hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")):
+        return nw.to_native(result)
+    return result
+
+
+def _get_non_null_mask(data):
+    """Get non-null mask for any data type."""
+    for method in ['isnull', 'is_null']:
+        if hasattr(data, method):
+            return ~getattr(data, method)()
+    # Fallback for numpy arrays
+    import pandas as pd
+    return ~pd.isnull(data)
+
+
 
 
 def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.ndarray:
@@ -101,56 +111,45 @@ def _fit_split(
     train_row_indices = np.where(train_indices)[0]
 
     # Use safe position-based indexing
-    X_subset = _safe_positional_indexing(X_nw, train_row_indices)
+    X_subset = _safe_indexing(X_nw, train_row_indices)
 
     # Handle y=None case (for transformers)
     if y is not None:
         y_nw = nw.from_native(y, pass_through=True)
-        y_subset = _safe_positional_indexing(y_nw, train_row_indices)
+        y_subset = _safe_indexing(y_nw, train_row_indices)
 
         if drop_na_in_y:
             # Get mask of non-null values
-            # Use pandas isnull for compatibility
-            if hasattr(y_subset, 'isnull'):
-                non_null_mask = ~y_subset.isnull()
-            elif hasattr(y_subset, 'is_null'):
-                non_null_mask = ~y_subset.is_null()
-            else:
-                # Fallback for numpy arrays
-                non_null_mask = ~pd.isnull(y_subset)
-            if hasattr(non_null_mask, "to_numpy"):
-                non_null_indices = np.where(non_null_mask.to_numpy())[0]
-            else:
-                # Fallback for non-numpy compatible
-                non_null_indices = np.arange(len(train_row_indices))
+            non_null_mask = _get_non_null_mask(y_subset)
+            non_null_indices = np.where(_to_numpy_array(non_null_mask))[0]
 
             # Filter both X and y using the non-null indices
-            X_filtered = _safe_positional_indexing(X_subset, non_null_indices)
-            y_filtered = _safe_positional_indexing(y_subset, non_null_indices)
+            X_filtered = _safe_indexing(X_subset, non_null_indices)
+            y_filtered = _safe_indexing(y_subset, non_null_indices)
         else:
             X_filtered = X_subset
             y_filtered = y_subset
 
         # Convert back to native format for sklearn
-        X_native = _safe_to_native(X_filtered)
-        y_native = _safe_to_native(y_filtered)
+        X_native = _safe_indexing(X_filtered, to_native=True)
+        y_native = _safe_indexing(y_filtered, to_native=True)
     else:
         # When y is None, we can't drop nulls based on y
         X_filtered = X_subset
-        X_native = _safe_to_native(X_filtered)
+        X_native = _safe_indexing(X_filtered, to_native=True)
         y_native = None
 
     if sample_weight is not None:
         sw_nw = nw.from_native(sample_weight, pass_through=True)
-        sw_subset = _safe_positional_indexing(sw_nw, train_row_indices)
+        sw_subset = _safe_indexing(sw_nw, train_row_indices)
 
         # Only filter by non_null_indices if y is not None and drop_na_in_y is True
         if y is not None and drop_na_in_y:
-            sw_filtered = _safe_positional_indexing(sw_subset, non_null_indices)
+            sw_filtered = _safe_indexing(sw_subset, non_null_indices)
         else:
             sw_filtered = sw_subset
 
-        sw_native = _safe_to_native(sw_filtered)
+        sw_native = _safe_indexing(sw_filtered, to_native=True)
 
         # Check if the estimator supports sample_weight
         import inspect
@@ -300,7 +299,7 @@ def cross_val_predict(
     test_preds = Parallel(n_jobs=n_jobs)(
         delayed(_predict_split)(
             fitted_estimators[i],
-            _safe_to_native(_safe_positional_indexing(X_nw, np.where(test_idx)[0])),
+            _safe_indexing(X_nw, np.where(test_idx)[0], to_native=True),
             method,
         )
         for i, test_idx in enumerate(test_splits)
@@ -313,9 +312,7 @@ def cross_val_predict(
         train_preds = Parallel(n_jobs=n_jobs)(
             delayed(_predict_split)(
                 fitted_estimators[i],
-                _safe_to_native(
-                    _safe_positional_indexing(X_nw, np.where(train_idx)[0])
-                ),
+                _safe_indexing(X_nw, np.where(train_idx)[0], to_native=True),
                 method,
             )
             for i, train_idx in enumerate(train_splits)

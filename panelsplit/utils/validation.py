@@ -16,6 +16,22 @@ except ImportError:
     _PANDAS_AVAILABLE = False
 
 
+def _to_numpy_array(data):
+    """Convert any data structure to numpy array."""
+    return data.to_numpy() if hasattr(data, "to_numpy") else np.array(data)
+
+
+def _is_valid_data_type(data, data_name="data"):
+    """Unified data type validation for narwhals compatibility."""
+    try:
+        data_nw = nw.from_native(data, pass_through=True)
+        return hasattr(data_nw, "to_numpy") or hasattr(data_nw, "shape") or isinstance(data, np.ndarray)
+    except Exception:
+        import pandas as pd
+        valid_types = (np.ndarray, pd.DataFrame, pd.Series)
+        return isinstance(data, valid_types) or hasattr(data, "__array__")
+
+
 __pdoc__ = {
     "get_index_or_col_from_df": False,
     "check_cv": False,
@@ -35,10 +51,9 @@ def get_index_or_col_from_df(df, name):
 
         # Check if it's a column
         if hasattr(df_nw, "columns") and name in df_nw.columns:
-            from ..application import _safe_to_native
-
             # Use get_column instead of select().to_series()
-            return _safe_to_native(df_nw.get_column(name))
+            column = df_nw.get_column(name)
+            return nw.to_native(column) if hasattr(column, "_compliant_series") else column
 
         # For index operations, we still need pandas-specific logic as narwhals doesn't support index access
         # This is a limitation but necessary for backward compatibility
@@ -79,9 +94,8 @@ def get_index_or_col_from_df(df, name):
         # For other exceptions, try simple column access
         try:
             df_nw = nw.from_native(df, pass_through=True)
-            from ..application import _safe_to_native
-
-            return _safe_to_native(df_nw.get_column(name))
+            column = df_nw.get_column(name)
+            return nw.to_native(column) if hasattr(column, "_compliant_series") else column
         except:
             raise KeyError(f"'{name}' was not found in the DataFrame's columns.")
 
@@ -114,7 +128,7 @@ def check_periods(periods, obj_name="periods"):
             return periods_nw.to_series()
         elif hasattr(periods_nw, "to_numpy"):
             # Convert to numpy and create a series-like object
-            periods_array = periods_nw.to_numpy()
+            periods_array = _to_numpy_array(periods_nw)
             if len(periods_array.shape) > 1:
                 raise ValueError(
                     f"{obj_name} array must be one-dimensional. Got an array of shape {periods_array.shape} instead"
@@ -204,40 +218,8 @@ def _check_X_y(X, y=None):
     TypeError
         If X or y is not a supported data type.
     """
-    # Try narwhals validation first
-    try:
-        X_nw = nw.from_native(X, pass_through=True)
-        if not (
-            hasattr(X_nw, "to_numpy")
-            or hasattr(X_nw, "shape")
-            or isinstance(X, np.ndarray)
-        ):
-            raise TypeError("X should be a dataframe, series, or array-like object")
-    except Exception:
-        # Fallback validation
-        import pandas as pd
-
-        valid_types = (np.ndarray, pd.DataFrame, pd.Series)
-        if not isinstance(X, valid_types) and not hasattr(X, "__array__"):
-            raise TypeError(
-                "X should be a numpy array, dataframe, series, or array-like object"
-            )
-
-    if y is not None:
-        try:
-            y_nw = nw.from_native(y, pass_through=True)
-            if not (
-                hasattr(y_nw, "to_numpy")
-                or hasattr(y_nw, "shape")
-                or isinstance(y, np.ndarray)
-            ):
-                raise TypeError("y should be a dataframe, series, or array-like object")
-        except Exception:
-            # Fallback validation
-            import pandas as pd
-
-            valid_types = (np.ndarray, pd.DataFrame, pd.Series)
-            if not isinstance(y, valid_types) and not hasattr(y, "__array__"):
-                raise TypeError(
-                    "y should be a numpy array, dataframe, series, or array-like object"
-                )
+    if not _is_valid_data_type(X, "X"):
+        raise TypeError("X should be a dataframe, series, or array-like object")
+    
+    if y is not None and not _is_valid_data_type(y, "y"):
+        raise TypeError("y should be a dataframe, series, or array-like object")

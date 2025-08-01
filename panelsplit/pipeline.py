@@ -179,6 +179,10 @@ def _make_method(method_name, fit=True):
             # Use 'transform' for intermediate steps and the provided method for the final step.
             method = "transform" if not_final_step else method_name
             if fit:
+                # Initialize fitted_steps_ if not already done (for dynamic methods)
+                if not hasattr(self, 'fitted_steps_'):
+                    self.fitted_steps_ = {}
+                    
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
@@ -194,6 +198,12 @@ def _make_method(method_name, fit=True):
 
                 self.fitted_steps_[name] = fitted_model
             else:
+                # Check if pipeline has been fitted
+                if not hasattr(self, 'fitted_steps_'):
+                    from sklearn.exceptions import NotFittedError
+                    raise NotFittedError(f"This {type(self).__name__} instance is not fitted yet. "
+                                       "Call 'fit' with appropriate arguments before using this estimator.")
+                
                 fitted_model = self.fitted_steps_.get(name)
                 if fitted_model is None:
                     continue
@@ -291,7 +301,7 @@ class SequentialCVPipeline(BaseEstimator):
                 raise ValueError("Each step must be a tuple of (name, transformer, cv)")
         self.steps = steps
         self.verbose = verbose
-        self.fitted_steps_ = {}
+        # Don't initialize fitted_steps_ until after fitting - sklearn convention
         self._inject_dynamic_methods()
 
     def __getitem__(self, key):
@@ -331,9 +341,9 @@ class SequentialCVPipeline(BaseEstimator):
 
             # Use narwhals for dataframe-agnostic operations
             X_nw = nw.from_native(X, pass_through=True)
-            from .application import _safe_positional_indexing, _safe_to_native
+            from .application import _safe_indexing
 
-            return _safe_to_native(_safe_positional_indexing(X_nw, row_indices))
+            return _safe_indexing(X_nw, row_indices, to_native=True)
         except Exception:
             # Fallback for non-narwhals compatible data
             return (
@@ -534,6 +544,8 @@ class SequentialCVPipeline(BaseEstimator):
             Transformed output after applying all pipeline steps.
         """
         _check_X_y(X, y)
+        # Initialize fitted_steps_ only when fitting begins (sklearn convention)
+        self.fitted_steps_ = {}
         X_current = X
         total_steps = len(self.steps)
         for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
