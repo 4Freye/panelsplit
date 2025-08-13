@@ -24,7 +24,7 @@ setup(
         "matplotlib",  # for plotting
         "joblib",  # for parallel computing
         "numpy",  # for numerical operations
-        "narwhals>=1.43.1",  # for dataframe-agnostic operations
+        "narwhals>=2.0.0",  # for dataframe-agnostic operations
     ],
     # README file content
     long_description=long_description,

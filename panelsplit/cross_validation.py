@@ -102,7 +102,9 @@ class PanelSplit:
         if unique_periods is None:
             periods_nw = nw.from_native(periods, pass_through=True)
             if hasattr(periods_nw, "unique"):
-                unique_vals = _to_numpy_array(periods_nw.unique().sort())
+                unique_result = periods_nw.unique()
+                unique_array = _to_numpy_array(unique_result)
+                unique_vals = np.sort(unique_array)
             else:
                 unique_vals = np.unique(periods)
             unique_periods = unique_vals

@@ -1,5 +1,12 @@
 import narwhals as nw
 from narwhals.typing import IntoDataFrame, IntoSeries
+from narwhals.dependencies import (
+    is_numpy_array,
+    is_pandas_dataframe,
+    is_pandas_series,
+    is_pandas_like_dataframe,
+    is_pandas_like_series,
+)
 import numpy as np
 import warnings
 from sklearn.utils.validation import check_is_fitted
@@ -17,24 +24,35 @@ except ImportError:
 
 
 def _to_numpy_array(data):
-    """Convert any data structure to numpy array."""
-    return data.to_numpy() if hasattr(data, "to_numpy") else np.array(data)
+    """Convert any data structure to numpy array using narwhals.""" 
+    if is_numpy_array(data):
+        return data
+    
+    # Use narwhals to handle conversion
+    try:
+        data_nw = nw.from_native(data, pass_through=True)
+        if hasattr(data_nw, "to_numpy"):
+            return data_nw.to_numpy()
+    except Exception:
+        pass
+    
+    # Final fallback
+    return np.array(data)
 
 
 def _is_valid_data_type(data, data_name="data"):
-    """Unified data type validation for narwhals compatibility."""
+    """Unified data type validation leveraging narwhals dependencies."""
+    # Direct numpy array check
+    if is_numpy_array(data):
+        return True
+    
+    # Narwhals-compatible check
     try:
         data_nw = nw.from_native(data, pass_through=True)
-        return (
-            hasattr(data_nw, "to_numpy")
-            or hasattr(data_nw, "shape")
-            or isinstance(data, np.ndarray)
-        )
+        return hasattr(data_nw, "to_numpy") or hasattr(data_nw, "shape")
     except Exception:
-        import pandas as pd
-
-        valid_types = (np.ndarray, pd.DataFrame, pd.Series)
-        return isinstance(data, valid_types) or hasattr(data, "__array__")
+        # Final fallback for array-like objects
+        return hasattr(data, "__array__") or hasattr(data, "__iter__")
 
 
 __pdoc__ = {
@@ -55,39 +73,38 @@ def get_index_or_col_from_df(df, name):
         df_nw = nw.from_native(df, pass_through=True)
 
         # Check if it's a column
-        if hasattr(df_nw, "columns") and name in df_nw.columns:
-            # Use get_column instead of select().to_series()
-            column = df_nw.get_column(name)
-            return (
-                nw.to_native(column) if hasattr(column, "_compliant_series") else column
-            )
-
-        # For index operations, we still need pandas-specific logic as narwhals doesn't support index access
-        # This is a limitation but necessary for backward compatibility
+        col_exists = hasattr(df_nw, "columns") and name in df_nw.columns
+        
+        # For index operations, we need pandas-specific logic as narwhals doesn't support index access
+        index_exists = False
+        is_multi = False
         if _PANDAS_AVAILABLE and hasattr(df, "index"):
             # Check if the DataFrame's index is a MultiIndex.
             is_multi = hasattr(df.index, "names") and len(df.index.names) > 1
-
             # Check for existence in the index.
             index_names = df.index.names if is_multi else [df.index.name]
             index_exists = name in index_names
 
-            # Check for existence in columns.
-            col_exists = hasattr(df, "columns") and name in df.columns
+        # When the name is found in both the index and the columns, warn and default to the index.
+        if col_exists and index_exists:
+            msg = (
+                f"'{name}' is found in both the DataFrame's "
+                f"{'MultiIndex levels' if is_multi else 'index'} and its columns. "
+                "Defaulting to the index."
+            )
+            warnings.warn(msg)
+            return df.index.get_level_values(name) if is_multi else df.index
 
-            # When the name is found in both the index and the columns, warn and default to the index.
-            if col_exists and index_exists:
-                msg = (
-                    f"'{name}' is found in both the DataFrame's "
-                    f"{'MultiIndex levels' if is_multi else 'index'} and its columns. "
-                    "Defaulting to the index."
-                )
-                warnings.warn(msg)
-                return df.index.get_level_values(name) if is_multi else df.index
-
-            # When the name is only in the index, return the index values.
-            elif index_exists:
-                return df.index.get_level_values(name) if is_multi else df.index
+        # When the name is only in the index, return the index values.
+        elif index_exists:
+            return df.index.get_level_values(name) if is_multi else df.index
+        
+        # When the name is only in columns, return the column
+        elif col_exists:
+            column = df_nw.get_column(name)
+            return (
+                nw.to_native(column) if hasattr(column, "_compliant_series") else column
+            )
 
         # If the name is not found, raise an error.
         raise KeyError(
@@ -149,7 +166,7 @@ def check_periods(periods, obj_name="periods"):
         # Fallback to pandas-specific logic for compatibility
         import pandas as pd
 
-        if isinstance(periods, pd.Series):
+        if is_pandas_series(periods):
             return periods
         elif hasattr(periods, "names") and len(getattr(periods, "names", [])) > 1:
             raise ValueError(
@@ -178,11 +195,13 @@ def check_labels(labels):
         pass
 
     # Fallback to check specific types
-    import pandas as pd
-
-    if not isinstance(
-        labels, (pd.Series, pd.DataFrame, pd.Index, np.ndarray)
-    ) and not hasattr(labels, "__array__"):
+    if not (
+        is_pandas_series(labels) or 
+        is_pandas_dataframe(labels) or 
+        is_numpy_array(labels) or
+        (hasattr(labels, "index") and hasattr(labels, "names")) or  # pandas Index check
+        hasattr(labels, "__array__")
+    ):
         raise TypeError(
             f"labels object type {type(labels)} not supported. labels must be a Series, DataFrame, Index, or array-like object"
         )
@@ -200,10 +219,27 @@ def check_fitted_estimators(fitted_estimators):
     for estimator in fitted_estimators:
         try:
             check_is_fitted(estimator)
-        except NotFittedError as exc:
+        except NotFittedError:
             print(
-                f"One or more of the estimators haven't been fitted yet. Please fit all estimators before using cross_val_predict."
+                "One or more of the estimators haven't been fitted yet. Please fit all estimators before using cross_val_predict."
             )
+
+
+def _handle_data_input(data):
+    """Handle input data with narwhals-first approach."""
+    # Quick numpy check
+    if is_numpy_array(data):
+        return data, "numpy"
+    
+    # Try narwhals conversion
+    try:
+        data_nw = nw.from_native(data, pass_through=True)
+        return data_nw, "narwhals"
+    except Exception:
+        # For unsupported types, try to make array-like
+        if hasattr(data, "__array__"):
+            return np.asarray(data), "numpy"
+        raise TypeError(f"Unsupported data type: {type(data)}")
 
 
 def _check_X_y(X, y=None):

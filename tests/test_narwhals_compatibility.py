@@ -509,6 +509,80 @@ class TestNarwhalsCompatibility(unittest.TestCase):
             _call_method_with_correct_args(estimator, "score", X, None)
         self.assertIn("requires y parameter but y is None", str(cm.exception))
 
+    def test_multiindex_integration(self):
+        """Test PanelSplit with pandas MultiIndex structures."""
+        from panelsplit.utils.validation import get_index_or_col_from_df
+        
+        # Create MultiIndex data
+        entities = ['A', 'A', 'A', 'B', 'B', 'B', 'C', 'C', 'C']
+        periods = [1, 2, 3, 1, 2, 3, 1, 2, 3]
+        
+        index = pd.MultiIndex.from_arrays([entities, periods], names=['entity', 'period'])
+        
+        data = {
+            'feature1': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            'feature2': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0],
+            'target': [11.0, 22.0, 33.0, 44.0, 55.0, 66.0, 77.0, 88.0, 99.0]
+        }
+        
+        df = pd.DataFrame(data, index=index)
+        
+        # Test extracting index levels
+        periods_extracted = get_index_or_col_from_df(df, 'period')
+        entities_extracted = get_index_or_col_from_df(df, 'entity')
+        
+        self.assertIsInstance(periods_extracted, pd.Index)
+        self.assertIsInstance(entities_extracted, pd.Index)
+        self.assertEqual(len(periods_extracted), 9)
+        self.assertEqual(len(entities_extracted), 9)
+        
+        # Test PanelSplit with MultiIndex periods
+        X = df[['feature1', 'feature2']]
+        y = df['target']
+        
+        # Test with period level
+        ps_periods = PanelSplit(periods=periods_extracted, n_splits=2, test_size=1)
+        splits_periods = list(ps_periods.split(X, y))
+        
+        self.assertEqual(len(splits_periods), 2)
+        for train_idx, test_idx in splits_periods:
+            self.assertTrue(len(train_idx) > 0)
+            self.assertTrue(len(test_idx) > 0)
+        
+        # Test with entity level  
+        ps_entities = PanelSplit(periods=entities_extracted, n_splits=2, test_size=1)
+        splits_entities = list(ps_entities.split(X, y))
+        
+        self.assertEqual(len(splits_entities), 2)
+        
+        # Test cross-validation with MultiIndex
+        preds, models = cross_val_fit_predict(
+            RandomForestRegressor(n_estimators=5, random_state=42), 
+            X, y, ps_periods
+        )
+        
+        self.assertIsInstance(preds, np.ndarray)
+        self.assertEqual(len(preds), 6)  # Should have predictions for test sets
+        self.assertEqual(len(models), 2)  # Should have 2 fitted models
+        
+        # Test edge case: name conflict (column and index level with same name)
+        df_conflict = df.copy()
+        df_conflict['period'] = df_conflict.index.get_level_values('period') * 10
+        
+        # Should warn and default to index level
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = get_index_or_col_from_df(df_conflict, 'period')
+            
+            # Should have generated a warning
+            self.assertTrue(len(w) > 0)
+            self.assertIn("found in both", str(w[0].message))
+            
+            # Should return the index level (not the column)
+            expected_index_values = df_conflict.index.get_level_values('period')
+            np.testing.assert_array_equal(result.values, expected_index_values.values)
+
 
 if __name__ == "__main__":
     unittest.main()

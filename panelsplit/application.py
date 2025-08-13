@@ -1,6 +1,7 @@
 import numpy as np
 import narwhals as nw
 from narwhals.typing import IntoDataFrame, IntoSeries
+from narwhals.dependencies import is_numpy_array
 from sklearn.base import clone
 from joblib import Parallel, delayed
 from .utils.utils import _split_wrapper
@@ -33,14 +34,17 @@ def _safe_indexing(obj, indices=None, to_native=False):
     """
     # Handle indexing if indices provided
     if indices is not None:
-        result = obj.iloc[indices] if hasattr(obj, "iloc") else obj[indices]
+        if is_numpy_array(obj):
+            result = obj[indices]
+        elif hasattr(obj, "iloc"):
+            result = obj.iloc[indices]
+        else:
+            result = obj[indices]
     else:
         result = obj
 
-    # Handle conversion if needed
-    if to_native and (
-        hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")
-    ):
+    # Handle narwhals conversion
+    if to_native and (hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")):
         return nw.to_native(result)
     return result
 
