@@ -24,10 +24,10 @@ except ImportError:
 
 
 def _to_numpy_array(data):
-    """Convert any data structure to numpy array using narwhals.""" 
+    """Convert any data structure to numpy array using narwhals."""
     if is_numpy_array(data):
         return data
-    
+
     # Use narwhals to handle conversion
     try:
         data_nw = nw.from_native(data, pass_through=True)
@@ -35,7 +35,7 @@ def _to_numpy_array(data):
             return data_nw.to_numpy()
     except Exception:
         pass
-    
+
     # Final fallback
     return np.array(data)
 
@@ -45,7 +45,7 @@ def _is_valid_data_type(data, data_name="data"):
     # Direct numpy array check
     if is_numpy_array(data):
         return True
-    
+
     # Narwhals-compatible check
     try:
         data_nw = nw.from_native(data, pass_through=True)
@@ -74,7 +74,7 @@ def get_index_or_col_from_df(df, name):
 
         # Check if it's a column
         col_exists = hasattr(df_nw, "columns") and name in df_nw.columns
-        
+
         # For index operations, we need pandas-specific logic as narwhals doesn't support index access
         index_exists = False
         is_multi = False
@@ -98,7 +98,7 @@ def get_index_or_col_from_df(df, name):
         # When the name is only in the index, return the index values.
         elif index_exists:
             return df.index.get_level_values(name) if is_multi else df.index
-        
+
         # When the name is only in columns, return the column
         elif col_exists:
             column = df_nw.get_column(name)
@@ -196,11 +196,11 @@ def check_labels(labels):
 
     # Fallback to check specific types
     if not (
-        is_pandas_series(labels) or 
-        is_pandas_dataframe(labels) or 
-        is_numpy_array(labels) or
-        (hasattr(labels, "index") and hasattr(labels, "names")) or  # pandas Index check
-        hasattr(labels, "__array__")
+        is_pandas_series(labels)
+        or is_pandas_dataframe(labels)
+        or is_numpy_array(labels)
+        or (hasattr(labels, "index") and hasattr(labels, "names"))  # pandas Index check
+        or hasattr(labels, "__array__")
     ):
         raise TypeError(
             f"labels object type {type(labels)} not supported. labels must be a Series, DataFrame, Index, or array-like object"
@@ -230,7 +230,7 @@ def _handle_data_input(data):
     # Quick numpy check
     if is_numpy_array(data):
         return data, "numpy"
-    
+
     # Try narwhals conversion
     try:
         data_nw = nw.from_native(data, pass_through=True)

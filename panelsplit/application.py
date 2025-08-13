@@ -44,7 +44,9 @@ def _safe_indexing(obj, indices=None, to_native=False):
         result = obj
 
     # Handle narwhals conversion
-    if to_native and (hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")):
+    if to_native and (
+        hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")
+    ):
         return nw.to_native(result)
     return result
 
