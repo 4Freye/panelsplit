@@ -30,11 +30,13 @@ class TestDynamicMethodCalling(unittest.TestCase):
         model.fit(self.X, self.y)
 
         # Predict doesn't require y
-        predictions = _call_method_with_correct_args(model, 'predict', self.X)
+        predictions = _call_method_with_correct_args(model, "predict", self.X)
         self.assertEqual(len(predictions), len(self.X))
 
         # Should also work when y is provided (it will be ignored)
-        predictions_with_y = _call_method_with_correct_args(model, 'predict', self.X, self.y)
+        predictions_with_y = _call_method_with_correct_args(
+            model, "predict", self.X, self.y
+        )
         np.testing.assert_array_equal(predictions, predictions_with_y)
 
     def test_call_method_with_correct_args_score(self):
@@ -43,7 +45,7 @@ class TestDynamicMethodCalling(unittest.TestCase):
         model.fit(self.X, self.y)
 
         # Score requires y
-        score = _call_method_with_correct_args(model, 'score', self.X, self.y)
+        score = _call_method_with_correct_args(model, "score", self.X, self.y)
         self.assertIsInstance(score, (int, float))
         self.assertGreaterEqual(score, 0.0)
         self.assertLessEqual(score, 1.0)
@@ -55,7 +57,7 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
         # Score requires y, should raise ValueError when y is None
         with self.assertRaises(ValueError) as context:
-            _call_method_with_correct_args(model, 'score', self.X, None)
+            _call_method_with_correct_args(model, "score", self.X, None)
 
         self.assertIn("requires y parameter", str(context.exception))
 
@@ -65,15 +67,17 @@ class TestDynamicMethodCalling(unittest.TestCase):
         scaler.fit(self.X)
 
         # Transform doesn't require y
-        transformed = _call_method_with_correct_args(scaler, 'transform', self.X)
+        transformed = _call_method_with_correct_args(scaler, "transform", self.X)
         self.assertEqual(transformed.shape, self.X.shape)
 
     def test_pipeline_fit_score(self):
         """Test that fit_score works correctly in pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('classifier', LogisticRegression(max_iter=1000), None)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("classifier", LogisticRegression(max_iter=1000), None),
+            ]
+        )
 
         # This should work without errors (issue #59)
         score = pipeline.fit_score(self.X, self.y)
@@ -83,10 +87,12 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
     def test_pipeline_score_after_fit(self):
         """Test that score works after fitting pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('classifier', LogisticRegression(max_iter=1000), None)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("classifier", LogisticRegression(max_iter=1000), None),
+            ]
+        )
 
         # Fit first
         pipeline.fit(self.X, self.y)
@@ -99,10 +105,12 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
     def test_pipeline_predict_after_fit(self):
         """Test that predict works after fitting pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('classifier', LogisticRegression(max_iter=1000), None)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("classifier", LogisticRegression(max_iter=1000), None),
+            ]
+        )
 
         # Fit first
         pipeline.fit(self.X, self.y)
@@ -113,10 +121,12 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
     def test_pipeline_fit_predict(self):
         """Test that fit_predict works correctly in pipeline."""
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('classifier', LogisticRegression(max_iter=1000), None)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("classifier", LogisticRegression(max_iter=1000), None),
+            ]
+        )
 
         # This should work without errors
         predictions = pipeline.fit_predict(self.X, self.y)
@@ -126,10 +136,12 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that fit_score works with cross-validation splits."""
         ps = PanelSplit(periods=self.periods, n_splits=2)
 
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('classifier', LogisticRegression(max_iter=1000), ps)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("classifier", LogisticRegression(max_iter=1000), ps),
+            ]
+        )
 
         # This should work without errors (issue #59 with CV)
         # With CV, score returns an array of scores (one per fold)
@@ -141,10 +153,12 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that score works after fitting pipeline with CV."""
         ps = PanelSplit(periods=self.periods, n_splits=2)
 
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('classifier', LogisticRegression(max_iter=1000), ps)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("classifier", LogisticRegression(max_iter=1000), ps),
+            ]
+        )
 
         # Fit first
         pipeline.fit(self.X, self.y)
@@ -159,10 +173,12 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that score works with regressors."""
         y_reg = np.array([1.0, 2.0, 3.0, 4.0])
 
-        pipeline = SequentialCVPipeline([
-            ('scaler', StandardScaler(), None),
-            ('regressor', RandomForestRegressor(), None)
-        ])
+        pipeline = SequentialCVPipeline(
+            [
+                ("scaler", StandardScaler(), None),
+                ("regressor", RandomForestRegressor(), None),
+            ]
+        )
 
         # This should work without errors
         score = pipeline.fit_score(self.X, y_reg)
@@ -180,13 +196,13 @@ class TestDynamicMethodCalling(unittest.TestCase):
         model.fit(self.X, self.y)
 
         # First call should populate cache
-        _call_method_with_correct_args(model, 'predict', self.X)
-        cache_key = (type(model).__name__, 'predict')
+        _call_method_with_correct_args(model, "predict", self.X)
+        cache_key = (type(model).__name__, "predict")
         self.assertIn(cache_key, _METHOD_SIGNATURE_CACHE)
 
         # Second call should use cached value
         cached_value = _METHOD_SIGNATURE_CACHE[cache_key]
-        _call_method_with_correct_args(model, 'predict', self.X)
+        _call_method_with_correct_args(model, "predict", self.X)
         self.assertEqual(_METHOD_SIGNATURE_CACHE[cache_key], cached_value)
 
 
