@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies and generate documentation
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          uv pip install ".[dev]"  # Install package with dev dependencies
+          uv sync
           rm -rf docs  # Remove old docs directory if it exists
           python -m pdoc panelsplit -o docs --no-include-undocumented
 
