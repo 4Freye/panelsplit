@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.base import BaseEstimator, clone
 from .utils.validation import check_cv, _check_X_y
 import pandas as pd  # added import for pandas
 import copy
@@ -310,6 +310,32 @@ class SequentialCVPipeline(BaseEstimator):
         except Exception:
             return np.array([X[i] for i in indices])
 
+    def _append_indexed_output(self, output_list, test_idx, output):
+        """
+        Helper to append outputs with their corresponding indices.
+
+        Handles both scalar outputs (e.g., from score()) and array-like outputs.
+
+        Parameters
+        ----------
+        output_list : list
+            List to append (index, output) tuples to.
+        test_idx : array-like
+            Indices corresponding to the output.
+        output : scalar or array-like
+            The output to append (can be scalar or array-like).
+
+        Returns
+        -------
+        None
+            Modifies output_list in place.
+        """
+        if np.isscalar(output):
+            output_list.append((test_idx[0], output))
+        else:
+            for i, idx in enumerate(test_idx):
+                output_list.append((idx, self._subset(output, i)))
+
     def _combine(self, transformed_list):
         """
         Combine a list of transformed outputs into a single output.
@@ -422,13 +448,8 @@ class SequentialCVPipeline(BaseEstimator):
                 if return_output:
                     # Use _call_method_with_correct_args to handle methods like score that need y
                     output_trans = _call_method_with_correct_args(model_fold, method, X_test, y_test)
-                    # Pair each output with its original index.
-                    # Handle scalar outputs (like score returns a single number)
-                    if np.isscalar(output_trans):
-                        idx_trans.append((test_idx[0], output_trans))
-                    else:
-                        for i, idx in enumerate(test_idx):
-                            idx_trans.append((idx, output_trans[i]))
+                    # Pair each output with its original index
+                    self._append_indexed_output(idx_trans, test_idx, output_trans)
             if return_output:
                 output = _sort_and_combine(idx_trans)
             fitted = {"splits": folds_models}
@@ -468,12 +489,7 @@ class SequentialCVPipeline(BaseEstimator):
         predictions_with_idx = []
         for test_idx, model in fitted_model["splits"]:
             output_list = self._apply_method_to_indices(model, method_name, X, test_idx, y)
-            # Handle scalar outputs (like score returning a single number)
-            if np.isscalar(output_list):
-                predictions_with_idx.append((test_idx[0], output_list))
-            else:
-                for i, idx in enumerate(test_idx):
-                    predictions_with_idx.append((idx, self._subset(output_list, i)))
+            self._append_indexed_output(predictions_with_idx, test_idx, output_list)
         return _sort_and_combine(predictions_with_idx)
 
     def _fit(self, X, y=None):
