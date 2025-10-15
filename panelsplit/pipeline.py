@@ -101,16 +101,27 @@ def _make_method(method_name, fit=True):
         current_output = X
         total_steps = len(self.steps)
 
+        # Optimize: Move fitted state checks outside the loop
+        if fit:
+            # Initialize fitted_steps_ if not already present (before first step of fitting)
+            if not hasattr(self, 'fitted_steps_'):
+                self.fitted_steps_ = {}
+        else:
+            # Check if pipeline is fitted before using fitted_steps_ (once before loop)
+            try:
+                check_is_fitted(self)
+            except NotFittedError:
+                raise NotFittedError(
+                    "This SequentialCVPipeline instance is not fitted yet. "
+                    "Call 'fit' with appropriate arguments before using this method."
+                )
+
         for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
             t_start = time.time()
             not_final_step = total_steps != step_idx
             # Use 'transform' for intermediate steps and the provided method for the final step.
             method = 'transform' if not_final_step else method_name
             if fit:
-                # Initialize fitted_steps_ if not already present (first step of fitting)
-                if not hasattr(self, 'fitted_steps_'):
-                    self.fitted_steps_ = {}
-
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
@@ -121,15 +132,6 @@ def _make_method(method_name, fit=True):
 
                 self.fitted_steps_[name] = fitted_model
             else:
-                # Check if pipeline is fitted before using fitted_steps_
-                try:
-                    check_is_fitted(self)
-                except NotFittedError:
-                    raise NotFittedError(
-                        "This SequentialCVPipeline instance is not fitted yet. "
-                        "Call 'fit' with appropriate arguments before using this method."
-                    )
-
                 fitted_model = self.fitted_steps_.get(name)
                 if fitted_model is None:
                     continue
