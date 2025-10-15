@@ -93,10 +93,28 @@ def _make_method(method_name, fit=True):
         A method that applies the specified method to all pipeline steps.
     """
     def _method(self, X, y=None, **kwargs):
+        from sklearn.utils.validation import check_is_fitted
+        from sklearn.exceptions import NotFittedError
+
         _check_X_y(X, y)
         # Fit all steps except the final one.
         current_output = X
         total_steps = len(self.steps)
+
+        # Optimize: Move fitted state checks outside the loop
+        if fit:
+            # Initialize fitted_steps_ if not already present (before first step of fitting)
+            if not hasattr(self, 'fitted_steps_'):
+                self.fitted_steps_ = {}
+        else:
+            # Check if pipeline is fitted before using fitted_steps_ (once before loop)
+            try:
+                check_is_fitted(self)
+            except NotFittedError:
+                raise NotFittedError(
+                    "This SequentialCVPipeline instance is not fitted yet. "
+                    "Call 'fit' with appropriate arguments before using this method."
+                )
 
         for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
             t_start = time.time()
@@ -190,7 +208,8 @@ class SequentialCVPipeline(BaseEstimator):
                 raise ValueError("Each step must be a tuple of (name, transformer, cv)")
         self.steps = steps
         self.verbose = verbose
-        self.fitted_steps_ = {}
+        # Note: fitted_steps_ is NOT initialized here to comply with sklearn conventions
+        # It will be created during fit() to properly indicate fitted state
         self._inject_dynamic_methods()
 
     def __getitem__(self, key):
@@ -395,6 +414,10 @@ class SequentialCVPipeline(BaseEstimator):
             Transformed output after applying all pipeline steps.
         """
         _check_X_y(X, y)
+        # Initialize fitted_steps_ here to comply with sklearn conventions
+        # This ensures the attribute only exists after fitting
+        self.fitted_steps_ = {}
+
         X_current = X
         total_steps = len(self.steps)
         for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
@@ -403,7 +426,7 @@ class SequentialCVPipeline(BaseEstimator):
                 continue
             not_final_step = not step_idx == total_steps
             X_current, fitted_model = self._fit_method_step(transformer, X_current, y, cv, return_output=not_final_step)
-            
+
             self.fitted_steps_[name] = fitted_model
             _log_message("Step '{}' completed".format(name),
                          self.verbose, step_idx, total_steps, time.time() - 0)  # time delta omitted for brevity
