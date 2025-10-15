@@ -32,6 +32,7 @@ Documentation = "https://4freye.github.io/panelsplit/panelsplit.html"
 dev = [
     "ipykernel",
     "pytest",
+    "pdoc>=14.7.0",
 ]
 
 
