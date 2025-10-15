@@ -42,12 +42,12 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Generate API documentation with pdoc
+      - name: Install dependencies and generate documentation
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh # install uv
-          uv sync
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv pip install ".[dev]"  # Install package with dev dependencies
           rm -rf docs  # Remove old docs directory if it exists
-          uv pdoc panelsplit -o docs -d numpy --no-include-undocumented 
+          python -m pdoc panelsplit -o docs --no-include-undocumented
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
