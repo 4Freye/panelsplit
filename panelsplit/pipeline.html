@@ -1437,29 +1437,25 @@ optional cross-validation (CV).</p>
 <p>Each step is a tuple of (name, transformer, cv). If cv is provided, out-of-fold
 outputs are reassembled.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>steps</strong> (list of tuples):
-List where each tuple is (name, transformer, cv). 'name' is a string identifier,
-'transformer' is an estimator or transformer, and 'cv' is a cross-validation splitter
-or None.</li>
-<li><strong>verbose</strong> (bool, default=False):
-Whether to print verbose output during fitting and transformation.</li>
-</ul>
+<p>steps : list of tuples
+    List where each tuple is (name, transformer, cv). 'name' is a string identifier,
+    'transformer' is an estimator or transformer, and 'cv' is a cross-validation splitter
+    or None.
+verbose : bool, default=False
+    Whether to print verbose output during fitting and transformation.</p>
 
-<h6 id="attributes">Attributes</h6>
+<h2 id="attributes">Attributes</h2>
 
-<ul>
-<li><strong>steps</strong> (list):
-The list of pipeline steps.</li>
-<li><strong>verbose</strong> (bool):
-Verbosity flag.</li>
-<li><strong>fitted_steps_</strong> (dict):
-Dictionary storing fitted transformers for each step.</li>
-</ul>
+<p>steps : list
+    The list of pipeline steps.
+verbose : bool
+    Verbosity flag.
+fitted_steps_ : dict
+    Dictionary storing fitted transformers for each step.</p>
 
-<h6 id="examples">Examples</h6>
+<h2 id="examples">Examples</h2>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
@@ -1528,22 +1524,19 @@ Dictionary storing fitted transformers for each step.</li>
 
             <div class="docstring"><p>Fit the entire pipeline to the data.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like, optional):
-Target values.</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values.</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>SequentialCVPipeline</strong>: The fitted pipeline instance.</li>
-</ul>
+<p>SequentialCVPipeline
+    The fitted pipeline instance.</p>
 
-<h6 id="examples">Examples</h6>
+<h2 id="examples">Examples</h2>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -1606,20 +1599,17 @@ Target values.</li>
 <p>This method applies the transformation steps on the data,
 returning the transformed output.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like, optional):
-Target values (used during fitting).</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>array-like or pandas.DataFrame or pandas.Series</strong>: Transformed output.</li>
-</ul>
+<p>array-like or pandas.DataFrame or pandas.Series
+    Transformed output.</p>
 </div>
 
 
@@ -1667,22 +1657,19 @@ Target values (used during fitting).</li>
 <p>This method fits the pipeline on the provided data and then applies the transformation steps,
 returning the transformed output.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like, optional):
-Target values (used during fitting).</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>array-like or pandas.DataFrame or pandas.Series</strong>: Transformed output.</li>
-</ul>
+<p>array-like or pandas.DataFrame or pandas.Series
+    Transformed output.</p>
 
-<h6 id="note">Note</h6>
+<h2 id="note">Note</h2>
 
 <p>This method is dynamically injected based on the final estimator's capabilities.</p>
 </div>
@@ -1732,22 +1719,19 @@ Target values (used during fitting).</li>
 <p>This method fits the pipeline on the provided data and then applies the final estimator's
 predict method to predict the class.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like, optional):
-Target values (used during fitting).</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>array-like or pandas.DataFrame or pandas.Series</strong>: Predicted class.</li>
-</ul>
+<p>array-like or pandas.DataFrame or pandas.Series
+    Predicted class.</p>
 
-<h6 id="note">Note</h6>
+<h2 id="note">Note</h2>
 
 <p>This method is dynamically injected based on the final estimator's capabilities.</p>
 </div>
@@ -1864,24 +1848,22 @@ Target values (used during fitting).</li>
 
 <p>This method applies the final estimator's predict_proba method on the transformed data to predict class probabilities.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like):
-True target values.</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like
+    True target values.</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>float</strong>: Predicted class probability.</li>
-<li><strong>Note:</strong></li>
-<li><strong>-----</strong></li>
-<li><strong>This is a placeholder method for documentation purposes only.</strong></li>
-<li><strong>The actual method is dynamically generated based on the final estimator's capabilities.</strong></li>
-</ul>
+<p>float
+    Predicted class probability.</p>
+
+<h2 id="note">Note:</h2>
+
+<p>This is a placeholder method for documentation purposes only.
+The actual method is dynamically generated based on the final estimator's capabilities.</p>
 </div>
 
 
@@ -1929,22 +1911,19 @@ True target values.</li>
 <p>This method fits the pipeline on the provided data and then applies the final estimator's
 predict_proba method to compute class probabilities.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like, optional):
-Target values (used during fitting).</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting).</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>array-like or pandas.DataFrame or pandas.Series</strong>: Predicted class probabilities.</li>
-</ul>
+<p>array-like or pandas.DataFrame or pandas.Series
+    Predicted class probabilities.</p>
 
-<h6 id="note">Note</h6>
+<h2 id="note">Note</h2>
 
 <p>This method is dynamically injected based on the final estimator's capabilities.</p>
 </div>
@@ -1992,22 +1971,19 @@ Target values (used during fitting).</li>
 
 <p>This method applies the final estimator's score method on the transformed data to compute a performance score.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like):
-True target values.</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like
+    True target values.</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>float</strong>: Computed performance score.</li>
-</ul>
+<p>float
+    Computed performance score.</p>
 
-<h6 id="note">Note</h6>
+<h2 id="note">Note</h2>
 
 <p>This method is dynamically injected based on the final estimator's capabilities.</p>
 </div>
@@ -2057,22 +2033,19 @@ True target values.</li>
 <p>This method fits the pipeline on the provided data and then computes a performance score using the final estimator's
 score method.</p>
 
-<h6 id="parameters">Parameters</h6>
+<h2 id="parameters">Parameters</h2>
 
-<ul>
-<li><strong>X</strong> (array-like or pandas.DataFrame or pandas.Series):
-Input data.</li>
-<li><strong>y</strong> (array-like, optional):
-Target values (used during fitting and scoring).</li>
-</ul>
+<p>X : array-like or pandas.DataFrame or pandas.Series
+    Input data.
+y : array-like, optional
+    Target values (used during fitting and scoring).</p>
 
-<h6 id="returns">Returns</h6>
+<h2 id="returns">Returns</h2>
 
-<ul>
-<li><strong>float</strong>: Computed performance score.</li>
-</ul>
+<p>float
+    Computed performance score.</p>
 
-<h6 id="note">Note</h6>
+<h2 id="note">Note</h2>
 
 <p>This method is dynamically injected based on the final estimator's capabilities.</p>
 </div>
