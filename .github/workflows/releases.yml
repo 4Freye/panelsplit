@@ -35,7 +35,7 @@ jobs:
 
       # Build package using uv environment (hatch)
       - name: Build package
-        run: uv run hatch build
+        run: uv build
 
       # Publish to PyPI
       - name: Upload to PyPI
