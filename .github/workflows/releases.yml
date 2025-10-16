@@ -19,7 +19,9 @@ jobs:
 
       # Install all dev dependencies in a virtual environment
       - name: Install dev dependencies
-        run: uv sync --dev
+        run : |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            uv sync --dev
 
       # Get release notes from CHANGELOG.md
       - name: Extract changelog
