@@ -1,6 +1,6 @@
 [project]
 name = "panelsplit"
-version = "1.0.3"
+dynamic = ["version"]
 description = "A tool for panel data analysis."
 authors = [
     {name = "panelsplit developers", email = "eric.frey@bse.eu"},
@@ -48,9 +48,10 @@ requires = [
 ]
 build-backend = "hatchling.build"
 
+# Hatch versioning from Git tags
 [tool.hatch.version]
-source = "vcs"
-fallback-version = "0.0.0"
+source = "vcs"               # derive version from Git tags
+write-to = "panelsplit/_version.py"  # optional: writes version to package
 
 # Package data configuration for hatchling
 [tool.hatch.build.targets.wheel]
