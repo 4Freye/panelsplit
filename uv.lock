@@ -2703,7 +2703,6 @@ wheels = [
 
 [[package]]
 name = "panelsplit"
-version = "1.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "joblib", version = "1.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
