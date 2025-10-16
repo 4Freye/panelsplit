@@ -5,6 +5,7 @@ from .utils.validation import check_cv, _check_X_y
 import pandas as pd  # added import for pandas
 import copy
 
+
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
     """
     Log messages similar to scikit-learn's Pipeline verbose output.
@@ -31,6 +32,7 @@ def _log_message(message, verbose, step_idx, total, elapsed_time=None):
             message += " (elapsed time: %5.1fs)" % elapsed_time
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
 
+
 def _to_int_indices(indices):
     """
     Convert indices to integer indices.
@@ -49,6 +51,7 @@ def _to_int_indices(indices):
     if indices.dtype == bool:
         indices = np.where(indices)[0]
     return indices
+
 
 def _sort_and_combine(predictions_with_idx):
     """
@@ -156,6 +159,7 @@ def _call_method_with_correct_args(model, method_name, X, y=None):
     # Method doesn't have y parameter
     return method(X)
 
+
 def _make_method(method_name, fit=True):
     """
     Create a pipeline method dynamically for fitting or predicting.
@@ -172,6 +176,7 @@ def _make_method(method_name, fit=True):
     function
         A method that applies the specified method to all pipeline steps.
     """
+
     def _method(self, X, y=None, **kwargs):
         from sklearn.utils.validation import check_is_fitted
         from sklearn.exceptions import NotFittedError
@@ -184,7 +189,7 @@ def _make_method(method_name, fit=True):
         # Optimize: Move fitted state checks outside the loop
         if fit:
             # Initialize fitted_steps_ if not already present (before first step of fitting)
-            if not hasattr(self, 'fitted_steps_'):
+            if not hasattr(self, "fitted_steps_"):
                 self.fitted_steps_ = {}
         else:
             # Check if pipeline is fitted before using fitted_steps_ (once before loop)
@@ -200,14 +205,19 @@ def _make_method(method_name, fit=True):
             t_start = time.time()
             not_final_step = total_steps != step_idx
             # Use 'transform' for intermediate steps and the provided method for the final step.
-            method = 'transform' if not_final_step else method_name
+            method = "transform" if not_final_step else method_name
             if fit:
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
 
                 current_output, fitted_model = self._fit_method_step(
-                    transformer, current_output, y, cv, return_output=True, method=method
+                    transformer,
+                    current_output,
+                    y,
+                    cv,
+                    return_output=True,
+                    method=method,
                 )
 
                 self.fitted_steps_[name] = fitted_model
@@ -216,15 +226,24 @@ def _make_method(method_name, fit=True):
                 if fitted_model is None:
                     continue
                 # Pass y along for the final step (needed for methods like score)
-                current_output = self._method_step(fitted_model, method, current_output, y if not not_final_step else None)
+                current_output = self._method_step(
+                    fitted_model,
+                    method,
+                    current_output,
+                    y if not not_final_step else None,
+                )
 
-            _log_message("Step '{}' completed".format(name),
-                         self.verbose, step_idx, total_steps, time.time() - t_start)
+            _log_message(
+                "Step '{}' completed".format(name),
+                self.verbose,
+                step_idx,
+                total_steps,
+                time.time() - t_start,
+            )
 
         return current_output
 
     return _method
-
 
 
 class SequentialCVPipeline(BaseEstimator):
@@ -265,16 +284,31 @@ class SequentialCVPipeline(BaseEstimator):
     >>> print(pipeline.steps)
     [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
+
     def _inject_dynamic_methods(self):
         """Inject dynamic pipeline methods based on the final step's transformer."""
-        method_names = ['transform', "predict", "predict_proba", "predict_log_proba", "score"]
+        method_names = [
+            "transform",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "score",
+        ]
         final_transformer = self.steps[-1][1]
         for method_name in method_names:
             fit_method_name = f"fit_{method_name}"
             if hasattr(final_transformer, method_name):
                 # Attach the methods to the instance.
-                setattr(self, fit_method_name, _make_method(method_name, fit=True).__get__(self, type(self)))
-                setattr(self, method_name, _make_method(method_name, fit=False).__get__(self, type(self)))
+                setattr(
+                    self,
+                    fit_method_name,
+                    _make_method(method_name, fit=True).__get__(self, type(self)),
+                )
+                setattr(
+                    self,
+                    method_name,
+                    _make_method(method_name, fit=False).__get__(self, type(self)),
+                )
             else:
                 # Remove these methods if they exist on the instance.
                 if fit_method_name in self.__dict__:
@@ -414,7 +448,9 @@ class SequentialCVPipeline(BaseEstimator):
         output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
         return output
 
-    def _fit_method_step(self, transformer, X, y, cv, return_output=True, method='transform'):
+    def _fit_method_step(
+        self, transformer, X, y, cv, return_output=True, method="transform"
+    ):
         """
         Fit one pipeline step and optionally transform the data.
 
@@ -466,7 +502,9 @@ class SequentialCVPipeline(BaseEstimator):
                 folds_models.append((test_idx, model_fold))
                 if return_output:
                     # Use _call_method_with_correct_args to handle methods like score that need y
-                    output_trans = _call_method_with_correct_args(model_fold, method, X_test, y_test)
+                    output_trans = _call_method_with_correct_args(
+                        model_fold, method, X_test, y_test
+                    )
                     # Pair each output with its original index
                     self._append_indexed_output(idx_trans, test_idx, output_trans)
             if return_output:
@@ -507,7 +545,9 @@ class SequentialCVPipeline(BaseEstimator):
                 raise ValueError(f"Fitted model does not have a {method_name} method.")
         predictions_with_idx = []
         for test_idx, model in fitted_model["splits"]:
-            output_list = self._apply_method_to_indices(model, method_name, X, test_idx, y)
+            output_list = self._apply_method_to_indices(
+                model, method_name, X, test_idx, y
+            )
             self._append_indexed_output(predictions_with_idx, test_idx, output_list)
         return _sort_and_combine(predictions_with_idx)
 
@@ -539,11 +579,18 @@ class SequentialCVPipeline(BaseEstimator):
                 self.fitted_steps_[name] = None
                 continue
             not_final_step = not step_idx == total_steps
-            X_current, fitted_model = self._fit_method_step(transformer, X_current, y, cv, return_output=not_final_step)
+            X_current, fitted_model = self._fit_method_step(
+                transformer, X_current, y, cv, return_output=not_final_step
+            )
 
             self.fitted_steps_[name] = fitted_model
-            _log_message("Step '{}' completed".format(name),
-                         self.verbose, step_idx, total_steps, time.time() - 0)  # time delta omitted for brevity
+            _log_message(
+                "Step '{}' completed".format(name),
+                self.verbose,
+                step_idx,
+                total_steps,
+                time.time() - 0,
+            )  # time delta omitted for brevity
         return X_current
 
     def fit(self, X, y=None):
@@ -582,7 +629,7 @@ class SequentialCVPipeline(BaseEstimator):
         """
         _ = self._fit(X, y)
         return self
-    
+
     def transform(self, X):
         """
         Transform the input data using the fitted pipeline.
@@ -655,34 +702,34 @@ class SequentialCVPipeline(BaseEstimator):
         pass
 
     def fit_predict(self, X, y=None):
-       """
-       Fit the pipeline and predict target values.
-
-        This method dynamically fits the pipeline on the provided data and then applies the final estimator's
-        predict method to generate predictions.
-
-        Parameters
-        ----------
-        X : array-like or pandas.DataFrame or pandas.Series
-            Input data.
-        y : array-like, optional
-            Target values (used during fitting).
-
-        Returns
-        -------
-        array-like or pandas.DataFrame or pandas.Series
-            Predicted target values.
-
-        Note
-        ----
-        This method is dynamically injected based on the final step of the pipeline.
         """
-       pass
+        Fit the pipeline and predict target values.
+
+         This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+         predict method to generate predictions.
+
+         Parameters
+         ----------
+         X : array-like or pandas.DataFrame or pandas.Series
+             Input data.
+         y : array-like, optional
+             Target values (used during fitting).
+
+         Returns
+         -------
+         array-like or pandas.DataFrame or pandas.Series
+             Predicted target values.
+
+         Note
+         ----
+         This method is dynamically injected based on the final step of the pipeline.
+        """
+        pass
 
     def predict_proba(self, X):
         """
         Predict class probabilities using the fitted pipeline.
-        
+
         This method applies the final estimator's predict_proba method on the transformed data to predict class probabilities.
 
         Parameters
@@ -696,7 +743,7 @@ class SequentialCVPipeline(BaseEstimator):
         -------
         float
             Predicted class probability.
-        
+
         Note:
         -----
         This is a placeholder method for documentation purposes only.

@@ -13,7 +13,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from panelsplit.pipeline import SequentialCVPipeline
-from panelsplit.cross_validation import PanelSplit
 
 
 class TestCheckFittedFix(unittest.TestCase):

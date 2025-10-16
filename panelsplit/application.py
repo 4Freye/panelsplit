@@ -3,10 +3,11 @@ import pandas as pd
 from sklearn.base import clone
 from joblib import Parallel, delayed
 from .utils.utils import _split_wrapper
-from .utils.validation import check_method, check_fitted_estimators, check_cv
+from .utils.validation import check_fitted_estimators, check_cv
 from typing import List, Union
 
-def _predict_split(model, X_test: pd.DataFrame, method: str = 'predict') -> np.ndarray:
+
+def _predict_split(model, X_test: pd.DataFrame, method: str = "predict") -> np.ndarray:
     """
     Perform predictions for a single split.
 
@@ -29,9 +30,14 @@ def _predict_split(model, X_test: pd.DataFrame, method: str = 'predict') -> np.n
     return predict_func(X_test)
 
 
-def _fit_split(estimator, X: pd.DataFrame, y: pd.Series, train_indices: List[bool],
-               sample_weight: Union[pd.Series, np.ndarray] = None,
-               drop_na_in_y=False):
+def _fit_split(
+    estimator,
+    X: pd.DataFrame,
+    y: pd.Series,
+    train_indices: List[bool],
+    sample_weight: Union[pd.Series, np.ndarray] = None,
+    drop_na_in_y=False,
+):
     """
     Fit a cloned estimator on the given training indices.
 
@@ -84,9 +90,16 @@ def _prediction_order_to_original_order(indices: List[bool]) -> List[int]:
     return np.argsort(indices)
 
 
-def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv, 
-                  sample_weight: Union[pd.Series, np.ndarray] = None, n_jobs: int = 1, 
-                  progress_bar: bool = False, drop_na_in_y=False):
+def cross_val_fit(
+    estimator,
+    X: pd.DataFrame,
+    y: pd.Series,
+    cv,
+    sample_weight: Union[pd.Series, np.ndarray] = None,
+    n_jobs: int = 1,
+    progress_bar: bool = False,
+    drop_na_in_y=False,
+):
     """
     Fit the estimator using cross-validation.
 
@@ -136,15 +149,25 @@ def cross_val_fit(estimator, X: pd.DataFrame, y: pd.Series, cv,
     splits = check_cv(cv)
 
     fitted_estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_split)(estimator, X, y, train_indices, sample_weight, drop_na_in_y = drop_na_in_y)
-        for train_indices, _ in _split_wrapper(indices=splits, progress_bar=progress_bar)
+        delayed(_fit_split)(
+            estimator, X, y, train_indices, sample_weight, drop_na_in_y=drop_na_in_y
+        )
+        for train_indices, _ in _split_wrapper(
+            indices=splits, progress_bar=progress_bar
+        )
     )
-    
+
     return fitted_estimators
 
 
-def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'predict', 
-                      n_jobs: int = 1, return_train_preds: bool = False) -> np.ndarray:
+def cross_val_predict(
+    fitted_estimators,
+    X: pd.DataFrame,
+    cv,
+    method: str = "predict",
+    n_jobs: int = 1,
+    return_train_preds: bool = False,
+) -> np.ndarray:
     """
     Perform cross-validated predictions using a given predictor model.
 
@@ -157,7 +180,7 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
     cv : object or iterable
         Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
     method : str, optional
-        The method to use for prediction. It can be whatever methods are available to the estimator 
+        The method to use for prediction. It can be whatever methods are available to the estimator
         (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
     n_jobs : int, optional
         The number of jobs to run in parallel. Default is 1.
@@ -192,15 +215,24 @@ def cross_val_predict(fitted_estimators, X: pd.DataFrame, cv, method: str = 'pre
             for i, train_idx in enumerate(train_splits)
         )
 
-        return np.concatenate(test_preds, axis=0)[test_indices], np.concatenate(train_preds, axis=0)[train_indices]
+        return np.concatenate(test_preds, axis=0)[test_indices], np.concatenate(
+            train_preds, axis=0
+        )[train_indices]
     else:
         return np.concatenate(test_preds, axis=0)[test_indices]
 
 
-def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: str = 'predict',
-                            sample_weight: Union[pd.Series, np.ndarray] = None, n_jobs: int = 1,
-                            return_train_preds: bool = False,
-                            drop_na_in_y=False) -> np.ndarray:
+def cross_val_fit_predict(
+    estimator,
+    X: pd.DataFrame,
+    y: pd.Series,
+    cv,
+    method: str = "predict",
+    sample_weight: Union[pd.Series, np.ndarray] = None,
+    n_jobs: int = 1,
+    return_train_preds: bool = False,
+    drop_na_in_y=False,
+) -> np.ndarray:
     """
     Fit the estimator using cross-validation and then make predictions.
 
@@ -215,7 +247,7 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
     cv : object
         Cross-validation splitter; an object that generates train/test splits.
      method : str, optional
-        The method to use for prediction. It can be whatever methods are available to the estimator 
+        The method to use for prediction. It can be whatever methods are available to the estimator
         (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
     sample_weight : pd.Series or np.ndarray, optional
         Sample weights for the training data. Default is None.
@@ -236,7 +268,7 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
             - preds (np.ndarray): Array containing test predictions made by the model during cross-validation.
             - train_preds (np.ndarray): Array containing train predictions made by the model during cross-validation.
             - fitted_estimators (list): List containing fitted models for each split.
-   
+
     Examples
     --------
     >>> import pandas as pd
@@ -257,10 +289,14 @@ def cross_val_fit_predict(estimator, X: pd.DataFrame, y: pd.Series, cv, method: 
     (2,)
     """
 
-    fitted_estimators = cross_val_fit(estimator, X, y, cv, sample_weight, n_jobs,  drop_na_in_y = drop_na_in_y)
+    fitted_estimators = cross_val_fit(
+        estimator, X, y, cv, sample_weight, n_jobs, drop_na_in_y=drop_na_in_y
+    )
 
     if return_train_preds:
-        preds, train_preds = cross_val_predict(fitted_estimators, X, cv, method, n_jobs, return_train_preds)
+        preds, train_preds = cross_val_predict(
+            fitted_estimators, X, cv, method, n_jobs, return_train_preds
+        )
         return preds, train_preds, fitted_estimators
     else:
         preds = cross_val_predict(fitted_estimators, X, cv, method, n_jobs)

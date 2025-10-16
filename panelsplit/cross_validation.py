@@ -5,6 +5,7 @@ import numpy as np
 import warnings
 from .utils.validation import check_periods, check_labels, get_index_or_col_from_df
 
+
 class PanelSplit:
     """
     PanelSplit implements panel data cross-validation using time series splits.
@@ -38,7 +39,7 @@ class PanelSplit:
     train_test_splits : list of tuples
         A list of train/test splits for the panel data. Each tuple has the form
         (train_indices, test_indices), representing the indices for the training and testing sets
-        for that split.    
+        for that split.
 
     Notes
     -----
@@ -55,18 +56,21 @@ class PanelSplit:
         gap: int = 0,
         test_size: int = 1,
         max_train_size: int = None,
-        include_first_train_in_test : bool = False,
-        include_train_in_test : bool = False
+        include_first_train_in_test: bool = False,
+        include_train_in_test: bool = False,
     ) -> None:
         periods = check_periods(periods)
 
         if unique_periods is None:
             unique_periods = pd.Series(periods.unique()).sort_values()
         else:
-            unique_periods = check_periods(unique_periods, obj_name='unique_periods')
+            unique_periods = check_periods(unique_periods, obj_name="unique_periods")
 
         self._tss = TimeSeriesSplit(
-            n_splits=n_splits, gap=gap, test_size=test_size, max_train_size=max_train_size
+            n_splits=n_splits,
+            gap=gap,
+            test_size=test_size,
+            max_train_size=max_train_size,
         )
         indices = self._tss.split(unique_periods.reset_index(drop=True))
         self._include_train_in_test = include_train_in_test
@@ -98,13 +102,17 @@ class PanelSplit:
             (unique_train_periods, unique_test_periods) for each split.
         """
         u_periods_cv = []
-        for i, (train_index, test_index) in enumerate(indices):                    
+        for i, (train_index, test_index) in enumerate(indices):
             unique_train_periods = unique_periods.iloc[train_index].values
             unique_test_periods = unique_periods.iloc[test_index].values
             if (i == 0) & self._include_first_train_in_test:
-                unique_test_periods = np.concatenate([unique_train_periods, unique_test_periods])
+                unique_test_periods = np.concatenate(
+                    [unique_train_periods, unique_test_periods]
+                )
             elif (i > 0) & self._include_train_in_test:
-                unique_test_periods = np.concatenate([unique_train_periods, unique_test_periods])
+                unique_test_periods = np.concatenate(
+                    [unique_train_periods, unique_test_periods]
+                )
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
@@ -134,8 +142,12 @@ class PanelSplit:
                         ),
                         stacklevel=2,
                     )
-                train_indices = self._periods.isin(train_periods).values & (self._snapshots == snapshot_val)
-                test_indices = self._periods.isin(test_periods).values & (self._snapshots == snapshot_val)
+                train_indices = self._periods.isin(train_periods).values & (
+                    self._snapshots == snapshot_val
+                )
+                test_indices = self._periods.isin(test_periods).values & (
+                    self._snapshots == snapshot_val
+                )
             else:
                 train_indices = self._periods.isin(train_periods).values
                 test_indices = self._periods.isin(test_periods).values
@@ -227,7 +239,9 @@ class PanelSplit:
             The labels corresponding to the specified fold.
         """
         check_labels(labels)
-        indices = np.stack([split[fold_idx] for split in self.split()], axis=1).any(axis=1)
+        indices = np.stack([split[fold_idx] for split in self.split()], axis=1).any(
+            axis=1
+        )
 
         if isinstance(labels, (pd.Series, pd.DataFrame)):
             return labels.loc[indices].copy()
@@ -338,7 +352,11 @@ class PanelSplit:
             split_indices = np.array([split[0], split[1]]).any(axis=0)
             if period_col is not None:
                 last_period = periods.loc[split_indices].unique().max()
-                snapshots.append(_data.loc[split_indices].assign(split=i, snapshot_period=last_period))
+                snapshots.append(
+                    _data.loc[split_indices].assign(
+                        split=i, snapshot_period=last_period
+                    )
+                )
             else:
                 snapshots.append(data.loc[split_indices].assign(split=i))
         return pd.concat(snapshots)
@@ -373,9 +391,8 @@ def drop_splits(cv, y):
     Dropping split 0 as either the test or train set is either empty or contains only one unique value.
     """
     for i, (train_indices, test_indices) in enumerate(cv.split()):
-        if (
-            (len(train_indices) == 0 or len(test_indices) == 0)
-            or (y.loc[train_indices].nunique() == 1 or y.loc[test_indices].nunique() == 1)
+        if (len(train_indices) == 0 or len(test_indices) == 0) or (
+            y.loc[train_indices].nunique() == 1 or y.loc[test_indices].nunique() == 1
         ):
             cv.n_splits -= 1
             cv.train_test_splits.pop(i)
