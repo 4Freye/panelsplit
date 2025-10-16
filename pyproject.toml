@@ -38,6 +38,7 @@ dev = [
     "pip>=25.0.1",
     "build>=1.2.2.post1",
     "twine>=6.1.0",
+    "hatchling>=1.27.0",
 ]
 
 
