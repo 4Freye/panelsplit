@@ -18,9 +18,10 @@ jobs:
           python-version: 3.12
 
       # Install all dev dependencies in a virtual environment
-      - name: Install dev dependencies
-        run : |
+      - name: Install uv and dev dependencies
+        run: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
             uv sync --dev
 
       # Get release notes from CHANGELOG.md
