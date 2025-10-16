@@ -14,7 +14,7 @@ repos:
         args: ["--maxkb=65536"]
       - id: no-commit-to-branch
         args: ["--branch", "main"]
-  
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.0
     hooks:
