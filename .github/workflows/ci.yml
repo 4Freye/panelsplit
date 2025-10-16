@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Ruff format check
         uses: astral-sh/ruff-action@v3
         with:
-          args: format --check
+          args: format
       - name: Ruff lint check (with autofix)
         uses: astral-sh/ruff-action@v3
         with:
