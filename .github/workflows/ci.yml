@@ -69,7 +69,7 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           uv sync
           rm -rf docs  # Remove old docs directory if it exists
-          uv run pdoc panelsplit -o docs --no-include-undocumented
+          uv run pdoc panelsplit -o docs --no-include-undocumented --docformat numpy
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
