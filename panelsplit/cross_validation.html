@@ -851,38 +851,42 @@
 
             <div class="docstring"><p>PanelSplit implements panel data cross-validation using time series splits.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>periods : pd.Series, pd.Index, or np.ndarray
-    A collection of periods for each observation.
-unique_periods : array-like, optional
-    An array-like object containing unique periods. If None, the unique periods will be
-    computed from <code>periods</code>. Default is None.
-snapshots : pd.Series, optional
-    A Series defining the snapshot for each observation. Default is None.
-n_splits : int, optional
-    Number of splits for TimeSeriesSplit. Default is 2.
-gap : int, optional
-    Gap between the training and testing sets. Default is 0.
-test_size : int, optional
-    Size of the test set. Default is 1.
-max_train_size : int, optional
-    Maximum size for a single training set. Default is None.
-include_first_train_in_test : bool, optional
-    Whether to include the first split's training set in the test set. Useful in the context of transforming data. Default is False.
-include_train_in_test : bool, optional
-    Whether to include the all splits' training sets in their respective test sets. Useful in the context of transforming data that has snapshots. Default is False. If set to True, overrides include_first_train_in_test.</p>
+<ul>
+<li><strong>periods</strong> (pd.Series, pd.Index, or np.ndarray):
+A collection of periods for each observation.</li>
+<li><strong>unique_periods</strong> (array-like, optional):
+An array-like object containing unique periods. If None, the unique periods will be
+computed from <code>periods</code>. Default is None.</li>
+<li><strong>snapshots</strong> (pd.Series, optional):
+A Series defining the snapshot for each observation. Default is None.</li>
+<li><strong>n_splits</strong> (int, optional):
+Number of splits for TimeSeriesSplit. Default is 2.</li>
+<li><strong>gap</strong> (int, optional):
+Gap between the training and testing sets. Default is 0.</li>
+<li><strong>test_size</strong> (int, optional):
+Size of the test set. Default is 1.</li>
+<li><strong>max_train_size</strong> (int, optional):
+Maximum size for a single training set. Default is None.</li>
+<li><strong>include_first_train_in_test</strong> (bool, optional):
+Whether to include the first split's training set in the test set. Useful in the context of transforming data. Default is False.</li>
+<li><strong>include_train_in_test</strong> (bool, optional):
+Whether to include the all splits' training sets in their respective test sets. Useful in the context of transforming data that has snapshots. Default is False. If set to True, overrides include_first_train_in_test.</li>
+</ul>
 
-<h2 id="attributes">Attributes</h2>
+<h6 id="attributes">Attributes</h6>
 
-<p>n_splits : int
-    The number of splits for cross-validation.
-train_test_splits : list of tuples
-    A list of train/test splits for the panel data. Each tuple has the form
-    (train_indices, test_indices), representing the indices for the training and testing sets
-    for that split.</p>
+<ul>
+<li><strong>n_splits</strong> (int):
+The number of splits for cross-validation.</li>
+<li><strong>train_test_splits</strong> (list of tuples):
+A list of train/test splits for the panel data. Each tuple has the form
+(train_indices, test_indices), representing the indices for the training and testing sets
+for that split.</li>
+</ul>
 
-<h2 id="notes">Notes</h2>
+<h6 id="notes">Notes</h6>
 
 <p>This class is designed for panel data where cross-validation splits must respect
 temporal ordering.</p>
@@ -942,22 +946,25 @@ temporal ordering.</p>
 
             <div class="docstring"><p>Generate training and testing indices for each cross-validation split.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>X : object, optional
-    Ignored; included for compatibility.
-y : object, optional
-    Ignored; included for compatibility.
-groups : object, optional
-    Ignored; included for compatibility.</p>
+<ul>
+<li><strong>X</strong> (object, optional):
+Ignored; included for compatibility.</li>
+<li><strong>y</strong> (object, optional):
+Ignored; included for compatibility.</li>
+<li><strong>groups</strong> (object, optional):
+Ignored; included for compatibility.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>list of tuple of np.ndarray
-    A list of tuples, where each tuple contains:
-    (train_indices, test_indices) as boolean arrays.</p>
+<ul>
+<li><strong>list of tuple of np.ndarray</strong>: A list of tuples, where each tuple contains:
+(train_indices, test_indices) as boolean arrays.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">period</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
@@ -1023,21 +1030,24 @@ groups : object, optional
 
             <div class="docstring"><p>Get the number of splits.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>X : object, optional
-    Ignored; included for compatibility.
-y : object, optional
-    Ignored; included for compatibility.
-groups : object, optional
-    Ignored; included for compatibility.</p>
+<ul>
+<li><strong>X</strong> (object, optional):
+Ignored; included for compatibility.</li>
+<li><strong>y</strong> (object, optional):
+Ignored; included for compatibility.</li>
+<li><strong>groups</strong> (object, optional):
+Ignored; included for compatibility.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>int
-    The number of splits.</p>
+<ul>
+<li><strong>int</strong>: The number of splits.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -1094,17 +1104,20 @@ groups : object, optional
 
             <div class="docstring"><p>Generate training set labels based on the provided labels.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>labels : pd.Index, pd.Series, pd.DataFrame, or np.ndarray
-    The labels corresponding to the observations.</p>
+<ul>
+<li><strong>labels</strong> (pd.Index, pd.Series, pd.DataFrame, or np.ndarray):
+The labels corresponding to the observations.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>Same type as <code>labels</code>
-    The labels for the training set.</p>
+<ul>
+<li><strong>Same type as <code>labels</code></strong>: The labels for the training set.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -1163,17 +1176,20 @@ groups : object, optional
 
             <div class="docstring"><p>Generate testing set labels based on the provided labels.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>labels : pd.Index, pd.Series, pd.DataFrame, or np.ndarray
-    The labels corresponding to the observations.</p>
+<ul>
+<li><strong>labels</strong> (pd.Index, pd.Series, pd.DataFrame, or np.ndarray):
+The labels corresponding to the observations.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>Same type as <code>labels</code>
-    The labels for the testing set.</p>
+<ul>
+<li><strong>Same type as <code>labels</code></strong>: The labels for the testing set.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -1259,22 +1275,25 @@ groups : object, optional
 
             <div class="docstring"><p>Generate snapshots for each cross-validation split.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>data : pd.DataFrame
-    The DataFrame from which snapshots are generated.
-period_col : str, optional
-    The column name (or index) in <code>data</code> to derive the snapshot period. If both an index
-    and a column in <code>data</code> are named <code>period_col</code>, the index is used by default.</p>
+<ul>
+<li><strong>data</strong> (pd.DataFrame):
+The DataFrame from which snapshots are generated.</li>
+<li><strong>period_col</strong> (str, optional):
+The column name (or index) in <code>data</code> to derive the snapshot period. If both an index
+and a column in <code>data</code> are named <code>period_col</code>, the index is used by default.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>pd.DataFrame
-    A concatenated DataFrame containing snapshots for each split. Each snapshot includes
-    a 'split' column (indicating the split number) and, if <code>period_col</code> is provided, a
-    'snapshot_period' column.</p>
+<ul>
+<li><strong>pd.DataFrame</strong>: A concatenated DataFrame containing snapshots for each split. Each snapshot includes
+a 'split' column (indicating the split number) and, if <code>period_col</code> is provided, a
+'snapshot_period' column.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -1352,20 +1371,23 @@ period_col : str, optional
 
             <div class="docstring"><p>Drop cross-validation splits if either the training or testing set is empty or contains only one unique value.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>cv : list
-    A list of tuples, where each tuple contains (train_indices, test_indices) as boolean arrays.
-    The object is expected to have an attribute <code>n_splits</code> (an integer) and support the <code>pop</code> method.
-y : pd.Series
-    Series of shape (n_samples,) containing target values.</p>
+<ul>
+<li><strong>cv</strong> (list):
+A list of tuples, where each tuple contains (train_indices, test_indices) as boolean arrays.
+The object is expected to have an attribute <code>n_splits</code> (an integer) and support the <code>pop</code> method.</li>
+<li><strong>y</strong> (pd.Series):
+Series of shape (n_samples,) containing target values.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>list
-    The modified list of splits with the problematic splits removed.</p>
+<ul>
+<li><strong>list</strong>: The modified list of splits with the problematic splits removed.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>

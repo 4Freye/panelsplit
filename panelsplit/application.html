@@ -451,32 +451,35 @@
 
             <div class="docstring"><p>Fit the estimator using cross-validation.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>estimator : object
-    The machine learning model to be fitted.
-X : pd.DataFrame
-    The input features for the estimator.
-y : pd.Series
-    The target variable for the estimator.
-cv : object or iterable
-    Cross-validation splitter; either an object that generates train/test splits (e.g., an instance of PanelSplit)
-    or an iterable of splits.
-sample_weight : pd.Series or np.ndarray, optional
-    Sample weights for the training data. Default is None.
-n_jobs : int, optional
-    The number of jobs to run in parallel. Default is 1.
-progress_bar : bool, optional
-    Whether to display a progress bar. Default is False.
-drop_na_in_y : bool, optional
-    Whether to drop observations where y is na. Default is False.</p>
+<ul>
+<li><strong>estimator</strong> (object):
+The machine learning model to be fitted.</li>
+<li><strong>X</strong> (pd.DataFrame):
+The input features for the estimator.</li>
+<li><strong>y</strong> (pd.Series):
+The target variable for the estimator.</li>
+<li><strong>cv</strong> (object or iterable):
+Cross-validation splitter; either an object that generates train/test splits (e.g., an instance of PanelSplit)
+or an iterable of splits.</li>
+<li><strong>sample_weight</strong> (pd.Series or np.ndarray, optional):
+Sample weights for the training data. Default is None.</li>
+<li><strong>n_jobs</strong> (int, optional):
+The number of jobs to run in parallel. Default is 1.</li>
+<li><strong>progress_bar</strong> (bool, optional):
+Whether to display a progress bar. Default is False.</li>
+<li><strong>drop_na_in_y</strong> (bool, optional):
+Whether to drop observations where y is na. Default is False.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>list
-    List containing fitted models for each split.</p>
+<ul>
+<li><strong>list</strong>: List containing fitted models for each split.</li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -576,29 +579,33 @@ drop_na_in_y : bool, optional
 
             <div class="docstring"><p>Perform cross-validated predictions using a given predictor model.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>fitted_estimators : list
-    List of fitted machine learning models used for prediction.
-X : pd.DataFrame
-    The input features for prediction.
-cv : object or iterable
-    Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
-method : str, optional
-    The method to use for prediction. It can be whatever methods are available to the estimator
-    (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
-n_jobs : int, optional
-    The number of jobs to run in parallel. Default is 1.
-return_train_preds : bool, optional
-    If True, return predictions for the training set as well. Default is False.</p>
+<ul>
+<li><strong>fitted_estimators</strong> (list):
+List of fitted machine learning models used for prediction.</li>
+<li><strong>X</strong> (pd.DataFrame):
+The input features for prediction.</li>
+<li><strong>cv</strong> (object or iterable):
+Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.</li>
+<li><strong>method</strong> (str, optional):
+The method to use for prediction. It can be whatever methods are available to the estimator
+(e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.</li>
+<li><strong>n_jobs</strong> (int, optional):
+The number of jobs to run in parallel. Default is 1.</li>
+<li><strong>return_train_preds</strong> (bool, optional):
+If True, return predictions for the training set as well. Default is False.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>test_preds : np.ndarray
-    Array containing test predictions made by the model during cross-validation.
-train_preds : np.ndarray, optional
-    Array containing train predictions made by the model during cross-validation.
-    Returned only if <code>return_train_preds</code> is True.</p>
+<ul>
+<li><strong>test_preds</strong> (np.ndarray):
+Array containing test predictions made by the model during cross-validation.</li>
+<li><strong>train_preds</strong> (np.ndarray, optional):
+Array containing train predictions made by the model during cross-validation.
+Returned only if <code>return_train_preds</code> is True.</li>
+</ul>
 </div>
 
 
@@ -698,40 +705,45 @@ train_preds : np.ndarray, optional
 
             <div class="docstring"><p>Fit the estimator using cross-validation and then make predictions.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>estimator : object
-    The machine learning model to be fitted.
-X : pd.DataFrame
-    The input features for the estimator.
-y : pd.Series
-    The target variable for the estimator.
-cv : object
-    Cross-validation splitter; an object that generates train/test splits.
- method : str, optional
-    The method to use for prediction. It can be whatever methods are available to the estimator
-    (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
-sample_weight : pd.Series or np.ndarray, optional
-    Sample weights for the training data. Default is None.
-n_jobs : int, optional
-    The number of jobs to run in parallel. Default is 1.
-return_train_preds : bool, optional
-    If True, return predictions for the training set as well. Default is False.
-drop_na_in_y : bool, optional
-    Whether to drop observations where y is na. Default is False.</p>
+<ul>
+<li><strong>estimator</strong> (object):
+The machine learning model to be fitted.</li>
+<li><strong>X</strong> (pd.DataFrame):
+The input features for the estimator.</li>
+<li><strong>y</strong> (pd.Series):
+The target variable for the estimator.</li>
+<li><strong>cv</strong> (object):
+Cross-validation splitter; an object that generates train/test splits.
+method : str, optional
+   The method to use for prediction. It can be whatever methods are available to the estimator
+   (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.</li>
+<li><strong>sample_weight</strong> (pd.Series or np.ndarray, optional):
+Sample weights for the training data. Default is None.</li>
+<li><strong>n_jobs</strong> (int, optional):
+The number of jobs to run in parallel. Default is 1.</li>
+<li><strong>return_train_preds</strong> (bool, optional):
+If True, return predictions for the training set as well. Default is False.</li>
+<li><strong>drop_na_in_y</strong> (bool, optional):
+Whether to drop observations where y is na. Default is False.</li>
+</ul>
 
-<h2 id="returns">Returns</h2>
+<h6 id="returns">Returns</h6>
 
-<p>tuple
-    If <code>return_train_preds</code> is False, returns a tuple of:
-        - preds (np.ndarray): Array containing predictions made by the model during cross-validation.
-        - fitted_estimators (list): List containing fitted models for each split.
-    If <code>return_train_preds</code> is True, returns a tuple of:
-        - preds (np.ndarray): Array containing test predictions made by the model during cross-validation.
-        - train_preds (np.ndarray): Array containing train predictions made by the model during cross-validation.
-        - fitted_estimators (list): List containing fitted models for each split.</p>
+<ul>
+<li><strong>tuple</strong>: If <code>return_train_preds</code> is False, returns a tuple of:
+<ul>
+<li>preds (np.ndarray): Array containing predictions made by the model during cross-validation.</li>
+<li>fitted_estimators (list): List containing fitted models for each split.
+If <code>return_train_preds</code> is True, returns a tuple of:</li>
+<li>preds (np.ndarray): Array containing test predictions made by the model during cross-validation.</li>
+<li>train_preds (np.ndarray): Array containing train predictions made by the model during cross-validation.</li>
+<li>fitted_estimators (list): List containing fitted models for each split.</li>
+</ul></li>
+</ul>
 
-<h2 id="examples">Examples</h2>
+<h6 id="examples">Examples</h6>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
