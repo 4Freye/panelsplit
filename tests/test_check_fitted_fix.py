@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests for the check_is_fitted fix in SequentialCVPipeline.
+Tests for the check_is_fitted fix in SequentialCVPipeline (Issue #54).
 
 This test ensures that the pipeline properly implements sklearn's
 fitted state detection conventions.
@@ -13,11 +13,10 @@ from sklearn.exceptions import NotFittedError
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from panelsplit.pipeline import SequentialCVPipeline
-from panelsplit.cross_validation import PanelSplit
 
 
 class TestCheckFittedFix(unittest.TestCase):
-    """Test cases for the check_is_fitted fix."""
+    """Test cases for the check_is_fitted fix (Issue #54)."""
 
     def setUp(self):
         """Set up test data."""

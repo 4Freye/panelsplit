@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
-import time
-from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.base import BaseEstimator, TransformerMixin
 from panelsplit.pipeline import SequentialCVPipeline
 
 

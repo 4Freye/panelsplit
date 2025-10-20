@@ -14,7 +14,6 @@ class TestPlot(unittest.TestCase):
 
     def test_plot(self):
         plot_splits(self.panel_split, show=False)
-        plot_splits(self.panel_split, show=True)
 
 
 if __name__ == "__main__":

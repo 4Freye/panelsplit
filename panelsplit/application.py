@@ -1,17 +1,18 @@
-import numpy as np
+from typing import List, Union
+
 import narwhals as nw
-from narwhals.typing import IntoDataFrame, IntoSeries
-from narwhals.dependencies import is_numpy_array
-from sklearn.base import clone
+import numpy as np
 from joblib import Parallel, delayed
+from narwhals.dependencies import is_numpy_array
+from narwhals.typing import IntoDataFrame, IntoSeries
+from sklearn.base import clone
+
 from .utils.utils import _split_wrapper
 from .utils.validation import (
-    check_method,
-    check_fitted_estimators,
-    check_cv,
     _to_numpy_array,
+    check_cv,
+    check_fitted_estimators,
 )
-from typing import List, Union
 
 
 def _safe_indexing(obj, indices=None, to_native=False):

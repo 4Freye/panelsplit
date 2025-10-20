@@ -78,6 +78,7 @@ class PanelSplit:
         A list of train/test splits for the panel data. Each tuple has the form
         (train_indices, test_indices), representing the indices for the training and testing sets
         for that split.
+        for that split.
 
     Notes
     -----
@@ -109,6 +110,7 @@ class PanelSplit:
                 unique_vals = np.unique(periods)
             unique_periods = unique_vals
         else:
+            unique_periods = check_periods(unique_periods, obj_name="unique_periods")
             unique_periods = check_periods(unique_periods, obj_name="unique_periods")
 
         self._tss = TimeSeriesSplit(
@@ -157,7 +159,13 @@ class PanelSplit:
                 unique_test_periods = np.concatenate(
                     [unique_train_periods, unique_test_periods]
                 )
+                unique_test_periods = np.concatenate(
+                    [unique_train_periods, unique_test_periods]
+                )
             elif (i > 0) & self._include_train_in_test:
+                unique_test_periods = np.concatenate(
+                    [unique_train_periods, unique_test_periods]
+                )
                 unique_test_periods = np.concatenate(
                     [unique_train_periods, unique_test_periods]
                 )

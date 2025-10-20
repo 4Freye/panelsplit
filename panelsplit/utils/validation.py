@@ -1,17 +1,15 @@
+import warnings
+from collections.abc import Iterable
+
 import narwhals as nw
-from narwhals.typing import IntoDataFrame, IntoSeries
+import numpy as np
 from narwhals.dependencies import (
     is_numpy_array,
     is_pandas_dataframe,
     is_pandas_series,
-    is_pandas_like_dataframe,
-    is_pandas_like_series,
 )
-import numpy as np
-import warnings
-from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-from collections.abc import Iterable
+from sklearn.utils.validation import check_is_fitted
 
 # Keep pandas import for fallback compatibility
 try:

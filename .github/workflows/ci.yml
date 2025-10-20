@@ -22,15 +22,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -e .
-          pip install pytest
+          curl -LsSf https://astral.sh/uv/install.sh | sh # install uv
+          uv sync
 
       - name: Run tests
-        run: pytest
+        run: uv run pytest
 
   docs:
+    # Only run this job on push to main (includes merges) and if tests pass
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test  # Only build docs if tests pass
     runs-on: ubuntu-latest
     steps:
@@ -42,15 +42,12 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install dependencies for docs
+      - name: Install dependencies and generate documentation
         run: |
-          pip install -e .
-          pip install pdoc
-
-      - name: Generate API documentation with pdoc
-        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv sync
           rm -rf docs  # Remove old docs directory if it exists
-          pdoc panelsplit -o docs -d numpy --no-include-undocumented 
+          uv run pdoc panelsplit -o docs --no-include-undocumented
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
