@@ -173,6 +173,11 @@ class PanelSplit:
         """
         train_test_splits = []
 
+        # Convert snapshots once if they exist
+        snapshots_array = (
+            _to_numpy_array(self._snapshots) if self._snapshots is not None else None
+        )
+
         for i, (train_periods, test_periods) in enumerate(self._u_periods_cv):
             if self._snapshots is not None:
                 if test_periods.max() >= self._snapshots.min():
@@ -192,7 +197,6 @@ class PanelSplit:
                 test_period_mask = np.isin(self._periods, test_periods)
 
                 # Handle snapshots
-                snapshots_array = _to_numpy_array(self._snapshots)
                 snapshot_mask = snapshots_array == snapshot_val
 
                 train_indices = train_period_mask & snapshot_mask

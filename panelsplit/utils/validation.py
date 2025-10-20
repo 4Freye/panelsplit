@@ -65,7 +65,7 @@ def _to_numpy_array(data):
 
     # Use narwhals to handle conversion
     try:
-        return nw.from_native(data).to_numpy()
+        return nw.from_native(data, pass_through=True).to_numpy()
     except Exception:
         # Final fallback
         return np.array(data)
