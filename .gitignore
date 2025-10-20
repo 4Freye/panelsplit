@@ -10,3 +10,4 @@ debug.ipynb
 panelsplit.egg-info
 
 .venv
+.python-version
