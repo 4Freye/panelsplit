@@ -152,33 +152,54 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_non_numpy_compatible_null_handling(self):
         """Test the fallback for non-numpy compatible null handling."""
+        from panelsplit.utils.validation import _to_numpy_array
 
         # Create a custom object that doesn't have to_numpy method
-        class CustomSeries:
-            def __init__(self, data):
-                self.data = data
+        # but can be converted using np.array() fallback
+        class CustomBoolArray:
+            """
+            A custom boolean array-like object that:
+            1. Doesn't have a proper to_numpy() method
+            2. Will fail narwhals conversion
+            3. Can be converted via np.array() fallback
+            """
 
-            def is_null(self):
-                # Return an object that doesn't have to_numpy
-                class CustomBoolSeries:
-                    def __init__(self, mask):
-                        self.mask = mask
+            def __init__(self, mask):
+                self.mask = mask
 
-                    def __iter__(self):
-                        return iter(self.mask)
-
-                    def __len__(self):
-                        return len(self.mask)
-
-                mask = [pd.isna(x) for x in self.data]
-                return CustomBoolSeries(mask)
+            def __iter__(self):
+                return iter(self.mask)
 
             def __len__(self):
-                return len(self.data)
+                return len(self.mask)
 
-        # This tests the fallback path in _fit_split when to_numpy() is not available
-        # This is a complex test that would require more setup to fully execute
-        pass  # Placeholder for this edge case
+            def __getitem__(self, idx):
+                return self.mask[idx]
+
+            # Deliberately make to_numpy fail to test fallback
+            def to_numpy(self):
+                raise AttributeError("to_numpy not properly implemented")
+
+        # Test the fallback path in _to_numpy_array
+        bool_mask = [True, False, True, False, True]
+        custom_array = CustomBoolArray(bool_mask)
+
+        # This should trigger the exception handler and use np.array() fallback
+        result = _to_numpy_array(custom_array)
+
+        # Verify the fallback worked correctly
+        self.assertIsInstance(result, np.ndarray)
+        np.testing.assert_array_equal(result, np.array(bool_mask))
+
+        # Additional test: verify with actual null mask scenario
+        data_with_nulls = [1.0, np.nan, 3.0, np.nan, 5.0]
+        null_mask = [pd.isna(x) for x in data_with_nulls]
+        custom_null_mask = CustomBoolArray(null_mask)
+
+        result_null = _to_numpy_array(custom_null_mask)
+        self.assertIsInstance(result_null, np.ndarray)
+        expected_mask = np.array([False, True, False, True, False])
+        np.testing.assert_array_equal(result_null, expected_mask)
 
     def test_pipeline_with_none_transformer(self):
         """Test pipeline with None/'passthrough' transformers."""
