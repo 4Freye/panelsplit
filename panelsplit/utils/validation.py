@@ -120,7 +120,7 @@ def get_index_or_col_from_df(df, name):
             return (
                 nw.to_native(column) if hasattr(column, "_compliant_series") else column
             )
-        except:
+        except Exception as _:
             raise KeyError(f"'{name}' was not found in the DataFrame's columns.")
 
 

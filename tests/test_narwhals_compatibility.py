@@ -15,7 +15,6 @@ from panelsplit.pipeline import SequentialCVPipeline
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import KNNImputer
-from sklearn.metrics import mean_squared_error
 
 
 class TestNarwhalsCompatibility(unittest.TestCase):

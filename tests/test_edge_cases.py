@@ -10,10 +10,9 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import KNNImputer
 
 from panelsplit.cross_validation import PanelSplit
-from panelsplit.application import cross_val_fit_predict, _fit_split
+from panelsplit.application import cross_val_fit_predict
 from panelsplit.pipeline import SequentialCVPipeline, _call_method_with_correct_args
 
 
@@ -183,7 +182,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_pipeline_with_none_transformer(self):
         """Test pipeline with None/'passthrough' transformers."""
-        ps = PanelSplit(periods=self.periods, n_splits=2)
+        _ = PanelSplit(periods=self.periods, n_splits=2)
 
         # Test with None transformer (no CV on None transformer)
         pipeline = SequentialCVPipeline(

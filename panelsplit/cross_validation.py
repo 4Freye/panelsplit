@@ -36,7 +36,7 @@ def _nunique_subset(data, indices):
                 data[indices] if hasattr(data, "__getitem__") else data.loc[indices]
             )
             return len(np.unique(subset_data))
-    except:
+    except Exception as _:
         # Final fallback for pandas-specific operations
         if hasattr(data, "loc"):
             return data.loc[indices].nunique()
@@ -314,7 +314,7 @@ class PanelSplit:
             labels_subset = _safe_indexing(labels_nw, row_indices)
 
             return _safe_indexing(labels_subset, to_native=True)
-        except:
+        except Exception as _:
             # Direct numpy/array indexing fallback
             return labels[indices]
 
