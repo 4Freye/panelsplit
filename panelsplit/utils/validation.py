@@ -175,7 +175,7 @@ def check_periods(periods, obj_name="periods"):
             return periods_nw.to_series()
         elif hasattr(periods_nw, "to_numpy"):
             # Convert to numpy and create a series-like object
-            periods_array = _to_numpy_array(periods_nw)
+            periods_array = periods_nw.to_numpy()
             if len(periods_array.shape) > 1:
                 raise ValueError(
                     f"{obj_name} array must be one-dimensional. Got an array of shape {periods_array.shape} instead"

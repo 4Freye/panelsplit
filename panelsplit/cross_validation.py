@@ -298,9 +298,7 @@ class PanelSplit:
         # Convert boolean indices to row numbers
         row_indices = np.where(indices)[0]
 
-        labels_subset = _safe_indexing(labels_nw, row_indices)
-
-        return _safe_indexing(labels_subset, to_native=True)
+        return _safe_indexing(labels_nw, row_indices, to_native=True)
 
     def gen_train_labels(
         self, labels: Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]
@@ -413,10 +411,8 @@ class PanelSplit:
 
             if period_col is not None:
                 # Get periods for this split and find max
-                split_periods = _safe_indexing(periods_nw, row_indices)
-
-                periods_array = _safe_indexing(split_periods, to_native=True)
-                last_period = np.max(np.unique(periods_array))
+                split_periods = _safe_indexing(periods_nw, row_indices, to_native=True)
+                last_period = np.max(np.unique(split_periods))
 
                 # Add columns using narwhals
                 split_data = split_data.with_columns(
