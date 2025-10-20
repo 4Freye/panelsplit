@@ -1,14 +1,17 @@
-from typing import List, Union
-from sklearn.model_selection import TimeSeriesSplit
-import narwhals as nw
-from narwhals.typing import IntoDataFrame, IntoSeries
-import numpy as np
 import warnings
+from typing import List, Union
+
+import narwhals as nw
+import numpy as np
+from narwhals.typing import IntoDataFrame, IntoSeries
+from sklearn.model_selection import TimeSeriesSplit
+
 from .utils.validation import (
-    check_periods,
-    check_labels,
-    get_index_or_col_from_df,
+    _safe_indexing,
     _to_numpy_array,
+    check_labels,
+    check_periods,
+    get_index_or_col_from_df,
 )
 
 # Keep pandas import for type annotations and fallback compatibility
@@ -26,22 +29,15 @@ def _nunique_subset(data, indices):
     Helper function to get number of unique values in a subset of data.
     Works with both pandas and narwhals-compatible data.
     """
-    try:
-        data_nw = nw.from_native(data, pass_through=True)
-        if hasattr(data_nw, "filter") and hasattr(data_nw, "n_unique"):
-            return data_nw.filter(indices).n_unique()
-        else:
-            # Fallback to numpy operations
-            subset_data = (
-                data[indices] if hasattr(data, "__getitem__") else data.loc[indices]
-            )
-            return len(np.unique(subset_data))
-    except Exception as _:
-        # Final fallback for pandas-specific operations
-        if hasattr(data, "loc"):
-            return data.loc[indices].nunique()
-        else:
-            return len(np.unique(data[indices]))
+    data_nw = nw.from_native(data, pass_through=True)
+    if hasattr(data_nw, "filter") and hasattr(data_nw, "n_unique"):
+        return data_nw.filter(indices).n_unique()
+    else:
+        # Fallback to numpy operations
+        subset_data = (
+            data[indices] if hasattr(data, "__getitem__") else data.loc[indices]
+        )
+        return len(np.unique(subset_data))
 
 
 class PanelSplit:
@@ -305,18 +301,13 @@ class PanelSplit:
         )
 
         # Use narwhals slice operation for clean dataframe-agnostic subsetting
-        try:
-            labels_nw = nw.from_native(labels, pass_through=True)
-            # Convert boolean indices to row numbers
-            row_indices = np.where(indices)[0]
-            from .application import _safe_indexing
+        labels_nw = nw.from_native(labels, pass_through=True)
+        # Convert boolean indices to row numbers
+        row_indices = np.where(indices)[0]
 
-            labels_subset = _safe_indexing(labels_nw, row_indices)
+        labels_subset = _safe_indexing(labels_nw, row_indices)
 
-            return _safe_indexing(labels_subset, to_native=True)
-        except Exception as _:
-            # Direct numpy/array indexing fallback
-            return labels[indices]
+        return _safe_indexing(labels_subset, to_native=True)
 
     def gen_train_labels(
         self, labels: Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]

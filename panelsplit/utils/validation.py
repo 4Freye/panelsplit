@@ -21,6 +21,43 @@ except ImportError:
     _PANDAS_AVAILABLE = False
 
 
+def _safe_indexing(obj, indices=None, to_native=False):
+    """
+    Unified safe indexing and conversion function for dataframe-agnostic operations.
+
+    Parameters
+    ----------
+    obj : pandas.DataFrame/Series or narwhals-compliant object
+        The object to index and/or convert
+    indices : array-like, optional
+        Integer positions to select. If None, no indexing is performed
+    to_native : bool, optional
+        Whether to convert to native format. Default is False
+
+    Returns
+    -------
+    obj : same type as input or native format
+        Processed object (indexed and/or converted)
+    """
+    # Handle indexing if indices provided
+    if indices is not None:
+        if is_numpy_array(obj):
+            result = obj[indices]
+        elif hasattr(obj, "iloc"):
+            result = obj.iloc[indices]
+        else:
+            result = obj[indices]
+    else:
+        result = obj
+
+    # Handle narwhals conversion
+    if to_native and (
+        hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")
+    ):
+        return nw.to_native(result)
+    return result
+
+
 def _to_numpy_array(data):
     """Convert any data structure to numpy array using narwhals."""
     if is_numpy_array(data):
@@ -28,14 +65,10 @@ def _to_numpy_array(data):
 
     # Use narwhals to handle conversion
     try:
-        data_nw = nw.from_native(data, pass_through=True)
-        if hasattr(data_nw, "to_numpy"):
-            return data_nw.to_numpy()
+        return nw.from_native(data).to_numpy()
     except Exception:
-        pass
-
-    # Final fallback
-    return np.array(data)
+        # Final fallback
+        return np.array(data)
 
 
 def _is_valid_data_type(data, data_name="data"):
@@ -109,19 +142,9 @@ def get_index_or_col_from_df(df, name):
             f"'{name}' was not found in the DataFrame's columns or index names."
         )
 
-    except Exception as e:
+    except KeyError as e:
         # Re-raise the original error if it's a KeyError we created
-        if isinstance(e, KeyError):
-            raise e
-        # For other exceptions, try simple column access
-        try:
-            df_nw = nw.from_native(df, pass_through=True)
-            column = df_nw.get_column(name)
-            return (
-                nw.to_native(column) if hasattr(column, "_compliant_series") else column
-            )
-        except Exception as _:
-            raise KeyError(f"'{name}' was not found in the DataFrame's columns.")
+        raise KeyError(f"'{name}' was not found in the DataFrame's columns. {e}")
 
 
 def check_cv(cv, X=None, y=None, groups=None):

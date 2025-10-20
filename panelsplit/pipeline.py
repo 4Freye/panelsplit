@@ -4,8 +4,10 @@ import time
 import narwhals as nw
 import numpy as np
 from sklearn.base import BaseEstimator, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
 
-from .utils.validation import _check_X_y, check_cv
+from .utils.validation import _check_X_y, _safe_indexing, check_cv
 
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
@@ -181,9 +183,6 @@ def _make_method(method_name, fit=True):
     """
 
     def _method(self, X, y=None, **kwargs):
-        from sklearn.utils.validation import check_is_fitted
-        from sklearn.exceptions import NotFittedError
-
         _check_X_y(X, y)
         # Fit all steps except the final one.
         current_output = X
@@ -231,8 +230,6 @@ def _make_method(method_name, fit=True):
             else:
                 # Check if pipeline has been fitted
                 if not hasattr(self, "fitted_steps_"):
-                    from sklearn.exceptions import NotFittedError
-
                     raise NotFittedError(
                         f"This {type(self).__name__} instance is not fitted yet. "
                         "Call 'fit' with appropriate arguments before using this estimator."
@@ -371,25 +368,16 @@ class SequentialCVPipeline(BaseEstimator):
         array-like or IntoDataFrame or IntoSeries
             The subset of X corresponding to the given indices.
         """
-        try:
-            # Convert boolean indices to row numbers if needed
-            if isinstance(indices, np.ndarray) and indices.dtype == bool:
-                row_indices = np.where(indices)[0]
-            else:
-                row_indices = indices
+        # Convert boolean indices to row numbers if needed
+        if isinstance(indices, np.ndarray) and indices.dtype == bool:
+            row_indices = np.where(indices)[0]
+        else:
+            row_indices = indices
 
-            # Use narwhals for dataframe-agnostic operations
-            X_nw = nw.from_native(X, pass_through=True)
-            from .application import _safe_indexing
+        # Use narwhals for dataframe-agnostic operations
+        X_nw = nw.from_native(X, pass_through=True)
 
-            return _safe_indexing(X_nw, row_indices, to_native=True)
-        except Exception:
-            # Fallback for non-narwhals compatible data
-            return (
-                X[indices]
-                if hasattr(X, "__getitem__")
-                else np.array([X[i] for i in indices])
-            )
+        return _safe_indexing(X_nw, row_indices, to_native=True)
 
     def _append_indexed_output(self, output_list, test_idx, output):
         """

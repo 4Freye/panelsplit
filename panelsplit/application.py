@@ -1,66 +1,24 @@
+import inspect
 from typing import List, Union
 
 import narwhals as nw
 import numpy as np
 from joblib import Parallel, delayed
-from narwhals.dependencies import is_numpy_array
 from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.base import clone
 
 from .utils.utils import _split_wrapper
 from .utils.validation import (
+    _safe_indexing,
     _to_numpy_array,
     check_cv,
     check_fitted_estimators,
 )
 
 
-def _safe_indexing(obj, indices=None, to_native=False):
-    """
-    Unified safe indexing and conversion function for dataframe-agnostic operations.
-
-    Parameters
-    ----------
-    obj : pandas.DataFrame/Series or narwhals-compliant object
-        The object to index and/or convert
-    indices : array-like, optional
-        Integer positions to select. If None, no indexing is performed
-    to_native : bool, optional
-        Whether to convert to native format. Default is False
-
-    Returns
-    -------
-    obj : same type as input or native format
-        Processed object (indexed and/or converted)
-    """
-    # Handle indexing if indices provided
-    if indices is not None:
-        if is_numpy_array(obj):
-            result = obj[indices]
-        elif hasattr(obj, "iloc"):
-            result = obj.iloc[indices]
-        else:
-            result = obj[indices]
-    else:
-        result = obj
-
-    # Handle narwhals conversion
-    if to_native and (
-        hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")
-    ):
-        return nw.to_native(result)
-    return result
-
-
 def _get_non_null_mask(data):
     """Get non-null mask for any data type."""
-    for method in ["isnull", "is_null"]:
-        if hasattr(data, method):
-            return ~getattr(data, method)()
-    # Fallback for numpy arrays
-    import pandas as pd
-
-    return ~pd.isnull(data)
+    return ~nw.from_native(data, series_only=True).is_null()
 
 
 def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.ndarray:
@@ -165,8 +123,6 @@ def _fit_split(
         sw_native = _safe_indexing(sw_filtered, to_native=True)
 
         # Check if the estimator supports sample_weight
-        import inspect
-
         fit_signature = inspect.signature(local_estimator.fit)
         if "sample_weight" in fit_signature.parameters:
             return local_estimator.fit(X_native, y_native, sample_weight=sw_native)
