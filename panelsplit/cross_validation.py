@@ -145,9 +145,9 @@ class PanelSplit:
             A list where each tuple contains two numpy arrays:
             (unique_train_periods, unique_test_periods) for each split.
         """
+        unique_periods_array = _to_numpy_array(unique_periods)
         u_periods_cv = []
         for i, (train_index, test_index) in enumerate(indices):
-            unique_periods_array = _to_numpy_array(unique_periods)
             unique_train_periods = unique_periods_array[train_index]
             unique_test_periods = unique_periods_array[test_index]
             if (i == 0) & self._include_first_train_in_test:
@@ -409,9 +409,6 @@ class PanelSplit:
             # Convert boolean indices to row numbers for narwhals indexing
             row_indices = np.where(split_indices)[0]
 
-            # Use safe position-based indexing
-            from .application import _safe_indexing
-
             split_data = _safe_indexing(data_nw, row_indices)
 
             if period_col is not None:
@@ -432,9 +429,6 @@ class PanelSplit:
                 split_data = split_data.with_columns([nw.lit(i).alias("split")])
 
             snapshots.append(split_data)
-
-        # Concatenate results using narwhals
-        from .application import _safe_indexing
 
         return _safe_indexing(nw.concat(snapshots), to_native=True)
 

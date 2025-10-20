@@ -461,8 +461,7 @@ class SequentialCVPipeline(BaseEstimator):
                 X_subset = X_subset.reshape(1, -1)
             else:
                 X_subset = X_subset.reshape(-1, 1)
-        # Subset y if provided
-        y_subset = None if y is None else self._subset(y, indices)
+
         output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
         return output
 
