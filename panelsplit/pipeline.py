@@ -1,4 +1,5 @@
 import copy
+import inspect
 import time
 
 import narwhals as nw
@@ -127,7 +128,6 @@ def _call_method_with_correct_args(model, method_name, X, y=None):
     >>> # For score (requires y)
     >>> score = _call_method_with_correct_args(model, 'score', X_test, y_test)
     """
-    import inspect
 
     method = getattr(model, method_name)
 
