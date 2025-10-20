@@ -107,7 +107,6 @@ class PanelSplit:
             unique_periods = unique_vals
         else:
             unique_periods = check_periods(unique_periods, obj_name="unique_periods")
-            unique_periods = check_periods(unique_periods, obj_name="unique_periods")
 
         self._tss = TimeSeriesSplit(
             n_splits=n_splits,
@@ -155,13 +154,7 @@ class PanelSplit:
                 unique_test_periods = np.concatenate(
                     [unique_train_periods, unique_test_periods]
                 )
-                unique_test_periods = np.concatenate(
-                    [unique_train_periods, unique_test_periods]
-                )
             elif (i > 0) & self._include_train_in_test:
-                unique_test_periods = np.concatenate(
-                    [unique_train_periods, unique_test_periods]
-                )
                 unique_test_periods = np.concatenate(
                     [unique_train_periods, unique_test_periods]
                 )
