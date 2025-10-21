@@ -1,9 +1,14 @@
-import numpy as np
-import time
-from sklearn.base import BaseEstimator, clone
-from .utils.validation import check_cv, _check_X_y
-import pandas as pd  # added import for pandas
 import copy
+import inspect
+import time
+
+import narwhals as nw
+import numpy as np
+from sklearn.base import BaseEstimator, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
+
+from .utils.validation import _check_X_y, _safe_indexing, check_cv
 
 
 def _log_message(message, verbose, step_idx, total, elapsed_time=None):
@@ -73,8 +78,9 @@ def _sort_and_combine(predictions_with_idx):
     predictions = [pred for idx, pred in predictions_with_idx]
     if predictions and isinstance(predictions[0], np.ndarray):
         predictions = np.vstack(predictions)
-    elif predictions and isinstance(predictions[0], (pd.DataFrame, pd.Series)):
-        predictions = pd.concat(predictions, axis=0)
+    elif predictions and hasattr(predictions[0], "pipe"):
+        # Use narwhals for dataframe-agnostic concatenation
+        predictions = nw.concat(predictions)
     else:
         predictions = np.array(predictions)
     return predictions
@@ -122,7 +128,6 @@ def _call_method_with_correct_args(model, method_name, X, y=None):
     >>> # For score (requires y)
     >>> score = _call_method_with_correct_args(model, 'score', X_test, y_test)
     """
-    import inspect
 
     method = getattr(model, method_name)
 
@@ -178,9 +183,6 @@ def _make_method(method_name, fit=True):
     """
 
     def _method(self, X, y=None, **kwargs):
-        from sklearn.utils.validation import check_is_fitted
-        from sklearn.exceptions import NotFittedError
-
         _check_X_y(X, y)
         # Fit all steps except the final one.
         current_output = X
@@ -207,6 +209,10 @@ def _make_method(method_name, fit=True):
             # Use 'transform' for intermediate steps and the provided method for the final step.
             method = "transform" if not_final_step else method_name
             if fit:
+                # Initialize fitted_steps_ if not already done (for dynamic methods)
+                if not hasattr(self, "fitted_steps_"):
+                    self.fitted_steps_ = {}
+
                 if transformer is None or transformer == "passthrough":
                     self.fitted_steps_[name] = None
                     continue
@@ -222,6 +228,13 @@ def _make_method(method_name, fit=True):
 
                 self.fitted_steps_[name] = fitted_model
             else:
+                # Check if pipeline has been fitted
+                if not hasattr(self, "fitted_steps_"):
+                    raise NotFittedError(
+                        f"This {type(self).__name__} instance is not fitted yet. "
+                        "Call 'fit' with appropriate arguments before using this estimator."
+                    )
+
                 fitted_model = self.fitted_steps_.get(name)
                 if fitted_model is None:
                     continue
@@ -345,23 +358,26 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             The data to subset.
         indices : array-like
             Indices used to select a subset of X.
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             The subset of X corresponding to the given indices.
         """
-        try:
-            if isinstance(X, (pd.DataFrame, pd.Series)):
-                return X.iloc[indices]
-            else:
-                return X[indices]
-        except Exception:
-            return np.array([X[i] for i in indices])
+        # Convert boolean indices to row numbers if needed
+        if isinstance(indices, np.ndarray) and indices.dtype == bool:
+            row_indices = np.where(indices)[0]
+        else:
+            row_indices = indices
+
+        # Use narwhals for dataframe-agnostic operations
+        X_nw = nw.from_native(X, pass_through=True)
+
+        return _safe_indexing(X_nw, row_indices, to_native=True)
 
     def _append_indexed_output(self, output_list, test_idx, output):
         """
@@ -400,16 +416,17 @@ class SequentialCVPipeline(BaseEstimator):
 
         Returns
         -------
-        numpy.ndarray or pandas.DataFrame or pandas.Series or list
-            Combined output. Numpy arrays are vertically stacked; pandas objects are concatenated.
+        numpy.ndarray or IntoDataFrame or IntoSeries or list
+            Combined output. Numpy arrays are vertically stacked; dataframe objects are concatenated.
         """
         if not transformed_list:
             return transformed_list
         first_item = transformed_list[0]
         if isinstance(first_item, np.ndarray):
             return np.vstack(transformed_list)
-        elif isinstance(first_item, (pd.DataFrame, pd.Series)):
-            return pd.concat(transformed_list, axis=0)
+        elif hasattr(first_item, "pipe"):
+            # Use narwhals for dataframe-agnostic concatenation
+            return nw.concat(transformed_list)
         else:
             return transformed_list
 
@@ -422,13 +439,13 @@ class SequentialCVPipeline(BaseEstimator):
         model : estimator
             Fitted model or transformer.
         method_name : str
-            The name of the method to apply (e.g., 'predict', 'transform', 'score').
-        X : array-like or pandas.DataFrame or pandas.Series
+            The name of the method to apply (e.g., 'predict' or 'transform').
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         indices : array-like
             Indices specifying the subset of X.
         y : array-like, optional
-            Target values (required for methods like 'score').
+            Target values (required for some methods like 'score').
 
         Returns
         -------
@@ -437,14 +454,14 @@ class SequentialCVPipeline(BaseEstimator):
         """
         indices = _to_int_indices(indices)
         X_subset = self._subset(X, indices)
+        y_subset = None if y is None else self._subset(y, indices)
         if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
             expected = getattr(model, "n_features_in_", None)
             if expected is not None and X_subset.shape[0] == expected:
                 X_subset = X_subset.reshape(1, -1)
             else:
                 X_subset = X_subset.reshape(-1, 1)
-        # Subset y if provided
-        y_subset = None if y is None else self._subset(y, indices)
+
         output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
         return output
 
@@ -462,7 +479,7 @@ class SequentialCVPipeline(BaseEstimator):
         ----------
         transformer : estimator
             The transformer or estimator to be fitted.
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data for fitting.
         y : array-like, optional
             Target values.
@@ -528,14 +545,14 @@ class SequentialCVPipeline(BaseEstimator):
             Fitted model or a dictionary containing fitted models from cross-validation.
         method_name : str
             The name of the method to apply (e.g., 'predict', 'transform', 'score').
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
-            Target values (required for methods like 'score').
+            Target values (required for some methods like 'score').
 
         Returns
         -------
-        numpy.ndarray or pandas.DataFrame or pandas.Series
+        numpy.ndarray or IntoDataFrame or IntoSeries
             Combined output after applying the method.
         """
         if not (isinstance(fitted_model, dict) and "splits" in fitted_model):
@@ -557,14 +574,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values.
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Transformed output after applying all pipeline steps.
         """
         _check_X_y(X, y)
@@ -599,7 +616,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values.
@@ -639,14 +656,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Transformed output.
         """
         pass
@@ -660,14 +677,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Transformed output.
 
         Note
@@ -685,14 +702,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Predicted class.
 
         Note
@@ -707,34 +724,41 @@ class SequentialCVPipeline(BaseEstimator):
 
          This method dynamically fits the pipeline on the provided data and then applies the final estimator's
          predict method to generate predictions.
+         This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+         predict method to generate predictions.
 
          Parameters
          ----------
-         X : array-like or pandas.DataFrame or pandas.Series
+         X : array-like or IntoDataFrame or IntoSeries
              Input data.
          y : array-like, optional
              Target values (used during fitting).
 
          Returns
          -------
-         array-like or pandas.DataFrame or pandas.Series
+         array-like or IntoDataFrame or IntoSeries
              Predicted target values.
 
          Note
          ----
          This method is dynamically injected based on the final step of the pipeline.
+         Note
+         ----
+         This method is dynamically injected based on the final step of the pipeline.
         """
+        pass
         pass
 
     def predict_proba(self, X):
         """
         Predict class probabilities using the fitted pipeline.
 
+
         This method applies the final estimator's predict_proba method on the transformed data to predict class probabilities.
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like
             True target values.
@@ -743,6 +767,7 @@ class SequentialCVPipeline(BaseEstimator):
         -------
         float
             Predicted class probability.
+
 
         Note:
         -----
@@ -760,14 +785,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or pandas.DataFrame or pandas.Series
+        array-like or IntoDataFrame or IntoSeries
             Predicted class probabilities.
 
         Note
@@ -784,7 +809,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like
             True target values.
@@ -809,7 +834,7 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or pandas.DataFrame or pandas.Series
+        X : array-like or IntoDataFrame or IntoSeries
             Input data.
         y : array-like, optional
             Target values (used during fitting and scoring).

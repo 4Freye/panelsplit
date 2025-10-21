@@ -12,9 +12,9 @@ teaching tutorials, working on the website, improving the documentation, are
 all priceless contributions.
 
 We abide by the principles of openness, respect, and consideration of others of
-the Python Software Foundation: https://www.python.org/psf/codeofconduct/
+the Python Software Foundation: <https://www.python.org/psf/codeofconduct/>
 
-# Low Quality and AI Generated Contributions Policy
+## Low Quality and AI Generated Contributions Policy
 
 Due to the burden put on maintainers, users submitting multiple low quality pull
 requests, or AI generated comments, reviews, issues, or pull requests, where the
@@ -29,12 +29,10 @@ from the organisation. Some examples of poor etiquette are:
 - Opening AI generated pull requests w/o understanding them;
 - Leaving AI generated comments on issues and pull requests.
 
-For more context, you can check out this blog post on [
-The Cost of AI in Open Source Maintenance
-](https://adrin.info/the-cost-of-ai-in-open-source-maintenance.html).
+For more context, you can check out this blog post on [The Cost of AI in Open Source Maintenance](https://adrin.info/the-cost-of-ai-in-open-source-maintenance.html).
 
 If this happens to you and you believe it's been a mistake, you can reach out to me at
 `eric.frey@bse.eu`.
 
-*This code of conduct is adapted from the scikit-learn's code of conduct, which itself follows the Python Software Foundation's Code of Conduct. 
-For the original version, see the scikit-learn repository on GitHub: https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md
+*This code of conduct is adapted from the scikit-learn's code of conduct, which itself follows the Python Software Foundation's Code of Conduct.
+For the original version, see the scikit-learn repository on GitHub: <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>

@@ -1,13 +1,27 @@
-import numpy as np
-import pandas as pd
-from sklearn.base import clone
-from joblib import Parallel, delayed
-from .utils.utils import _split_wrapper
-from .utils.validation import check_fitted_estimators, check_cv
+import inspect
 from typing import List, Union
 
+import narwhals as nw
+import numpy as np
+from joblib import Parallel, delayed
+from narwhals.typing import IntoDataFrame, IntoSeries
+from sklearn.base import clone
 
-def _predict_split(model, X_test: pd.DataFrame, method: str = "predict") -> np.ndarray:
+from .utils.utils import _split_wrapper
+from .utils.validation import (
+    _safe_indexing,
+    _to_numpy_array,
+    check_cv,
+    check_fitted_estimators,
+)
+
+
+def _get_non_null_mask(data):
+    """Get non-null mask for any data type."""
+    return ~nw.from_native(data, series_only=True).is_null()
+
+
+def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.ndarray:
     """
     Perform predictions for a single split.
 
@@ -15,7 +29,7 @@ def _predict_split(model, X_test: pd.DataFrame, method: str = "predict") -> np.n
     ----------
     model : object
         The machine learning model used for prediction.
-    X_test : pd.DataFrame
+    X_test : IntoDataFrame
         The input features for testing.
     method : str, optional
         The method to use for prediction. It can be 'predict', 'predict_proba',
@@ -32,10 +46,10 @@ def _predict_split(model, X_test: pd.DataFrame, method: str = "predict") -> np.n
 
 def _fit_split(
     estimator,
-    X: pd.DataFrame,
-    y: pd.Series,
+    X: IntoDataFrame,
+    y: IntoSeries,
     train_indices: List[bool],
-    sample_weight: Union[pd.Series, np.ndarray] = None,
+    sample_weight: Union[IntoSeries, np.ndarray] = None,
     drop_na_in_y=False,
 ):
     """
@@ -45,13 +59,13 @@ def _fit_split(
     ----------
     estimator : object
         The machine learning model to be fitted.
-    X : pd.DataFrame
+    X : IntoDataFrame
         The input features for the estimator.
-    y : pd.Series
+    y : IntoSeries
         The target variable for the estimator.
     train_indices : list of bool
         Boolean mask or indices indicating the training data.
-    sample_weight : pd.Series or np.ndarray, optional
+    sample_weight : IntoSeries or np.ndarray, optional
         Sample weights for the training data. Default is None.
 
     Returns
@@ -61,15 +75,62 @@ def _fit_split(
     """
     local_estimator = clone(estimator)
 
-    if drop_na_in_y:
-        y = y.loc[train_indices].dropna()
-        X = X.loc[y.index]
+    # Use narwhals for dataframe-agnostic operations
+    X_nw = nw.from_native(X, pass_through=True)
+
+    # Convert boolean indices to row numbers for narwhals
+    train_row_indices = np.where(train_indices)[0]
+
+    # Use safe position-based indexing
+    X_subset = _safe_indexing(X_nw, train_row_indices)
+
+    # Handle y=None case (for transformers)
+    if y is not None:
+        y_nw = nw.from_native(y, pass_through=True)
+        y_subset = _safe_indexing(y_nw, train_row_indices)
+
+        if drop_na_in_y:
+            # Get mask of non-null values
+            non_null_mask = _get_non_null_mask(y_subset)
+            non_null_indices = np.where(_to_numpy_array(non_null_mask))[0]
+
+            # Filter both X and y using the non-null indices
+            X_filtered = _safe_indexing(X_subset, non_null_indices)
+            y_filtered = _safe_indexing(y_subset, non_null_indices)
+        else:
+            X_filtered = X_subset
+            y_filtered = y_subset
+
+        # Convert back to native format for sklearn
+        X_native = _safe_indexing(X_filtered, to_native=True)
+        y_native = _safe_indexing(y_filtered, to_native=True)
+    else:
+        # When y is None, we can't drop nulls based on y
+        X_filtered = X_subset
+        X_native = _safe_indexing(X_filtered, to_native=True)
+        y_native = None
 
     if sample_weight is not None:
-        sw = sample_weight.loc[y.index]
-        return local_estimator.fit(X, y, sample_weight=sw)
+        sw_nw = nw.from_native(sample_weight, pass_through=True)
+        sw_subset = _safe_indexing(sw_nw, train_row_indices)
+
+        # Only filter by non_null_indices if y is not None and drop_na_in_y is True
+        if y is not None and drop_na_in_y:
+            sw_filtered = _safe_indexing(sw_subset, non_null_indices)
+        else:
+            sw_filtered = sw_subset
+
+        sw_native = _safe_indexing(sw_filtered, to_native=True)
+
+        # Check if the estimator supports sample_weight
+        fit_signature = inspect.signature(local_estimator.fit)
+        if "sample_weight" in fit_signature.parameters:
+            return local_estimator.fit(X_native, y_native, sample_weight=sw_native)
+        else:
+            # Estimator doesn't support sample_weight, fit without it
+            return local_estimator.fit(X_native, y_native)
     else:
-        return local_estimator.fit(X, y)
+        return local_estimator.fit(X_native, y_native)
 
 
 def _prediction_order_to_original_order(indices: List[bool]) -> List[int]:
@@ -92,10 +153,10 @@ def _prediction_order_to_original_order(indices: List[bool]) -> List[int]:
 
 def cross_val_fit(
     estimator,
-    X: pd.DataFrame,
-    y: pd.Series,
+    X: IntoDataFrame,
+    y: IntoSeries,
     cv,
-    sample_weight: Union[pd.Series, np.ndarray] = None,
+    sample_weight: Union[IntoSeries, np.ndarray] = None,
     n_jobs: int = 1,
     progress_bar: bool = False,
     drop_na_in_y=False,
@@ -107,14 +168,14 @@ def cross_val_fit(
     ----------
     estimator : object
         The machine learning model to be fitted.
-    X : pd.DataFrame
+    X : IntoDataFrame
         The input features for the estimator.
-    y : pd.Series
+    y : IntoSeries
         The target variable for the estimator.
     cv : object or iterable
         Cross-validation splitter; either an object that generates train/test splits (e.g., an instance of PanelSplit)
         or an iterable of splits.
-    sample_weight : pd.Series or np.ndarray, optional
+    sample_weight : IntoSeries or np.ndarray, optional
         Sample weights for the training data. Default is None.
     n_jobs : int, optional
         The number of jobs to run in parallel. Default is 1.
@@ -162,7 +223,7 @@ def cross_val_fit(
 
 def cross_val_predict(
     fitted_estimators,
-    X: pd.DataFrame,
+    X: IntoDataFrame,
     cv,
     method: str = "predict",
     n_jobs: int = 1,
@@ -175,7 +236,7 @@ def cross_val_predict(
     ----------
     fitted_estimators : list
         List of fitted machine learning models used for prediction.
-    X : pd.DataFrame
+    X : IntoDataFrame
         The input features for prediction.
     cv : object or iterable
         Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
@@ -201,8 +262,15 @@ def cross_val_predict(
     test_splits = [split[1] for split in splits]
     test_indices = _prediction_order_to_original_order(test_splits)
 
+    # Use narwhals for dataframe-agnostic operations
+    X_nw = nw.from_native(X, pass_through=True)
+
     test_preds = Parallel(n_jobs=n_jobs)(
-        delayed(_predict_split)(fitted_estimators[i], X.loc[test_idx], method)
+        delayed(_predict_split)(
+            fitted_estimators[i],
+            _safe_indexing(X_nw, np.where(test_idx)[0], to_native=True),
+            method,
+        )
         for i, test_idx in enumerate(test_splits)
     )
 
@@ -211,7 +279,11 @@ def cross_val_predict(
         train_indices = _prediction_order_to_original_order(train_splits)
 
         train_preds = Parallel(n_jobs=n_jobs)(
-            delayed(_predict_split)(fitted_estimators[i], X.loc[train_idx], method)
+            delayed(_predict_split)(
+                fitted_estimators[i],
+                _safe_indexing(X_nw, np.where(train_idx)[0], to_native=True),
+                method,
+            )
             for i, train_idx in enumerate(train_splits)
         )
 
@@ -224,11 +296,11 @@ def cross_val_predict(
 
 def cross_val_fit_predict(
     estimator,
-    X: pd.DataFrame,
-    y: pd.Series,
+    X: IntoDataFrame,
+    y: IntoSeries,
     cv,
     method: str = "predict",
-    sample_weight: Union[pd.Series, np.ndarray] = None,
+    sample_weight: Union[IntoSeries, np.ndarray] = None,
     n_jobs: int = 1,
     return_train_preds: bool = False,
     drop_na_in_y=False,
@@ -240,16 +312,16 @@ def cross_val_fit_predict(
     ----------
     estimator : object
         The machine learning model to be fitted.
-    X : pd.DataFrame
+    X : IntoDataFrame
         The input features for the estimator.
-    y : pd.Series
+    y : IntoSeries
         The target variable for the estimator.
     cv : object
         Cross-validation splitter; an object that generates train/test splits.
      method : str, optional
         The method to use for prediction. It can be whatever methods are available to the estimator
         (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
-    sample_weight : pd.Series or np.ndarray, optional
+    sample_weight : IntoSeries or np.ndarray, optional
         Sample weights for the training data. Default is None.
     n_jobs : int, optional
         The number of jobs to run in parallel. Default is 1.
