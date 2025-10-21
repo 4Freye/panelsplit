@@ -6,7 +6,7 @@ panelsplit is a Python package designed to facilitate time series cross-validati
 
 **Key Features:**
 - **Panel data cross-validation:** Split up your panel dataset, respecting its temporal structure.
-- **Data compatibility:** Works with polars, pandas, numpy and more using a narwhals-based, DataFrame-agnostic approach.
+- **Data compatibility:** Provides a DataFrame-agnostic approach via narwhals, supporting libraries like polars, pandas, and numpy.
 - **Flexible pipelines:** Easily build pipelines that integrate with popular libraries such as scikit-learn and feature-engine.
 - **Parallel Processing:** Leverages parallel computing to speed up fitting and prediction tasks.
 
