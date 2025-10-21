@@ -5,6 +5,7 @@ This module focuses on edge cases and scenarios that aren't covered by the main 
 """
 
 import unittest
+import pytest
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -66,9 +67,10 @@ class TestEdgeCases(unittest.TestCase):
         sample_weight = np.ones(len(self.X))
 
         # Should work even with sample_weight provided (should be ignored)
-        preds, fitted_models = cross_val_fit_predict(
-            estimator, self.X, self.y, ps, sample_weight=sample_weight, n_jobs=1
-        )
+        with pytest.warns(UserWarning, match="does not support sample_weight"):
+            preds, fitted_models = cross_val_fit_predict(
+                estimator, self.X, self.y, ps, sample_weight=sample_weight, n_jobs=1
+            )
 
         self.assertIsInstance(preds, np.ndarray)
         self.assertEqual(len(fitted_models), 2)

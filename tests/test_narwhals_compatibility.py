@@ -6,6 +6,7 @@ dataframe libraries to ensure dataframe-agnostic behavior.
 """
 
 import unittest
+import pytest
 import numpy as np
 import pandas as pd
 import narwhals as nw
@@ -300,15 +301,19 @@ class TestNarwhalsCompatibility(unittest.TestCase):
 
         try:
             # This should work without error even with y=None and sample_weight
-            preds, fitted_models = cross_val_fit_predict(
-                imputer,
-                X_with_missing,
-                y=None,
-                cv=ps,
-                method="transform",
-                sample_weight=sample_weight,
-                n_jobs=1,
-            )
+            with pytest.warns(
+                UserWarning,
+                match="does not support sample_weight. sample_weight will be ignored.",
+            ):
+                preds, fitted_models = cross_val_fit_predict(
+                    imputer,
+                    X_with_missing,
+                    y=None,
+                    cv=ps,
+                    method="transform",
+                    sample_weight=sample_weight,
+                    n_jobs=1,
+                )
 
             # Check that predictions have the right shape
             self.assertIsInstance(preds, np.ndarray)

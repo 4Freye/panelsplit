@@ -13,6 +13,7 @@ from .utils.validation import (
     _to_numpy_array,
     check_cv,
     check_fitted_estimators,
+    _supports_sample_weights,
 )
 
 
@@ -207,6 +208,7 @@ def cross_val_fit(
     >>> len(fitted_models)
     2
     """
+    _supports_sample_weights(estimator, sample_weight)
     splits = check_cv(cv)
 
     fitted_estimators = Parallel(n_jobs=n_jobs)(
@@ -360,6 +362,7 @@ def cross_val_fit_predict(
     >>> preds.shape
     (2,)
     """
+    _supports_sample_weights(estimator, sample_weight)
 
     fitted_estimators = cross_val_fit(
         estimator, X, y, cv, sample_weight, n_jobs, drop_na_in_y=drop_na_in_y
