@@ -362,7 +362,6 @@ def cross_val_fit_predict(
     >>> preds.shape
     (2,)
     """
-    _supports_sample_weights(estimator, sample_weight)
 
     fitted_estimators = cross_val_fit(
         estimator, X, y, cv, sample_weight, n_jobs, drop_na_in_y=drop_na_in_y
