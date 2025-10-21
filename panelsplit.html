@@ -61,9 +61,9 @@ panelsplit    </h1>
 
 <ul>
 <li><strong>Panel data cross-validation:</strong> Split up your panel dataset, respecting its temporal structure.</li>
-<li><strong>Data compatibility:</strong> Works effortlessly with both numpy arrays and pandas DataFrames.</li>
+<li><strong>Data compatibility:</strong> Provides a DataFrame-agnostic approach via narwhals, supporting libraries like polars, pandas, and numpy.</li>
 <li><strong>Flexible pipelines:</strong> Easily build pipelines that integrate with popular libraries such as scikit-learn and feature-engine.</li>
-<li><strong>Parallel Processing:</strong> Leverages parallel computing to speed up cross-validation and prediction tasks.</li>
+<li><strong>Parallel Processing:</strong> Leverages parallel computing to speed up fitting and prediction tasks.</li>
 </ul>
 
 <hr />
@@ -103,7 +103,7 @@ panelsplit    </h1>
 <h3 id="panelsplitpipeline"><code><a href="panelsplit/pipeline.html">panelsplit.pipeline</a></code></h3>
 
 <ul>
-<li><strong>Sequential processing:</strong> Chains multiple transformers and estimators into a streamlined workflow.</li>
+<li><strong>Sequential processing:</strong> Chains multiple transformers and estimators into a streamlined pipeline, each with its own cross-validation approach.</li>
 <li><strong>Dynamic method injection:</strong> Automatically creates methods (like <code>predict</code> and <code>score</code>) based on the final estimator’s capabilities.</li>
 <li><strong>Out-of-fold predictions:</strong> Supports cross-validation based predictions with reassembled outputs.</li>
 </ul>
@@ -127,46 +127,45 @@ panelsplit    </h1>
 </span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="sd">**Key Features:**</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">- **Panel data cross-validation:** Split up your panel dataset, respecting its temporal structure.</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">- **Data compatibility:** Works effortlessly with both numpy arrays and pandas DataFrames.</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">- **Data compatibility:** Provides a DataFrame-agnostic approach via narwhals, supporting libraries like polars, pandas, and numpy.</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="sd">- **Flexible pipelines:** Easily build pipelines that integrate with popular libraries such as scikit-learn and feature-engine.</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">- **Parallel Processing:** Leverages parallel computing to speed up cross-validation and prediction tasks.</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">- **Parallel Processing:** Leverages parallel computing to speed up fitting and prediction tasks.</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="sd">---</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="sd">## Why choose panelsplit?</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="sd">panelsplit is built with the practical needs of data scientists working with panel data in mind:</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="sd">- **Robust &amp; flexible:** Whether experimenting with models or deploying production pipelines, its modular design lets you focus on analysis rather than plumbing.</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="sd">- **User-friendly:** Clear API design and comprehensive documentation make it easy to integrate into your existing workflows.</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="sd">- **Efficient:** Parallel processing and tailored cross-validation ensure that your computations are both fast and accurate.</span>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="sd">Explore the modules in detail by clicking on the links below to see full documentation and examples.</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="sd">---</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="sd">## Modules</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="sd">---</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="sd">## Why choose panelsplit?</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="sd">panelsplit is built with the practical needs of data scientists working with panel data in mind:</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="sd">- **Robust &amp; flexible:** Whether experimenting with models or deploying production pipelines, its modular design lets you focus on analysis rather than plumbing.</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="sd">- **User-friendly:** Clear API design and comprehensive documentation make it easy to integrate into your existing workflows.</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="sd">- **Efficient:** Parallel processing and tailored cross-validation ensure that your computations are both fast and accurate.</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="sd">Explore the modules in detail by clicking on the links below to see full documentation and examples.</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a><span class="sd">---</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="sd">## Modules</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>
-</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="sd">### `panelsplit.cross_validation`</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a><span class="sd">- **PanelSplit class:** Automatically generates train/test splits while preserving temporal order and handling edge cases.</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="sd">- **Label generation:** Provides helper functions to create training and testing labels.</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a><span class="sd">- **Snapshot generation:** Generates snapshots of data in cases where transformations aren&#39;t comparable across time.</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>
-</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="sd">### `panelsplit.application`</span>
-</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="sd">- **Model fitting &amp; prediction:** Fits models on each training split using cloned estimators and supports multiple prediction methods (e.g., `predict`, `predict_proba`).</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="sd">- **Parallel execution:** Leverages parallel processing for efficient handling of cross-validation splits.</span>
-</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a><span class="sd">- **Data integrity:** Restores predictions to the original data order for consistency.</span>
-</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>
-</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="sd">### `panelsplit.pipeline`</span>
-</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a><span class="sd">- **Sequential processing:** Chains multiple transformers and estimators into a streamlined workflow.</span>
-</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">- **Dynamic method injection:** Automatically creates methods (like `predict` and `score`) based on the final estimator’s capabilities.</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a><span class="sd">- **Out-of-fold predictions:** Supports cross-validation based predictions with reassembled outputs.</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>
-</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a><span class="sd">### `panelsplit.plot`</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a><span class="sd">- Visualize time series splits easily.</span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a>
-</span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;application&quot;</span><span class="p">,</span> <span class="s2">&quot;cross_validation&quot;</span><span class="p">,</span> <span class="s2">&quot;pipeline&quot;</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">]</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a><span class="sd">### `panelsplit.cross_validation`</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="sd">- **PanelSplit class:** Automatically generates train/test splits while preserving temporal order and handling edge cases.</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a><span class="sd">- **Label generation:** Provides helper functions to create training and testing labels.</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="sd">- **Snapshot generation:** Generates snapshots of data in cases where transformations aren&#39;t comparable across time.</span>
+</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a><span class="sd">### `panelsplit.application`</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="sd">- **Model fitting &amp; prediction:** Fits models on each training split using cloned estimators and supports multiple prediction methods (e.g., `predict`, `predict_proba`).</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="sd">- **Parallel execution:** Leverages parallel processing for efficient handling of cross-validation splits.</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="sd">- **Data integrity:** Restores predictions to the original data order for consistency.</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a><span class="sd">### `panelsplit.pipeline`</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="sd">- **Sequential processing:** Chains multiple transformers and estimators into a streamlined pipeline, each with its own cross-validation approach.</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a><span class="sd">- **Dynamic method injection:** Automatically creates methods (like `predict` and `score`) based on the final estimator’s capabilities.</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">- **Out-of-fold predictions:** Supports cross-validation based predictions with reassembled outputs.</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>
+</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a><span class="sd">### `panelsplit.plot`</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a><span class="sd">- Visualize time series splits easily.</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>
+</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;application&quot;</span><span class="p">,</span> <span class="s2">&quot;cross_validation&quot;</span><span class="p">,</span> <span class="s2">&quot;pipeline&quot;</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
