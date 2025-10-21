@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Migrated from boolean indexing to purely integer-based indexing, as mentioned in (#86)[https://github.com/4Freye/panelsplit/issues/86]
+- Migrated from boolean indexing to purely integer-based indexing, as mentioned in [#86](https://github.com/4Freye/panelsplit/issues/86)
 ### Added
 - Consistent type hints throughout the Python codebase
 
