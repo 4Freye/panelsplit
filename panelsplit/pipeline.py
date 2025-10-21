@@ -1,9 +1,11 @@
 import copy
 import inspect
 import time
+from typing import Union
 
 import narwhals as nw
 import numpy as np
+from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.base import BaseEstimator, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
@@ -36,26 +38,6 @@ def _log_message(message, verbose, step_idx, total, elapsed_time=None):
         if elapsed_time is not None:
             message += " (elapsed time: %5.1fs)" % elapsed_time
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
-
-
-def _to_int_indices(indices):
-    """
-    Convert indices to integer indices.
-
-    Parameters
-    ----------
-    indices : array-like
-        Array of indices, which can be boolean or integer.
-
-    Returns
-    -------
-    np.ndarray
-        Array of integer indices.
-    """
-    indices = np.atleast_1d(indices)
-    if indices.dtype == bool:
-        indices = np.where(indices)[0]
-    return indices
 
 
 def _sort_and_combine(predictions_with_idx):
@@ -352,32 +334,28 @@ class SequentialCVPipeline(BaseEstimator):
         else:
             raise TypeError("Invalid index type. Expected int or slice.")
 
-    def _subset(self, X, indices):
+    def _subset(
+        self, X: Union[IntoDataFrame, IntoSeries, np.ndarray], indices: np.ndarray
+    ) -> Union[IntoDataFrame, IntoSeries, np.ndarray]:
         """
         Subset the input X based on provided indices.
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : IntoDataFrame, IntoSeries, or np.ndarray
             The data to subset.
-        indices : array-like
-            Indices used to select a subset of X.
+        indices : np.ndarray
+            Integer indices used to select a subset of X.
 
         Returns
         -------
-        array-like or IntoDataFrame or IntoSeries
+        IntoDataFrame, IntoSeries, or np.ndarray
             The subset of X corresponding to the given indices.
         """
-        # Convert boolean indices to row numbers if needed
-        if isinstance(indices, np.ndarray) and indices.dtype == bool:
-            row_indices = np.where(indices)[0]
-        else:
-            row_indices = indices
-
         # Use narwhals for dataframe-agnostic operations
         X_nw = nw.from_native(X, pass_through=True)
 
-        return _safe_indexing(X_nw, row_indices, to_native=True)
+        return _safe_indexing(X_nw, indices, to_native=True)
 
     def _append_indexed_output(self, output_list, test_idx, output):
         """
@@ -452,7 +430,6 @@ class SequentialCVPipeline(BaseEstimator):
         list
             List of predictions or transformed values.
         """
-        indices = _to_int_indices(indices)
         X_subset = self._subset(X, indices)
         y_subset = None if y is None else self._subset(y, indices)
         if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
@@ -508,8 +485,6 @@ class SequentialCVPipeline(BaseEstimator):
             idx_trans = []
             folds_models = []
             for train_idx, test_idx in splits:
-                train_idx = _to_int_indices(train_idx)
-                test_idx = _to_int_indices(test_idx)
                 model_fold = clone(transformer)
                 X_train = self._subset(X, train_idx)
                 y_train = None if y is None else self._subset(y, train_idx)

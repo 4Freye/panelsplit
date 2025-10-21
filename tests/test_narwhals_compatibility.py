@@ -48,12 +48,12 @@ class TestNarwhalsCompatibility(unittest.TestCase):
         self.assertEqual(len(splits), 2)
         self.assertEqual(ps.get_n_splits(), 2)
 
-        # Test that splits contain boolean arrays
+        # Test that splits contain integer arrays
         for train_idx, test_idx in splits:
             self.assertIsInstance(train_idx, np.ndarray)
             self.assertIsInstance(test_idx, np.ndarray)
-            self.assertEqual(train_idx.dtype, bool)
-            self.assertEqual(test_idx.dtype, bool)
+            self.assertEqual(train_idx.dtype, np.int64)
+            self.assertEqual(test_idx.dtype, np.int64)
 
     def test_panelsplit_with_numpy_array(self):
         """Test PanelSplit with numpy array for periods."""
@@ -270,7 +270,7 @@ class TestNarwhalsCompatibility(unittest.TestCase):
 
             # Cross-validation returns out-of-fold predictions (only test sets)
             # With 2 splits and 2 test samples each, we expect 4 total predictions
-            expected_test_samples = sum(np.sum(test) for _, test in ps.split())
+            expected_test_samples = sum(len(test) for _, test in ps.split())
             self.assertEqual(
                 preds.shape[0], expected_test_samples
             )  # Out-of-fold predictions only
@@ -321,7 +321,7 @@ class TestNarwhalsCompatibility(unittest.TestCase):
 
             # Cross-validation returns out-of-fold predictions (only test sets)
             # With 2 splits and 2 test samples each, we expect 4 total predictions
-            expected_test_samples = sum(np.sum(test) for _, test in ps.split())
+            expected_test_samples = sum(len(test) for _, test in ps.split())
             self.assertEqual(
                 preds.shape[0], expected_test_samples
             )  # Out-of-fold predictions only
@@ -365,7 +365,7 @@ class TestNarwhalsCompatibility(unittest.TestCase):
             self.assertEqual(len(fitted_models), 2)  # 2 splits
 
             # Should have predictions for test samples only
-            expected_test_samples = sum(np.sum(test) for _, test in ps.split())
+            expected_test_samples = sum(len(test) for _, test in ps.split())
             self.assertEqual(len(preds), expected_test_samples)
 
         except Exception as e:

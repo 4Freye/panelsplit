@@ -1,5 +1,5 @@
 import warnings
-from typing import List, Union
+from typing import List, Optional, Tuple, Union
 
 import narwhals as nw
 import numpy as np
@@ -161,14 +161,14 @@ class PanelSplit:
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
-    def _gen_splits(self):
+    def _gen_splits(self) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
-        Generate boolean index arrays for training and testing sets for each split.
+        Generate integer index arrays for training and testing sets for each split.
 
         Returns
         -------
-        list of tuple of np.ndarray
-            A list where each tuple contains two boolean arrays:
+        List[Tuple[np.ndarray, np.ndarray]]
+            A list where each tuple contains two integer arrays:
             (train_indices, test_indices) corresponding to each split.
         """
         train_test_splits = []
@@ -192,42 +192,47 @@ class PanelSplit:
                         ),
                         stacklevel=2,
                     )
-                # Use numpy operations for boolean masking - simpler and more reliable
+                # Create boolean masks then convert to integer indices
                 train_period_mask = np.isin(self._periods, train_periods)
                 test_period_mask = np.isin(self._periods, test_periods)
 
                 # Handle snapshots
                 snapshot_mask = snapshots_array == snapshot_val
 
-                train_indices = train_period_mask & snapshot_mask
-                test_indices = test_period_mask & snapshot_mask
+                train_indices = np.where(train_period_mask & snapshot_mask)[0]
+                test_indices = np.where(test_period_mask & snapshot_mask)[0]
             else:
-                # Use numpy operations for boolean masking - simpler and more reliable
-                train_indices = np.isin(self._periods, train_periods)
-                test_indices = np.isin(self._periods, test_periods)
+                # Create boolean masks then convert to integer indices
+                train_indices = np.where(np.isin(self._periods, train_periods))[0]
+                test_indices = np.where(np.isin(self._periods, test_periods))[0]
 
             train_test_splits.append((train_indices, test_indices))
 
         return train_test_splits
 
-    def split(self, X=None, y=None, groups=None) -> List[List[bool]]:
+    def split(
+        self,
+        X: Optional[IntoDataFrame] = None,
+        y: Optional[Union[IntoSeries, np.ndarray]] = None,
+        groups: Optional[np.ndarray] = None,
+    ) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
         Generate training and testing indices for each cross-validation split.
 
         Parameters
         ----------
-        X : object, optional
+        X : IntoDataFrame, optional
             Ignored; included for compatibility.
-        y : object, optional
+        y : IntoSeries or np.ndarray, optional
             Ignored; included for compatibility.
-        groups : object, optional
+        groups : np.ndarray, optional
             Ignored; included for compatibility.
 
         Returns
         -------
-        list of tuple of np.ndarray
+        List[Tuple[np.ndarray, np.ndarray]]
             A list of tuples, where each tuple contains:
-            (train_indices, test_indices) as boolean arrays.
+            (train_indices, test_indices) as integer arrays.
 
         Examples
         --------
@@ -237,28 +242,33 @@ class PanelSplit:
         >>> splits = ps.split()
         >>> for train, test in splits:
         ...     print("Train:", train, "Test:", test)
-        Train: [ True False False] Test: [False  True False]
-        Train: [ True  True False] Test: [False False  True]
+        Train: [0] Test: [1]
+        Train: [0 1] Test: [2]
         >>> ps_modified = drop_splits(ps, y)
         >>> splits_modified = ps_modified.split()
         Dropping split 0 as either the test or train set is either empty or contains only one unique value.
         >>> for train, test in splits_modified:
         ...    print("Train:", train, "Test:", test)
-        Train: [ True  True False] Test: [False False  True]
+        Train: [0 1] Test: [2]
         """
         return self.train_test_splits
 
-    def get_n_splits(self, X=None, y=None, groups=None):
+    def get_n_splits(
+        self,
+        X: Optional[IntoDataFrame] = None,
+        y: Optional[Union[IntoSeries, np.ndarray]] = None,
+        groups: Optional[np.ndarray] = None,
+    ) -> int:
         """
         Get the number of splits.
 
         Parameters
         ----------
-        X : object, optional
+        X : IntoDataFrame, optional
             Ignored; included for compatibility.
-        y : object, optional
+        y : IntoSeries or np.ndarray, optional
             Ignored; included for compatibility.
-        groups : object, optional
+        groups : np.ndarray, optional
             Ignored; included for compatibility.
 
         Returns
@@ -276,31 +286,34 @@ class PanelSplit:
         """
         return self.n_splits
 
-    def _gen_labels(self, labels, fold_idx):
+    def _gen_labels(
+        self,
+        labels: Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray],
+        fold_idx: int,
+    ) -> Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]:
         """
         Generate labels for either the training or testing set based on the cross-validation splits.
 
         Parameters
         ----------
-        labels : IntoSeries, IntoDataFrame, pd.Index, or np.ndarray
+        labels : pd.Index, IntoSeries, IntoDataFrame, or np.ndarray
             The labels corresponding to the observations.
         fold_idx : int
             Indicator for the fold to generate labels for (0 for training, 1 for testing).
 
         Returns
         -------
-        Same type as `labels`
+        pd.Index, IntoSeries, IntoDataFrame, or np.ndarray
             The labels corresponding to the specified fold.
         """
         check_labels(labels)
-        indices = np.stack([split[fold_idx] for split in self.split()], axis=1).any(
-            axis=1
-        )
+        # Collect all indices from all splits for the specified fold
+        all_indices = np.concatenate([split[fold_idx] for split in self.split()])
+        # Get unique indices to avoid duplicates
+        row_indices = np.unique(all_indices)
 
         # Use narwhals slice operation for clean dataframe-agnostic subsetting
         labels_nw = nw.from_native(labels, pass_through=True)
-        # Convert boolean indices to row numbers
-        row_indices = np.where(indices)[0]
 
         return _safe_indexing(labels_nw, row_indices, to_native=True)
 
@@ -360,7 +373,9 @@ class PanelSplit:
         """
         return self._gen_labels(labels=labels, fold_idx=1)
 
-    def gen_snapshots(self, data, period_col=None):
+    def gen_snapshots(
+        self, data: IntoDataFrame, period_col: Optional[str] = None
+    ) -> IntoDataFrame:
         """
         Generate snapshots for each cross-validation split.
 
@@ -406,10 +421,8 @@ class PanelSplit:
         splits = self.split()
         snapshots = []
         for i, split in enumerate(splits):
-            split_indices = np.array([split[0], split[1]]).any(axis=0)
-
-            # Convert boolean indices to row numbers for narwhals indexing
-            row_indices = np.where(split_indices)[0]
+            # Combine train and test indices (both are already integer arrays)
+            row_indices = np.unique(np.concatenate([split[0], split[1]]))
 
             split_data = _safe_indexing(data_nw, row_indices)
 
