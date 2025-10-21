@@ -40,23 +40,6 @@ def _log_message(message, verbose, step_idx, total, elapsed_time=None):
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
 
 
-def _to_int_indices(indices: np.ndarray) -> np.ndarray:
-    """
-    Ensure indices are integer indices (passthrough since indices are always integers now).
-
-    Parameters
-    ----------
-    indices : np.ndarray
-        Array of integer indices.
-
-    Returns
-    -------
-    np.ndarray
-        Array of integer indices.
-    """
-    return np.atleast_1d(indices)
-
-
 def _sort_and_combine(predictions_with_idx):
     """
     Sort and combine predictions from (index, prediction) pairs.
@@ -447,7 +430,6 @@ class SequentialCVPipeline(BaseEstimator):
         list
             List of predictions or transformed values.
         """
-        indices = _to_int_indices(indices)
         X_subset = self._subset(X, indices)
         y_subset = None if y is None else self._subset(y, indices)
         if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
@@ -503,8 +485,6 @@ class SequentialCVPipeline(BaseEstimator):
             idx_trans = []
             folds_models = []
             for train_idx, test_idx in splits:
-                train_idx = _to_int_indices(train_idx)
-                test_idx = _to_int_indices(test_idx)
                 model_fold = clone(transformer)
                 X_train = self._subset(X, train_idx)
                 y_train = None if y is None else self._subset(y, train_idx)
