@@ -1,4 +1,6 @@
 import warnings
+import inspect
+
 from collections.abc import Iterable
 
 import narwhals as nw
@@ -84,6 +86,45 @@ def _is_valid_data_type(data, data_name="data"):
     except Exception:
         # Final fallback for array-like objects
         return hasattr(data, "__array__") or hasattr(data, "__iter__")
+
+
+def _supports_sample_weights(estimator, sample_weight=None):
+    """
+    Check whether an estimator supports sample weights in its fit method.
+    Issues a warning if not supported.
+
+    Parameters
+    ----------
+    estimator : object
+        A scikit-learn style estimator class or instance.
+
+    Returns
+    -------
+    bool
+        True if the estimator supports sample_weight, False otherwise.
+    """
+    if sample_weight is None:
+        return True
+
+    try:
+        fit_signature = inspect.signature(estimator.fit)
+        if "sample_weight" not in fit_signature.parameters:
+            warnings.warn(
+                f"Estimator {estimator.__class__.__name__} does not support sample_weight. sample_weight will be ignored.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return False
+    except (TypeError, ValueError):
+        warnings.warn(
+            f"Estimator {estimator.__class__.__name__} has no inspectable fit signature; "
+            "cannot verify sample_weight support.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return False
+
+    return True
 
 
 __pdoc__ = {
