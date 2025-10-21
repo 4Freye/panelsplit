@@ -290,7 +290,7 @@ class TestEdgeCases(unittest.TestCase):
             self.assertEqual(len(fitted_models), 3)
 
             # Check that we get reasonable number of predictions
-            expected_test_samples = sum(np.sum(test) for _, test in ps.split())
+            expected_test_samples = sum(len(test) for _, test in ps.split())
             self.assertEqual(len(preds), expected_test_samples)
 
         except Exception as e:

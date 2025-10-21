@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Union
+from typing import List, Optional, Union
 
 import narwhals as nw
 import numpy as np
@@ -47,10 +47,10 @@ def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.
 def _fit_split(
     estimator,
     X: IntoDataFrame,
-    y: IntoSeries,
-    train_indices: List[bool],
-    sample_weight: Union[IntoSeries, np.ndarray] = None,
-    drop_na_in_y=False,
+    y: Optional[IntoSeries],
+    train_indices: np.ndarray,
+    sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
+    drop_na_in_y: bool = False,
 ):
     """
     Fit a cloned estimator on the given training indices.
@@ -61,12 +61,14 @@ def _fit_split(
         The machine learning model to be fitted.
     X : IntoDataFrame
         The input features for the estimator.
-    y : IntoSeries
+    y : IntoSeries or None
         The target variable for the estimator.
-    train_indices : list of bool
-        Boolean mask or indices indicating the training data.
+    train_indices : np.ndarray
+        Integer indices indicating the training data.
     sample_weight : IntoSeries or np.ndarray, optional
         Sample weights for the training data. Default is None.
+    drop_na_in_y : bool, default=False
+        Whether to drop rows with null values in y.
 
     Returns
     -------
@@ -78,16 +80,13 @@ def _fit_split(
     # Use narwhals for dataframe-agnostic operations
     X_nw = nw.from_native(X, pass_through=True)
 
-    # Convert boolean indices to row numbers for narwhals
-    train_row_indices = np.where(train_indices)[0]
-
-    # Use safe position-based indexing
-    X_subset = _safe_indexing(X_nw, train_row_indices)
+    # Use safe position-based indexing (train_indices are already integers)
+    X_subset = _safe_indexing(X_nw, train_indices)
 
     # Handle y=None case (for transformers)
     if y is not None:
         y_nw = nw.from_native(y, pass_through=True)
-        y_subset = _safe_indexing(y_nw, train_row_indices)
+        y_subset = _safe_indexing(y_nw, train_indices)
 
         if drop_na_in_y:
             # Get mask of non-null values
@@ -112,7 +111,7 @@ def _fit_split(
 
     if sample_weight is not None:
         sw_nw = nw.from_native(sample_weight, pass_through=True)
-        sw_subset = _safe_indexing(sw_nw, train_row_indices)
+        sw_subset = _safe_indexing(sw_nw, train_indices)
 
         # Only filter by non_null_indices if y is not None and drop_na_in_y is True
         if y is not None and drop_na_in_y:
@@ -133,21 +132,21 @@ def _fit_split(
         return local_estimator.fit(X_native, y_native)
 
 
-def _prediction_order_to_original_order(indices: List[bool]) -> List[int]:
+def _prediction_order_to_original_order(indices: List[np.ndarray]) -> np.ndarray:
     """
     Convert the concatenated predictions back to the original order.
 
     Parameters
     ----------
-    indices : list of array-like
-        List of boolean arrays or index arrays corresponding to the test/train splits.
+    indices : List[np.ndarray]
+        List of integer index arrays corresponding to the test/train splits.
 
     Returns
     -------
     np.ndarray
         Array of indices representing the sorted order to restore the original data order.
     """
-    indices = np.concatenate([np.where(indices_)[0] for indices_ in indices])
+    indices = np.concatenate(indices)
     return np.argsort(indices)
 
 
@@ -268,7 +267,7 @@ def cross_val_predict(
     test_preds = Parallel(n_jobs=n_jobs)(
         delayed(_predict_split)(
             fitted_estimators[i],
-            _safe_indexing(X_nw, np.where(test_idx)[0], to_native=True),
+            _safe_indexing(X_nw, test_idx, to_native=True),
             method,
         )
         for i, test_idx in enumerate(test_splits)
@@ -281,7 +280,7 @@ def cross_val_predict(
         train_preds = Parallel(n_jobs=n_jobs)(
             delayed(_predict_split)(
                 fitted_estimators[i],
-                _safe_indexing(X_nw, np.where(train_idx)[0], to_native=True),
+                _safe_indexing(X_nw, train_idx, to_native=True),
                 method,
             )
             for i, train_idx in enumerate(train_splits)
