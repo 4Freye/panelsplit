@@ -6,6 +6,8 @@ on:
   push:
     paths:
       - '*.py'
+  pull_request:
+    branches: [ main ]
 
 jobs:
   mypy:
