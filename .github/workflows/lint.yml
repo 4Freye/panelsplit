@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
       - name: Run mypy
-        run: uv run mypy .
+        run: uv run mypy . --install-types
 
   ruff:
     runs-on: ubuntu-latest
