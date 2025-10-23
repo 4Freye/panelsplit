@@ -160,7 +160,7 @@ def cross_val_fit(
     n_jobs: int = 1,
     progress_bar: bool = False,
     drop_na_in_y: bool = False,
-) -> List:
+) -> List[BaseEstimator]:
     """
     Fit the estimator using cross-validation.
 
