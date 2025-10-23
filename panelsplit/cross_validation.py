@@ -1,5 +1,5 @@
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, TYPE_CHECKING
 
 import narwhals as nw
 import numpy as np
@@ -14,14 +14,8 @@ from .utils.validation import (
     get_index_or_col_from_df,
 )
 
-# Keep pandas import for type annotations and fallback compatibility
-try:
+if TYPE_CHECKING:
     import pandas as pd
-
-    _PANDAS_AVAILABLE = True
-except ImportError:
-    pd = None
-    _PANDAS_AVAILABLE = False
 
 
 def _nunique_subset(data, indices):
@@ -85,12 +79,12 @@ class PanelSplit:
     def __init__(
         self,
         periods: Union[IntoSeries, np.ndarray],
-        unique_periods=None,
-        snapshots: IntoSeries = None,
+        unique_periods: Optional[Union[IntoSeries, np.ndarray]] = None,
+        snapshots: Optional[Union[IntoSeries, np.ndarray]] = None,
         n_splits: int = 2,
         gap: int = 0,
         test_size: int = 1,
-        max_train_size: int = None,
+        max_train_size: Optional[int] = None,
         include_first_train_in_test: bool = False,
         include_train_in_test: bool = False,
     ) -> None:
@@ -103,7 +97,7 @@ class PanelSplit:
                 unique_array = _to_numpy_array(unique_result)
                 unique_vals = np.sort(unique_array)
             else:
-                unique_vals = np.unique(periods)
+                unique_vals = np.unique(_to_numpy_array(periods))
             unique_periods = unique_vals
         else:
             unique_periods = check_periods(unique_periods, obj_name="unique_periods")
@@ -123,12 +117,14 @@ class PanelSplit:
         else:
             self._include_first_train_in_test = True
         self._u_periods_cv = self._split_unique_periods(indices, unique_periods)
-        self._periods = periods
-        self._snapshots = snapshots
+        self._periods = _to_numpy_array(periods)
+        self._snapshots = _to_numpy_array(snapshots) if snapshots is not None else None
         self.n_splits = n_splits
         self.train_test_splits = self._gen_splits()
 
-    def _split_unique_periods(self, indices, unique_periods):
+    def _split_unique_periods(
+        self, indices, unique_periods
+    ) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
         Split unique periods into training and testing sets based on TimeSeriesSplit indices.
 
@@ -173,11 +169,6 @@ class PanelSplit:
         """
         train_test_splits = []
 
-        # Convert snapshots once if they exist
-        snapshots_array = (
-            _to_numpy_array(self._snapshots) if self._snapshots is not None else None
-        )
-
         for i, (train_periods, test_periods) in enumerate(self._u_periods_cv):
             if self._snapshots is not None:
                 if test_periods.max() >= self._snapshots.min():
@@ -197,7 +188,7 @@ class PanelSplit:
                 test_period_mask = np.isin(self._periods, test_periods)
 
                 # Handle snapshots
-                snapshot_mask = snapshots_array == snapshot_val
+                snapshot_mask = self._snapshots == snapshot_val
 
                 train_indices = np.where(train_period_mask & snapshot_mask)[0]
                 test_indices = np.where(test_period_mask & snapshot_mask)[0]

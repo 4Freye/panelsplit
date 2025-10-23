@@ -1,11 +1,11 @@
 import inspect
-from typing import List, Optional, Union
+from typing import Tuple, List, Union, Optional
 
 import narwhals as nw
 import numpy as np
 from joblib import Parallel, delayed
 from narwhals.typing import IntoDataFrame, IntoSeries
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator
 
 from .utils.utils import _split_wrapper
 from .utils.validation import (
@@ -156,11 +156,11 @@ def cross_val_fit(
     X: IntoDataFrame,
     y: IntoSeries,
     cv,
-    sample_weight: Union[IntoSeries, np.ndarray] = None,
+    sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     progress_bar: bool = False,
-    drop_na_in_y=False,
-):
+    drop_na_in_y: bool = False,
+) -> List:
     """
     Fit the estimator using cross-validation.
 
@@ -229,7 +229,7 @@ def cross_val_predict(
     method: str = "predict",
     n_jobs: int = 1,
     return_train_preds: bool = False,
-) -> np.ndarray:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Perform cross-validated predictions using a given predictor model.
 
@@ -301,11 +301,14 @@ def cross_val_fit_predict(
     y: IntoSeries,
     cv,
     method: str = "predict",
-    sample_weight: Union[IntoSeries, np.ndarray] = None,
+    sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     return_train_preds: bool = False,
     drop_na_in_y=False,
-) -> np.ndarray:
+) -> Union[
+    Tuple[np.ndarray, List[BaseEstimator]],
+    Tuple[np.ndarray, np.ndarray, List[BaseEstimator]],
+]:
     """
     Fit the estimator using cross-validation and then make predictions.
 
@@ -366,11 +369,22 @@ def cross_val_fit_predict(
         estimator, X, y, cv, sample_weight, n_jobs, drop_na_in_y=drop_na_in_y
     )
 
+    res = cross_val_predict(
+        fitted_estimators, X, cv, method, n_jobs, return_train_preds
+    )
+
     if return_train_preds:
-        preds, train_preds = cross_val_predict(
-            fitted_estimators, X, cv, method, n_jobs, return_train_preds
-        )
+        # res should be Tuple[np.ndarray, np.ndarray]
+        if isinstance(res, tuple):
+            preds, train_preds = res
+        else:
+            # defensive: unexpected type at runtime
+            raise TypeError("cross_val_predict returned ndarray but expected tuple")
         return preds, train_preds, fitted_estimators
     else:
-        preds = cross_val_predict(fitted_estimators, X, cv, method, n_jobs)
+        # res should be np.ndarray
+        if isinstance(res, tuple):
+            preds = res[0]
+        else:
+            preds = res
         return preds, fitted_estimators
