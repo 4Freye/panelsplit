@@ -42,6 +42,8 @@ dev = [
     "twine>=6.1.0",
     "hatchling>=1.27.0",
     "wbdata>=1.0.0",
+    "tqdm-stubs>=0.2.1",
+    "pandas-stubs>=2.0.2.230605",
 ]
 
 
@@ -60,3 +62,6 @@ write-to = "panelsplit/_version.py"  # optional: writes version to package
 # Package data configuration for hatchling
 [tool.hatch.build.targets.wheel]
 packages = ["panelsplit"]
+
+# [tool.mypy]
+disable_error_code = ["import-untyped"]
