@@ -18,7 +18,7 @@ from sklearn.utils.validation import check_is_fitted
 # Keep pandas import for fallback compatibility
 def _get_pandas():
     try:
-        return importlib.import_module("pandas"), _PANDAS_AVAILABLE
+        return importlib.import_module("pandas")
     except ImportError:
         return None
 
