@@ -1,0 +1,44 @@
+name: lint
+permissions:
+  contents: write
+
+on:
+  push:
+    paths:
+      - '*.py'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync --dev
+      - name: Run mypy
+        run: uv run mypy panelsplit
+
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ruff format check
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: format
+      - name: Ruff lint check (with autofix)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check --fix

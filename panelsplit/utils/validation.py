@@ -1,5 +1,6 @@
 import warnings
 import inspect
+import importlib
 
 from collections.abc import Iterable
 
@@ -13,14 +14,17 @@ from narwhals.dependencies import (
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
-# Keep pandas import for fallback compatibility
-try:
-    import pandas as pd
 
-    _PANDAS_AVAILABLE = True
-except ImportError:
-    pd = None
-    _PANDAS_AVAILABLE = False
+# Keep pandas import for fallback compatibility
+def _get_pandas():
+    try:
+        return importlib.import_module("pandas")
+    except ImportError:
+        return None
+
+
+pd = _get_pandas()
+_PANDAS_AVAILABLE = False if pd is None else True
 
 
 def _safe_indexing(obj, indices=None, to_native=False):
