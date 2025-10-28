@@ -4,6 +4,14 @@ __pycache__/
 *.pyo
 *.pyd
 *.pyirc
+*.mypy_cache
+*.pytest_cache
+*.ruff_cache
+*docs/
+*typecov/
+dist/
+
+.DS_Store
 
 debug.ipynb
 
@@ -11,3 +19,7 @@ panelsplit.egg-info
 
 .venv
 .python-version
+
+# drafts
+examples/Intro to PanelSplit.ipynb
+examples/PanelSplit explanation.ipynb

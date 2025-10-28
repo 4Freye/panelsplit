@@ -39,6 +39,7 @@ dev = [
     "pip>=25.0.1",
     "build>=1.2.2.post1",
     "twine>=6.1.0",
+    "lxml>=6.0.2",
     "hatchling>=1.27.0",
     "wbdata>=1.0.0",
     "mypy>=1.14.1",
