@@ -45,6 +45,7 @@ dev = [
     "mypy>=1.14.1",
     "tqdm-stubs>=0.2.1",
     "pandas-stubs>=2.0.2.230605",
+    "pydoclint>=0.5.11",
 ]
 
 
@@ -66,3 +67,6 @@ packages = ["panelsplit"]
 
 [tool.mypy]
 disable_error_code = ["import-untyped"]
+
+[tool.pydoclint]
+ignore-underscore-args = true
