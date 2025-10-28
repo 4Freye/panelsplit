@@ -344,7 +344,7 @@ class SequentialCVPipeline(BaseEstimator):
         # It will be created during fit() to properly indicate fitted state
         self._inject_dynamic_methods()
 
-    def __getitem__(self, key: str) -> Tuple:
+    def __getitem__(self, key: Union[int, slice]) -> Union["SequentialCVPipeline", Tuple]:
         if isinstance(key, slice):
             # Create a deep copy to include the fitted state.
             new_pipe = copy.deepcopy(self)
