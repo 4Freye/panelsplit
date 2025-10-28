@@ -344,7 +344,9 @@ class SequentialCVPipeline(BaseEstimator):
         # It will be created during fit() to properly indicate fitted state
         self._inject_dynamic_methods()
 
-    def __getitem__(self, key: Union[int, slice]) -> Union["SequentialCVPipeline", Tuple]:
+    def __getitem__(
+        self, key: Union[int, slice]
+    ) -> Union["SequentialCVPipeline", Tuple]:
         if isinstance(key, slice):
             # Create a deep copy to include the fitted state.
             new_pipe = copy.deepcopy(self)
@@ -811,7 +813,9 @@ class SequentialCVPipeline(BaseEstimator):
         pass
 
     def fit_predict_proba(
-        self, X: ArrayLike, y: Optional[ArrayLike] = None
+        self,
+        X: ArrayLike,
+        y: Optional[ArrayLike] = None,  # type: ignore[empty-body, return]
     ) -> ArrayLike:  # type: ignore[empty-body, return]
         """
         Fit the pipeline and predict class probabilities.
