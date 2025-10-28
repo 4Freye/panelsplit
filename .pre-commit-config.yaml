@@ -24,10 +24,8 @@ repos:
       - id: ruff-format
         types_or: [python, pyi]
 
-  - repo: local
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.7.6
     hooks:
       - id: pydoclint
-        name: pydoclint
-        entry: pydoclint panelsplit --check-class-attributes False
-        language: system
-        types: [python]
+        args: [--style=numpy, --check-class-attributes=False]

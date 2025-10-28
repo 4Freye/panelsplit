@@ -256,7 +256,7 @@ class SequentialCVPipeline(BaseEstimator):
 
     Parameters
     ----------
-    steps : List[Tuple[str, BaseEstimator, PanelSplit | Iterable | None]]
+    steps : List[Tuple[str, BaseEstimator, Union[PanelSplit, Iterable, None]]]
         List where each tuple is (name, transformer, cv). 'name' is a string identifier,
         'transformer' is an estimator or transformer, and 'cv' is a cross-validation
         splitter or None.
@@ -270,7 +270,7 @@ class SequentialCVPipeline(BaseEstimator):
 
     Attributes
     ----------
-    steps : list[tuple[str, BaseEstimator, PanelSplit | Iterable | None]]
+    steps : List[Tuple[str, BaseEstimator, Union[PanelSplit, Iterable, None]]]
         The list of pipeline steps.
     verbose : bool
         Verbosity flag.
@@ -323,7 +323,7 @@ class SequentialCVPipeline(BaseEstimator):
 
     def __init__(
         self,
-        steps: List[Tuple[str, BaseEstimator, PanelSplit | Iterable | None]],
+        steps: List[Tuple[str, BaseEstimator, Union[PanelSplit, Iterable, None]]],
         verbose: bool = False,
     ) -> None:
         # Each step must be a tuple: (name, transformer, cv)
@@ -389,7 +389,7 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _combine(
         transformed_list: List,
-    ) -> NDArray | IntoDataFrame | IntoSeries | List:
+    ) -> Union[ArrayLike | List]:
         """
         Combine a list of transformed outputs into a single output.
         """
@@ -409,7 +409,7 @@ class SequentialCVPipeline(BaseEstimator):
         model: EstimatorLike,
         method_name: str,
         X: ArrayLike,
-        indices: int | NDArray[np.int64],
+        indices: Union[int, NDArray[np.int64]],
         y: Optional[ArrayLike] = None,
     ) -> List:
         """
@@ -423,7 +423,7 @@ class SequentialCVPipeline(BaseEstimator):
             The name of the method to apply (e.g., 'predict' or 'transform').
         X : ArrayLike
             Input data.
-        indices : int | NDArray[np.int64]
+        indices : Union[int, NDArray[np.int64]]
             Indices specifying the subset of X.
         y : Optional[ArrayLike]
             Target values (required for some methods like 'score'). Default is None.
@@ -449,8 +449,8 @@ class SequentialCVPipeline(BaseEstimator):
         self,
         transformer: EstimatorLike,
         X: ArrayLike,
-        y: ArrayLike | None,
-        cv: Optional[PanelSplit | Iterable] = None,
+        y: Union[ArrayLike, None],
+        cv: Optional[Union[PanelSplit.Iterable]] = None,
         return_output: bool = True,
         method: str = "transform",
     ) -> Tuple:
@@ -467,10 +467,10 @@ class SequentialCVPipeline(BaseEstimator):
             The transformer or estimator to be fitted.
         X : ArrayLike
             Input data for fitting.
-        y : ArrayLike | None
+        y : Union[ArrayLike, None]
             Target values.
-        cv : PanelSplit | Iterable
-            Cross-validation splitting strategy.
+        cv : Optional[Union[PanelSplit. Iterable]]
+            Cross-validation splitting strategy. Default is None.
         return_output : bool
             Whether to return the transformed output. Default is True.
         method : str

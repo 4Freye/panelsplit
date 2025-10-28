@@ -1,5 +1,5 @@
 import inspect
-from typing import Tuple, List, Optional, Iterable
+from typing import Tuple, List, Optional, Iterable, Union
 from numpy.typing import NDArray
 
 import narwhals as nw
@@ -55,7 +55,7 @@ def _fit_split(
     X: IntoDataFrame,
     y: Optional[IntoSeries],
     train_indices: NDArray,
-    sample_weight: Optional[IntoSeries | NDArray] = None,
+    sample_weight: Optional[Union[IntoSeries, NDArray]] = None,
     drop_na_in_y: bool = False,
 ) -> EstimatorLike:
     """
@@ -71,7 +71,7 @@ def _fit_split(
         The target variable for the estimator. Default is None.
     train_indices : NDArray
         Integer indices indicating the training data.
-    sample_weight : Optional[IntoSeries | NDArray]
+    sample_weight : Optional[Union[IntoSeries, NDArray]]
         Sample weights for the training data. Default is None.
     drop_na_in_y : bool
         Whether to drop rows with null values in y. Default is False
@@ -160,8 +160,8 @@ def cross_val_fit(
     estimator: EstimatorLike,
     X: IntoDataFrame,
     y: IntoSeries,
-    cv: PanelSplit | Iterable,
-    sample_weight: Optional[IntoSeries | np.ndarray] = None,
+    cv: Union[PanelSplit, Iterable],
+    sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     progress_bar: bool = False,
     drop_na_in_y: bool = False,
@@ -177,10 +177,10 @@ def cross_val_fit(
         The input features for the estimator.
     y : IntoSeries
         The target variable for the estimator.
-    cv : PanelSplit | Iterable
+    cv : Union[PanelSplit, Iterable]
         Cross-validation splitter; either an object that generates train/test splits (e.g., an instance of PanelSplit)
         or an iterable of splits.
-    sample_weight : Optional[IntoSeries | np.ndarray]
+    sample_weight : Optional[Union[IntoSeries, np.ndarray]]
         Sample weights for the training data. Default is None.
     n_jobs : int
         The number of jobs to run in parallel. Default is 1.
@@ -230,11 +230,11 @@ def cross_val_fit(
 def cross_val_predict(
     fitted_estimators: List[EstimatorLike],
     X: IntoDataFrame,
-    cv: PanelSplit | Iterable,
+    cv: Union[PanelSplit, Iterable],
     method: str = "predict",
     n_jobs: int = 1,
     return_train_preds: bool = False,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Perform cross-validated predictions using a given predictor model.
 
@@ -244,7 +244,7 @@ def cross_val_predict(
         List of fitted machine learning models used for prediction.
     X : IntoDataFrame
         The input features for prediction.
-    cv : PanelSplit | Iterable
+    cv : Union[PanelSplit, Iterable]
         Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
     method : str
         The method to use for prediction. It can be whatever methods are available to the estimator.
@@ -256,7 +256,7 @@ def cross_val_predict(
 
     Returns
     -------
-    np.ndarray | Tuple[np.ndarray, np.ndarray]
+    Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
         If ``return_train_preds`` is False, returns an array of test predictions.
         If ``return_train_preds`` is True, returns a tuple containing:
         (test_predictions, train_predictions).
@@ -303,16 +303,16 @@ def cross_val_fit_predict(
     estimator: EstimatorLike,
     X: IntoDataFrame,
     y: IntoSeries,
-    cv: PanelSplit | Iterable,
+    cv: Union[PanelSplit, Iterable],
     method: str = "predict",
-    sample_weight: Optional[IntoSeries | np.ndarray] = None,
+    sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     return_train_preds: bool = False,
     drop_na_in_y: bool = False,
-) -> (
-    Tuple[np.ndarray, List[EstimatorLike]]
-    | Tuple[np.ndarray, np.ndarray, List[EstimatorLike]]
-):
+) -> Union[
+    Tuple[np.ndarray, List[EstimatorLike]],
+    Tuple[np.ndarray, np.ndarray, List[EstimatorLike]],
+]:
     """
     Fit the estimator using cross-validation and then make predictions.
 
@@ -324,12 +324,12 @@ def cross_val_fit_predict(
         The input features for the estimator.
     y : IntoSeries
         The target variable for the estimator.
-    cv : PanelSplit | Iterable
+    cv : Union[PanelSplit, Iterable]
         Cross-validation splitter; an object that generates train/test splits.
     method : str
         The method to use for prediction. It can be any method available on the estimator
         (e.g., ``predict_proba`` for classifiers or ``transform`` for transformers). Default is predict.
-    sample_weight : Optional[IntoSeries | np.ndarray]
+    sample_weight : Optional[Union[IntoSeries, np.ndarray]]
         Sample weights for the training data. Default is None.
     n_jobs : int
         The number of jobs to run in parallel. Default is 1.
@@ -340,7 +340,7 @@ def cross_val_fit_predict(
 
     Returns
     -------
-    Tuple[np.ndarray, List[EstimatorLike]] | Tuple[np.ndarray, np.ndarray, List[EstimatorLike]]
+    Union[Tuple[np.ndarray, List[EstimatorLike]], Tuple[np.ndarray, np.ndarray, List[EstimatorLike]]]
         If ``return_train_preds`` is False, returns a tuple ``(preds, fitted_estimators)``, where:
             - preds (*np.ndarray*): Array of predictions made during cross-validation.
             - fitted_estimators (*list of EstimatorLike*): List of fitted models for each split.

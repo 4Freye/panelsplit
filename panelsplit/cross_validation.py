@@ -6,7 +6,6 @@ from .utils.typing import ArrayLike, CVIndices
 
 import narwhals as nw
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import TimeSeriesSplit
 
 from .utils.validation import (
@@ -45,12 +44,12 @@ class PanelSplit:
 
     Parameters
     ----------
-    periods : IntoSeries | np.ndarray | pd.Index
+    periods : Union[IntoSeries, np.ndarray, "pd.Index"]
         A collection of periods for each observation.
-    unique_periods : Optional[IntoSeries | np.ndarray | pd.Index]
+    unique_periods : Optional[Union[IntoSeries, np.ndarray, "pd.Index"]]
         An array-like object containing unique periods. If None, they will be computed
         from ``periods``. Default is None.
-    snapshots : Optional[IntoSeries | np.ndarray | pd.Index]
+    snapshots : Optional[Union[IntoSeries, np.ndarray, "pd.Index"]]
         A Series defining the snapshot for each observation. Default is None.
     n_splits : int
         Number of splits for ``TimeSeriesSplit``. Default is 2.
@@ -82,9 +81,9 @@ class PanelSplit:
 
     def __init__(
         self,
-        periods: IntoSeries | np.ndarray | pd.Index,
-        unique_periods: Optional[IntoSeries | np.ndarray | pd.Index] = None,
-        snapshots: Optional[IntoSeries | np.ndarray | pd.Index] = None,
+        periods: Union[IntoSeries, np.ndarray, "pd.Index"],
+        unique_periods: Optional[Union[IntoSeries, np.ndarray, "pd.Index"]] = None,
+        snapshots: Optional[Union[IntoSeries, np.ndarray, "pd.Index"]] = None,
         n_splits: int = 2,
         gap: int = 0,
         test_size: int = 1,
@@ -268,9 +267,9 @@ class PanelSplit:
 
     def _gen_labels(
         self,
-        labels: "pd.Index" | ArrayLike,
+        labels: Union["pd.Index", ArrayLike],
         fold_idx: int,
-    ) -> "pd.Index" | ArrayLike:
+    ) -> Union["pd.Index", ArrayLike]:
         """
         Generate labels for either the training or testing set based on the cross-validation splits.
 
@@ -287,19 +286,19 @@ class PanelSplit:
         return _safe_indexing(labels_nw, row_indices, to_native=True)
 
     def gen_train_labels(
-        self, labels: "pd.Index" | ArrayLike
-    ) -> "pd.Index" | ArrayLike:
+        self, labels: Union["pd.Index", ArrayLike]
+    ) -> Union["pd.Index", ArrayLike]:
         """
         Generate training set labels based on the provided labels.
 
         Parameters
         ----------
-        labels : "pd.Index" | ArrayLike
+        labels : Union["pd.Index", ArrayLike]
             The labels corresponding to the observations.
 
         Returns
         -------
-        "pd.Index" | ArrayLike
+        Union["pd.Index", ArrayLike]
             The labels for the training set. Same type as labels.
 
         Examples
@@ -314,18 +313,20 @@ class PanelSplit:
         """
         return self._gen_labels(labels=labels, fold_idx=0)
 
-    def gen_test_labels(self, labels: "pd.Index" | ArrayLike) -> "pd.Index" | ArrayLike:
+    def gen_test_labels(
+        self, labels: Union["pd.Index", ArrayLike]
+    ) -> Union["pd.Index", ArrayLike]:
         """
         Generate testing set labels based on the provided labels.
 
         Parameters
         ----------
-        labels : "pd.Index" | ArrayLike
+        labels : Union["pd.Index", ArrayLike]
             The labels corresponding to the observations.
 
         Returns
         -------
-        "pd.Index" | ArrayLike
+        Union["pd.Index", ArrayLike]
             The labels for the testing set. Same type as labels.
 
         Examples
@@ -414,7 +415,7 @@ class PanelSplit:
         return _safe_indexing(nw.concat(snapshots), to_native=True)
 
 
-def drop_splits(cv: PanelSplit, y: IntoSeries | NDArray) -> PanelSplit:
+def drop_splits(cv: PanelSplit, y: Union[IntoSeries, NDArray]) -> PanelSplit:
     """
     Drop cross-validation splits if either the training or testing set is empty or contains only one unique value.
 
@@ -422,7 +423,7 @@ def drop_splits(cv: PanelSplit, y: IntoSeries | NDArray) -> PanelSplit:
     ----------
     cv : PanelSplit
         The object is expected to have an attribute `n_splits` (an integer) and support the `pop` method.
-    y : IntoSeries | NDArray
+    y : Union[IntoSeries, NDArray]
         Series of shape (n_samples,) containing target values.
 
     Returns
