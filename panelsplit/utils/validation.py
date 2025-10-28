@@ -5,7 +5,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal, overload
 from numpy.typing import NDArray
 from narwhals.typing import IntoSeriesT, IntoDataFrameT, IntoSeries, IntoDataFrame
-from .typing import ArrayLike, CVIndices
+from .typing import ArrayLike
 
 from collections.abc import Iterable
 
@@ -250,9 +250,7 @@ def get_index_or_col_from_df(df: Any, name: str) -> Any:
         raise KeyError(f"'{name}' was not found in the DataFrame's columns. {e}")
 
 
-def check_cv(
-    cv: Any, X: Any = None, y: Any = None, groups: Any = None
-) -> Iterable[Tuple[NDArray[np.int64], NDArray[np.int64]]]:
+def check_cv(cv: Any, X: Any = None, y: Any = None, groups: Any = None) -> Iterable:
     if hasattr(cv, "split"):  # If cv is a class with split() method
         splits = cv.split(X=X, y=y, groups=groups)
     elif isinstance(cv, Iterable):  # If cv is an iterable
