@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
+from .cross_validation import PanelSplit
+from typing import Tuple, Optional
 
 
-def plot_splits(PanelSplit, show=True):
+def plot_splits(
+    PanelSplit: PanelSplit, show: bool = True
+) -> Optional[Tuple[plt.Figure, plt.Axes]]:
     """
     Visualize time series cross-validation splits using a scatter plot.
 
@@ -57,5 +61,6 @@ def plot_splits(PanelSplit, show=True):
 
     if show:
         plt.show()
+        return None
     else:
         return fig, ax

@@ -1,6 +1,11 @@
 import warnings
 import inspect
 import importlib
+from types import ModuleType
+from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal, overload
+from numpy.typing import NDArray
+from narwhals.typing import IntoSeriesT, IntoDataFrameT, IntoSeries, IntoDataFrame
+from .typing import ArrayLike, CVIndices
 
 from collections.abc import Iterable
 
@@ -16,7 +21,7 @@ from sklearn.utils.validation import check_is_fitted
 
 
 # Keep pandas import for fallback compatibility
-def _get_pandas():
+def _get_pandas() -> Optional[ModuleType]:
     try:
         return importlib.import_module("pandas")
     except ImportError:
@@ -26,8 +31,50 @@ def _get_pandas():
 pd = _get_pandas()
 _PANDAS_AVAILABLE = False if pd is None else True
 
+if TYPE_CHECKING:
+    from pandas import Index as PandasIndex
+    from pandas import Series as PandasSeries
+    from pandas import DataFrame as PandasDataFrame
+    from sklearn.base import BaseEstimator
+else:
+    PandasIndex: Any = Any
+    PandasSeries: Any = Any
+    PandasDataFrame: Any = Any
+    BaseEstimator: Any = Any
+    BaseEstimator = Any
 
-def _safe_indexing(obj, indices=None, to_native=False):
+
+@overload
+def _safe_indexing(
+    obj: NDArray,
+    indices: Optional[Union[int, NDArray[np.int64]]] = None,
+    to_native: bool = False,
+) -> NDArray: ...
+@overload
+def _safe_indexing(
+    obj: IntoSeriesT,
+    indices: Optional[Union[int, NDArray[np.int64]]] = None,
+    to_native: bool = False,
+) -> IntoSeriesT: ...
+@overload
+def _safe_indexing(
+    obj: IntoDataFrameT,
+    indices: Optional[Union[int, NDArray[np.int64]]] = None,
+    to_native: bool = False,
+) -> IntoDataFrameT: ...
+@overload
+def _safe_indexing(
+    obj: PandasIndex,
+    indices: Optional[Union[int, NDArray[np.int64]]] = None,
+    to_native: bool = False,
+) -> PandasIndex: ...
+
+
+def _safe_indexing(
+    obj: Any,
+    indices: Optional[Union[int, NDArray[np.int64]]] = None,
+    to_native: bool = False,
+) -> Any:
     """
     Unified safe indexing and conversion function for dataframe-agnostic operations.
 
@@ -60,11 +107,11 @@ def _safe_indexing(obj, indices=None, to_native=False):
     if to_native and (
         hasattr(result, "_compliant_frame") or hasattr(result, "_compliant_series")
     ):
-        return nw.to_native(result)
+        return nw.to_native(result, pass_through=True)
     return result
 
 
-def _to_numpy_array(data):
+def _to_numpy_array(data: Any) -> NDArray:
     """Convert any data structure to numpy array using narwhals."""
     if is_numpy_array(data):
         return data
@@ -77,7 +124,7 @@ def _to_numpy_array(data):
         return np.array(data)
 
 
-def _is_valid_data_type(data, data_name="data"):
+def _is_valid_data_type(data: Any, data_name: str = "data") -> bool:
     """Unified data type validation leveraging narwhals dependencies."""
     # Direct numpy array check
     if is_numpy_array(data):
@@ -92,7 +139,9 @@ def _is_valid_data_type(data, data_name="data"):
         return hasattr(data, "__array__") or hasattr(data, "__iter__")
 
 
-def _supports_sample_weights(estimator, sample_weight=None):
+def _supports_sample_weights(
+    estimator: BaseEstimator, sample_weight: Optional[Any] = None
+) -> bool:
     """
     Check whether an estimator supports sample weights in its fit method.
     Issues a warning if not supported.
@@ -101,6 +150,7 @@ def _supports_sample_weights(estimator, sample_weight=None):
     ----------
     estimator : object
         A scikit-learn style estimator class or instance.
+    sample_weight : array-like, optional
 
     Returns
     -------
@@ -142,7 +192,15 @@ __pdoc__ = {
 }
 
 
-def get_index_or_col_from_df(df, name):
+@overload
+def get_index_or_col_from_df(
+    df: PandasDataFrame, name: str
+) -> Union[PandasSeries, PandasIndex]: ...
+@overload
+def get_index_or_col_from_df(df: IntoDataFrame, name: str) -> IntoSeries: ...
+
+
+def get_index_or_col_from_df(df: Any, name: str) -> Any:
     """Get column or index from dataframe in a dataframe-agnostic way."""
     try:
         # Use narwhals for dataframe-agnostic operations
@@ -192,7 +250,9 @@ def get_index_or_col_from_df(df, name):
         raise KeyError(f"'{name}' was not found in the DataFrame's columns. {e}")
 
 
-def check_cv(cv, X=None, y=None, groups=None):
+def check_cv(
+    cv: Union[Any, CVIndices], X: Any = None, y: Any = None, groups: Any = None
+) -> CVIndices:
     if hasattr(cv, "split"):  # If cv is a class with split() method
         splits = cv.split(X=X, y=y, groups=groups)
     elif isinstance(cv, Iterable):  # If cv is an iterable
@@ -211,7 +271,7 @@ def check_cv(cv, X=None, y=None, groups=None):
 #     return y_train
 
 
-def check_periods(periods, obj_name="periods"):
+def check_periods(periods: Any, obj_name: str = "periods") -> Any:
     """Check and convert periods to a compatible format using narwhals."""
     try:
         # Try narwhals first for dataframe-agnostic operations
@@ -250,7 +310,7 @@ def check_periods(periods, obj_name="periods"):
             raise ValueError(f"{obj_name} type not supported.")
 
 
-def check_labels(labels):
+def check_labels(labels: Any) -> None:
     """Check if labels are in a supported format using narwhals."""
     try:
         # Try narwhals for dataframe-agnostic validation
@@ -273,7 +333,7 @@ def check_labels(labels):
         )
 
 
-def check_method(fitted_estimators, method):
+def check_method(fitted_estimators: List[BaseEstimator], method: str) -> None:
     for estimator in fitted_estimators:
         if not hasattr(estimator, method):
             raise ValueError(
@@ -281,7 +341,7 @@ def check_method(fitted_estimators, method):
             )
 
 
-def check_fitted_estimators(fitted_estimators):
+def check_fitted_estimators(fitted_estimators: List[BaseEstimator]) -> None:
     for estimator in fitted_estimators:
         try:
             check_is_fitted(estimator)
@@ -291,24 +351,25 @@ def check_fitted_estimators(fitted_estimators):
             )
 
 
-def _handle_data_input(data):
+def _handle_data_input(
+    data: Any,
+) -> Tuple[
+    Union[NDArray, IntoDataFrameT, IntoSeriesT, Any], Literal["numpy", "narwhals"]
+]:
     """Handle input data with narwhals-first approach."""
-    # Quick numpy check
     if is_numpy_array(data):
         return data, "numpy"
 
-    # Try narwhals conversion
     try:
         data_nw = nw.from_native(data, pass_through=True)
         return data_nw, "narwhals"
     except Exception:
-        # For unsupported types, try to make array-like
         if hasattr(data, "__array__"):
             return np.asarray(data), "numpy"
         raise TypeError(f"Unsupported data type: {type(data)}")
 
 
-def _check_X_y(X, y=None):
+def _check_X_y(X: ArrayLike, y: Optional[ArrayLike] = None) -> None:
     """
     Validate that X and y are supported data types using narwhals.
 

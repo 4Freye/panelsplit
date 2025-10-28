@@ -6,6 +6,8 @@ import numpy as np
 from joblib import Parallel, delayed
 from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.base import clone, BaseEstimator
+from .utils.typing import ArrayLike
+from .cross_validation import PanelSplit
 
 from .utils.utils import _split_wrapper
 from .utils.validation import (
@@ -17,12 +19,14 @@ from .utils.validation import (
 )
 
 
-def _get_non_null_mask(data):
+def _get_non_null_mask(data: IntoSeries) -> IntoSeries:
     """Get non-null mask for any data type."""
     return ~nw.from_native(data, series_only=True).is_null()
 
 
-def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.ndarray:
+def _predict_split(
+    model: BaseEstimator, X_test: ArrayLike, method: str = "predict"
+) -> np.ndarray:
     """
     Perform predictions for a single split.
 
@@ -46,13 +50,13 @@ def _predict_split(model, X_test: IntoDataFrame, method: str = "predict") -> np.
 
 
 def _fit_split(
-    estimator,
+    estimator: BaseEstimator,
     X: IntoDataFrame,
     y: Optional[IntoSeries],
     train_indices: np.ndarray,
     sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     drop_na_in_y: bool = False,
-):
+) -> BaseEstimator:
     """
     Fit a cloned estimator on the given training indices.
 
@@ -152,10 +156,10 @@ def _prediction_order_to_original_order(indices: List[np.ndarray]) -> np.ndarray
 
 
 def cross_val_fit(
-    estimator,
+    estimator: BaseEstimator,
     X: IntoDataFrame,
     y: IntoSeries,
-    cv,
+    cv: PanelSplit,
     sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     progress_bar: bool = False,
@@ -223,9 +227,9 @@ def cross_val_fit(
 
 
 def cross_val_predict(
-    fitted_estimators,
+    fitted_estimators: List[BaseEstimator],
     X: IntoDataFrame,
-    cv,
+    cv: PanelSplit,
     method: str = "predict",
     n_jobs: int = 1,
     return_train_preds: bool = False,
@@ -296,15 +300,15 @@ def cross_val_predict(
 
 
 def cross_val_fit_predict(
-    estimator,
+    estimator: BaseEstimator,
     X: IntoDataFrame,
     y: IntoSeries,
-    cv,
+    cv: PanelSplit,
     method: str = "predict",
     sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     return_train_preds: bool = False,
-    drop_na_in_y=False,
+    drop_na_in_y: bool = False,
 ) -> Union[
     Tuple[np.ndarray, List[BaseEstimator]],
     Tuple[np.ndarray, np.ndarray, List[BaseEstimator]],

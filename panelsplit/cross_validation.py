@@ -1,9 +1,11 @@
 import warnings
-from typing import List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Optional, Union, TYPE_CHECKING, Any
+from numpy.typing import NDArray
+from narwhals.typing import IntoDataFrame, IntoSeries
+from .utils.typing import ArrayLike, CVIndices
 
 import narwhals as nw
 import numpy as np
-from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.model_selection import TimeSeriesSplit
 
 from .utils.validation import (
@@ -18,7 +20,9 @@ if TYPE_CHECKING:
     import pandas as pd
 
 
-def _nunique_subset(data, indices):
+def _nunique_subset(
+    data: Union[ArrayLike, "pd.DataFrame", "pd.Series"], indices: Any
+) -> int:
     """
     Helper function to get number of unique values in a subset of data.
     Works with both pandas and narwhals-compatible data.
@@ -29,7 +33,7 @@ def _nunique_subset(data, indices):
     else:
         # Fallback to numpy operations
         subset_data = (
-            data[indices] if hasattr(data, "__getitem__") else data.loc[indices]
+            data[indices] if hasattr(data, "__getitem__") else data.loc[indices]  # type: ignore[union-attr]
         )
         return len(np.unique(subset_data))
 
@@ -116,15 +120,13 @@ class PanelSplit:
             self._include_first_train_in_test = include_first_train_in_test
         else:
             self._include_first_train_in_test = True
-        self._u_periods_cv = self._split_unique_periods(indices, unique_periods)
+        self._u_periods_cv = self._split_unique_periods(indices, unique_periods_array)
         self._periods = _to_numpy_array(periods)
         self._snapshots = _to_numpy_array(snapshots) if snapshots is not None else None
         self.n_splits = n_splits
         self.train_test_splits = self._gen_splits()
 
-    def _split_unique_periods(
-        self, indices, unique_periods
-    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def _split_unique_periods(self, indices: Any, unique_periods: NDArray) -> CVIndices:
         """
         Split unique periods into training and testing sets based on TimeSeriesSplit indices.
 
@@ -157,13 +159,13 @@ class PanelSplit:
             u_periods_cv.append((unique_train_periods, unique_test_periods))
         return u_periods_cv
 
-    def _gen_splits(self) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def _gen_splits(self) -> CVIndices:
         """
         Generate integer index arrays for training and testing sets for each split.
 
         Returns
         -------
-        List[Tuple[np.ndarray, np.ndarray]]
+        CVIndices
             A list where each tuple contains two integer arrays:
             (train_indices, test_indices) corresponding to each split.
         """
@@ -206,7 +208,7 @@ class PanelSplit:
         X: Optional[IntoDataFrame] = None,
         y: Optional[Union[IntoSeries, np.ndarray]] = None,
         groups: Optional[np.ndarray] = None,
-    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+    ) -> CVIndices:
         """
         Generate training and testing indices for each cross-validation split.
 
@@ -221,7 +223,7 @@ class PanelSplit:
 
         Returns
         -------
-        List[Tuple[np.ndarray, np.ndarray]]
+        CVIndices
             A list of tuples, where each tuple contains:
             (train_indices, test_indices) as integer arrays.
 
@@ -402,12 +404,13 @@ class PanelSplit:
         1   <NA>       2      1                3
         2     30       3      1                3
         """
-        periods = get_index_or_col_from_df(data, period_col)
-        periods = check_periods(periods)
+        if period_col is not None:
+            periods = get_index_or_col_from_df(data, period_col)
+            periods = check_periods(periods)
+            periods_nw = nw.from_native(periods, pass_through=True)
 
         # Use narwhals for dataframe-agnostic operations
         data_nw = nw.from_native(data, pass_through=True)
-        periods_nw = nw.from_native(periods, pass_through=True)
 
         splits = self.split()
         snapshots = []
@@ -437,14 +440,13 @@ class PanelSplit:
         return _safe_indexing(nw.concat(snapshots), to_native=True)
 
 
-def drop_splits(cv, y):
+def drop_splits(cv: PanelSplit, y: Union[IntoSeries, NDArray]) -> PanelSplit:
     """
     Drop cross-validation splits if either the training or testing set is empty or contains only one unique value.
 
     Parameters
     ----------
-    cv : list
-        A list of tuples, where each tuple contains (train_indices, test_indices) as boolean arrays.
+    cv : PanelSplit object
         The object is expected to have an attribute `n_splits` (an integer) and support the `pop` method.
     y : IntoSeries
         Series of shape (n_samples,) containing target values.
