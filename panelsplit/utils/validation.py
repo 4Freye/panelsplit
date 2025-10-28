@@ -251,8 +251,8 @@ def get_index_or_col_from_df(df: Any, name: str) -> Any:
 
 
 def check_cv(
-    cv: Union[Any, CVIndices], X: Any = None, y: Any = None, groups: Any = None
-) -> CVIndices:
+    cv: Any, X: Any = None, y: Any = None, groups: Any = None
+) -> Iterable[Tuple[NDArray[np.int64], NDArray[np.int64]]]:
     if hasattr(cv, "split"):  # If cv is a class with split() method
         splits = cv.split(X=X, y=y, groups=groups)
     elif isinstance(cv, Iterable):  # If cv is an iterable
