@@ -4,7 +4,7 @@ from typing import Tuple, Optional
 
 
 def plot_splits(
-    PanelSplit: PanelSplit, show: bool = True
+    panel_split: PanelSplit, show: bool = True
 ) -> Optional[Tuple[plt.Figure, plt.Axes]]:
     """
     Visualize time series cross-validation splits using a scatter plot.
