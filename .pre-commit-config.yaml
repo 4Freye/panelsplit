@@ -23,3 +23,11 @@ repos:
         args: [--fix]
       - id: ruff-format
         types_or: [python, pyi]
+
+  - repo: local
+    hooks:
+      - id: pydoclint
+        name: pydoclint
+        entry: pydoclint panelsplit --check-class-attributes False
+        language: system
+        types: [python]
