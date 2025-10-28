@@ -812,11 +812,11 @@ class SequentialCVPipeline(BaseEstimator):
         """
         pass
 
-    def fit_predict_proba(
+    def fit_predict_proba(  # type: ignore[empty-body, return]
         self,
         X: ArrayLike,
-        y: Optional[ArrayLike] = None,  # type: ignore[empty-body, return]
-    ) -> ArrayLike:  # type: ignore[empty-body, return]
+        y: Optional[ArrayLike] = None,
+    ) -> ArrayLike:
         """
         Fit the pipeline and predict class probabilities.
 
