@@ -1,8 +1,8 @@
 import copy
 import inspect
 import time
-from typing import Union, Optional, Any, Tuple, List, overload, Dict, Iterable
-from narwhals.typing import IntoSeriesT, IntoDataFrame, IntoSeries
+from typing import Union, Optional, Any, Tuple, List, Dict, Iterable
+from narwhals.typing import IntoDataFrame, IntoSeries
 from numpy.typing import NDArray
 from .utils.typing import ArrayLike, EstimatorLike
 from collections.abc import Callable
@@ -31,14 +31,6 @@ def _log_message(
         if elapsed_time is not None:
             message += " (elapsed time: %5.1fs)" % elapsed_time
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
-
-
-@overload
-def _sort_and_combine(predictions_with_idx: List[Tuple[int, NDArray]]) -> NDArray: ...
-@overload
-def _sort_and_combine(
-    predictions_with_idx: List[Tuple[int, IntoSeriesT]],
-) -> IntoSeriesT: ...
 
 
 def _sort_and_combine(predictions_with_idx: List[Tuple[int, Any]]) -> Any:
@@ -377,16 +369,6 @@ class SequentialCVPipeline(BaseEstimator):
             for i, idx in enumerate(test_idx):
                 output_list.append((idx, self._subset(output, i)))
 
-    @overload
-    def _combine(transformed_list: List[NDArray]) -> NDArray: ...
-    @overload
-    def _combine(transformed_list: List[IntoDataFrame]) -> IntoDataFrame: ...
-    @overload
-    def _combine(transformed_list: List[IntoSeries]) -> IntoSeries: ...
-
-    @overload
-    def _combine(transformed_list: List) -> List: ...
-
     def _combine(
         transformed_list: List,
     ) -> Union[ArrayLike | List]:
@@ -450,7 +432,7 @@ class SequentialCVPipeline(BaseEstimator):
         transformer: EstimatorLike,
         X: ArrayLike,
         y: Union[ArrayLike, None],
-        cv: Optional[Union[PanelSplit.Iterable]] = None,
+        cv: Optional[Union[PanelSplit, Iterable]] = None,
         return_output: bool = True,
         method: str = "transform",
     ) -> Tuple:
@@ -469,7 +451,7 @@ class SequentialCVPipeline(BaseEstimator):
             Input data for fitting.
         y : Union[ArrayLike, None]
             Target values.
-        cv : Optional[Union[PanelSplit. Iterable]]
+        cv : Optional[Union[PanelSplit, Iterable]]
             Cross-validation splitting strategy. Default is None.
         return_output : bool
             Whether to return the transformed output. Default is True.

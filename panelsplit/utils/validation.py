@@ -2,9 +2,9 @@ import warnings
 import inspect
 import importlib
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal, overload
+from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal
 from numpy.typing import NDArray
-from narwhals.typing import IntoSeriesT, IntoDataFrameT, IntoSeries, IntoDataFrame
+from narwhals.typing import IntoSeriesT, IntoDataFrameT
 from .typing import ArrayLike, EstimatorLike
 
 from collections.abc import Iterable
@@ -42,32 +42,6 @@ else:
     PandasDataFrame: Any = Any
     BaseEstimator: Any = Any
     BaseEstimator = Any
-
-
-@overload
-def _safe_indexing(
-    obj: NDArray,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> NDArray: ...
-@overload
-def _safe_indexing(
-    obj: IntoSeriesT,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> IntoSeriesT: ...
-@overload
-def _safe_indexing(
-    obj: IntoDataFrameT,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> IntoDataFrameT: ...
-@overload
-def _safe_indexing(
-    obj: PandasIndex,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> PandasIndex: ...
 
 
 def _safe_indexing(
@@ -189,14 +163,6 @@ __pdoc__ = {
     "check_method": False,
     "_check_X_y": False,
 }
-
-
-@overload
-def get_index_or_col_from_df(
-    df: PandasDataFrame, name: str
-) -> Union[PandasSeries, PandasIndex]: ...
-@overload
-def get_index_or_col_from_df(df: IntoDataFrame, name: str) -> IntoSeries: ...
 
 
 def get_index_or_col_from_df(df: Any, name: str) -> Any:
