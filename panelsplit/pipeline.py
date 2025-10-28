@@ -1,10 +1,12 @@
 import copy
 import inspect
 import time
-from typing import Union, Optional, Any, Tuple, List, overload, Dict
+from typing import Union, Optional, Any, Tuple, List, overload, Dict, Iterable
 from narwhals.typing import IntoSeriesT, IntoDataFrame, IntoSeries
 from numpy.typing import NDArray
-from .utils.typing import ArrayLike
+from .utils.typing import ArrayLike, EstimatorLike
+from collections.abc import Callable
+from .cross_validation import PanelSplit
 
 import narwhals as nw
 import numpy as np
@@ -24,23 +26,6 @@ def _log_message(
 ) -> None:
     """
     Log messages similar to scikit-learn's Pipeline verbose output.
-
-    Parameters
-    ----------
-    message : str
-        The message to log.
-    verbose : bool
-        Whether to output verbose logging.
-    step_idx : int
-        The current step index (zero-indexed).
-    total : int
-        The total number of steps.
-    elapsed_time : float, optional
-        Elapsed time for the step in seconds.
-
-    Returns
-    -------
-    None
     """
     if verbose:
         if elapsed_time is not None:
@@ -89,7 +74,7 @@ _METHOD_SIGNATURE_CACHE = {}
 
 
 def _call_method_with_correct_args(
-    model: BaseEstimator, method_name: str, X: ArrayLike, y: Optional[ArrayLike] = None
+    model: EstimatorLike, method_name: str, X: ArrayLike, y: Optional[ArrayLike] = None
 ) -> Any:
     """
     Call a method on a model with the correct arguments.
@@ -100,18 +85,18 @@ def _call_method_with_correct_args(
 
     Parameters
     ----------
-    model : estimator
+    model : EstimatorLike
         The fitted model
     method_name : str
         The name of the method to call (e.g., 'predict', 'score', 'transform')
-    X : array-like
+    X : ArrayLike
         Input features
-    y : array-like, optional
+    y : Optional[ArrayLike]
         Target values
 
     Returns
     -------
-    output
+    output : Any
         Result of calling the method
 
     Raises
@@ -165,7 +150,7 @@ def _call_method_with_correct_args(
     return method(X)
 
 
-def _make_method(method_name: str, fit: bool = True) -> Any:
+def _make_method(method_name: str, fit: bool = True) -> Callable:
     """
     Create a pipeline method dynamically for fitting or predicting.
 
@@ -173,12 +158,12 @@ def _make_method(method_name: str, fit: bool = True) -> Any:
     ----------
     method_name : str
         The name of the method to create (e.g., 'predict', 'transform').
-    fit : bool, default=True
-        Whether the method should perform fitting of the pipeline.
+    fit : bool
+        Whether the method should perform fitting of the pipeline. Default is True.
 
     Returns
     -------
-    function
+    function: Callable
         A method that applies the specified method to all pipeline steps.
     """
 
@@ -271,16 +256,21 @@ class SequentialCVPipeline(BaseEstimator):
 
     Parameters
     ----------
-    steps : list of tuples
+    steps : List[Tuple[str, BaseEstimator, PanelSplit | Iterable | None]]
         List where each tuple is (name, transformer, cv). 'name' is a string identifier,
-        'transformer' is an estimator or transformer, and 'cv' is a cross-validation splitter
-        or None.
-    verbose : bool, default=False
-        Whether to print verbose output during fitting and transformation.
+        'transformer' is an estimator or transformer, and 'cv' is a cross-validation
+        splitter or None.
+    verbose : bool
+        Whether to print verbose output during fitting and transformation. Default is False
+
+    Raises
+    ------
+    ValueError
+        If any of the tuples provided in ``steps`` are not of length 3.
 
     Attributes
     ----------
-    steps : list
+    steps : list[tuple[str, BaseEstimator, PanelSplit | Iterable | None]]
         The list of pipeline steps.
     verbose : bool
         Verbosity flag.
@@ -294,8 +284,8 @@ class SequentialCVPipeline(BaseEstimator):
     >>> from sklearn.model_selection import KFold
     >>> pipeline = SequentialCVPipeline([
     ...     ('scaler', StandardScaler(), None),
-    ...     ('classifier', LogisticRegression(), None))
-    ... ], verbose = False)
+    ...     ('classifier', LogisticRegression(), KFold(n_splits=3))
+    ... ], verbose=False)
     >>> print(pipeline.steps)
     [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
     """
@@ -332,7 +322,9 @@ class SequentialCVPipeline(BaseEstimator):
                     del self.__dict__[method_name]
 
     def __init__(
-        self, steps: List[Tuple[str, BaseEstimator, Any]], verbose: bool = False
+        self,
+        steps: List[Tuple[str, BaseEstimator, PanelSplit | Iterable | None]],
+        verbose: bool = False,
     ) -> None:
         # Each step must be a tuple: (name, transformer, cv)
         for step in steps:
@@ -365,18 +357,6 @@ class SequentialCVPipeline(BaseEstimator):
     ) -> Union[IntoDataFrame, IntoSeries, np.ndarray]:
         """
         Subset the input X based on provided indices.
-
-        Parameters
-        ----------
-        X : IntoDataFrame, IntoSeries, or np.ndarray
-            The data to subset.
-        indices : np.ndarray
-            Integer indices used to select a subset of X.
-
-        Returns
-        -------
-        IntoDataFrame, IntoSeries, or np.ndarray
-            The subset of X corresponding to the given indices.
         """
         # Use narwhals for dataframe-agnostic operations
         X_nw = nw.from_native(X, pass_through=True)
@@ -390,20 +370,6 @@ class SequentialCVPipeline(BaseEstimator):
         Helper to append outputs with their corresponding indices.
 
         Handles both scalar outputs (e.g., from score()) and array-like outputs.
-
-        Parameters
-        ----------
-        output_list : list
-            List to append (index, output) tuples to.
-        test_idx : array-like
-            Indices corresponding to the output.
-        output : scalar or array-like
-            The output to append (can be scalar or array-like).
-
-        Returns
-        -------
-        None
-            Modifies output_list in place.
         """
         if np.isscalar(output):
             output_list.append((test_idx[0], output))
@@ -423,19 +389,9 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _combine(
         transformed_list: List,
-    ) -> Union[NDArray, IntoDataFrame, IntoSeries, List]:
+    ) -> NDArray | IntoDataFrame | IntoSeries | List:
         """
         Combine a list of transformed outputs into a single output.
-
-        Parameters
-        ----------
-        transformed_list : list
-            List of transformed outputs from different pipeline steps.
-
-        Returns
-        -------
-        numpy.ndarray or IntoDataFrame or IntoSeries or list
-            Combined output. Numpy arrays are vertically stacked; dataframe objects are concatenated.
         """
         if not transformed_list:
             return transformed_list
@@ -450,31 +406,31 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _apply_method_to_indices(
         self,
-        model: BaseEstimator,
+        model: EstimatorLike,
         method_name: str,
         X: ArrayLike,
-        indices: Union[int, NDArray[np.int64]],
+        indices: int | NDArray[np.int64],
         y: Optional[ArrayLike] = None,
-    ) -> Any:
+    ) -> List:
         """
         Apply a method of the given model to a subset of X based on indices.
 
         Parameters
         ----------
-        model : estimator
+        model : EstimatorLike
             Fitted model or transformer.
         method_name : str
             The name of the method to apply (e.g., 'predict' or 'transform').
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        indices : array-like
+        indices : int | NDArray[np.int64]
             Indices specifying the subset of X.
-        y : array-like, optional
-            Target values (required for some methods like 'score').
+        y : Optional[ArrayLike]
+            Target values (required for some methods like 'score'). Default is None.
 
         Returns
         -------
-        list
+        List
             List of predictions or transformed values.
         """
         X_subset = self._subset(X, indices)
@@ -491,10 +447,10 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _fit_method_step(
         self,
-        transformer: BaseEstimator,
+        transformer: EstimatorLike,
         X: ArrayLike,
-        y: Union[ArrayLike, None],
-        cv: Any,
+        y: ArrayLike | None,
+        cv: Optional[PanelSplit | Iterable] = None,
         return_output: bool = True,
         method: str = "transform",
     ) -> Tuple:
@@ -507,22 +463,22 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        transformer : estimator
+        transformer : EstimatorLike
             The transformer or estimator to be fitted.
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data for fitting.
-        y : array-like, optional
+        y : ArrayLike | None
             Target values.
-        cv : cross-validation splitter or None
+        cv : PanelSplit | Iterable
             Cross-validation splitting strategy.
-        return_output : bool, default=True
-            Whether to return the transformed output.
-        method : str, default='transform'
-            Method to call on the transformer (e.g., 'predict' or 'transform').
+        return_output : bool
+            Whether to return the transformed output. Default is True.
+        method : str
+            Method to call on the transformer (e.g., 'predict' or 'transform'). Default is "transform"
 
         Returns
         -------
-        tuple
+        Tuple
             If `return_output` is True, returns (transformed_output, fitted_model);
             otherwise returns (None, fitted_model).
         """
@@ -562,7 +518,7 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _method_step(
         self,
-        fitted_model: BaseEstimator,
+        fitted_model: EstimatorLike,
         method_name: str,
         X: ArrayLike,
         y: Optional[ArrayLike] = None,
@@ -572,22 +528,6 @@ class SequentialCVPipeline(BaseEstimator):
 
         For steps with CV, this method applies the given method to each fold's model and
         reassembles the predictions.
-
-        Parameters
-        ----------
-        fitted_model : estimator or dict
-            Fitted model or a dictionary containing fitted models from cross-validation.
-        method_name : str
-            The name of the method to apply (e.g., 'predict', 'transform', 'score').
-        X : array-like or IntoDataFrame or IntoSeries
-            Input data.
-        y : array-like, optional
-            Target values (required for some methods like 'score').
-
-        Returns
-        -------
-        numpy.ndarray or IntoDataFrame or IntoSeries
-            Combined output after applying the method.
         """
         if not (isinstance(fitted_model, dict) and "splits" in fitted_model):
             if hasattr(fitted_model, method_name):
@@ -605,18 +545,6 @@ class SequentialCVPipeline(BaseEstimator):
     def _fit(self, X: ArrayLike, y: Optional[ArrayLike] = None) -> ArrayLike:
         """
         Fit the pipeline sequentially, passing the transformed output of each step to the next.
-
-        Parameters
-        ----------
-        X : array-like or IntoDataFrame or IntoSeries
-            Input data.
-        y : array-like, optional
-            Target values.
-
-        Returns
-        -------
-        array-like or IntoDataFrame or IntoSeries
-            Transformed output after applying all pipeline steps.
         """
         _check_X_y(X, y)
         # Initialize fitted_steps_ here to comply with sklearn conventions
@@ -652,14 +580,14 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like, optional
+        y : Optional[ArrayLike]
             Target values.
 
         Returns
         -------
-        SequentialCVPipeline
+        "SequentialCVPipeline"
             The fitted pipeline instance.
 
         Examples
@@ -692,14 +620,12 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like, optional
-            Target values (used during fitting).
 
         Returns
         -------
-        array-like or IntoDataFrame or IntoSeries
+        ArrayLike
             Transformed output.
         """
         ...
@@ -714,18 +640,18 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like, optional
+        y : Optional[ArrayLike]
             Target values (used during fitting).
 
         Returns
         -------
-        array-like or IntoDataFrame or IntoSeries
-            Transformed output.
+        output : ArrayLike
+            Transformed output, in the same format as X.
 
-        Note
-        ----
+        Notes
+        -----
         This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
@@ -739,19 +665,17 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like, optional
-            Target values (used during fitting).
 
         Returns
         -------
-        array-like or IntoDataFrame or IntoSeries
+        ArrayLike
             Predicted class.
 
-        Note
-        ----
-        This method is dynamically injected based on the final estimator's capabilities.
+        Notes
+        -----
+            This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
@@ -766,22 +690,19 @@ class SequentialCVPipeline(BaseEstimator):
 
          Parameters
          ----------
-         X : array-like or IntoDataFrame or IntoSeries
+         X : ArrayLike
              Input data.
-         y : array-like, optional
+         y : Optional[ArrayLike]
              Target values (used during fitting).
 
          Returns
          -------
-         array-like or IntoDataFrame or IntoSeries
+         output : ArrayLike
              Predicted target values.
 
-         Note
-         ----
-         This method is dynamically injected based on the final step of the pipeline.
-         Note
-         ----
-         This method is dynamically injected based on the final step of the pipeline.
+        Notes
+        ------
+        This method is dynamically injected based on the final step of the pipeline.
         """
         pass
 
@@ -789,23 +710,20 @@ class SequentialCVPipeline(BaseEstimator):
         """
         Predict class probabilities using the fitted pipeline.
 
-
         This method applies the final estimator's predict_proba method on the transformed data to predict class probabilities.
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like
-            True target values.
 
         Returns
         -------
-        float
-            Predicted class probability.
+        output : ArrayLike
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in ``self.classes_``
 
-
-        Note:
+        Notes
         -----
         This is a placeholder method for documentation purposes only.
         The actual method is dynamically generated based on the final estimator's capabilities.
@@ -825,23 +743,23 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like, optional
-            Target values (used during fitting).
+        y : Optional[ArrayLike]
+            array-like of shape (n_samples, n_classes)
 
         Returns
         -------
-        array-like or IntoDataFrame or IntoSeries
+        ArrayLike
             Predicted class probabilities.
 
-        Note
-        ----
+        Notes
+        -----
         This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
-    def score(self, X: ArrayLike, y: ArrayLike) -> ArrayLike:  # type: ignore[empty-body, return]
+    def score(self, X: ArrayLike, y: ArrayLike) -> float:  # type: ignore[empty-body, return]
         """
         Compute the score.
 
@@ -849,23 +767,23 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like
+        y : ArrayLike
             True target values.
 
         Returns
         -------
-        float
+        score : float
             Computed performance score.
 
-        Note
-        ----
+        Notes
+        -----
         This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
 
-    def fit_score(self, X: ArrayLike, y: Optional[ArrayLike] = None) -> ArrayLike:  # type: ignore[empty-body, return]
+    def fit_score(self, X: ArrayLike, y: Optional[ArrayLike] = None) -> float:  # type: ignore[empty-body, return]
         """
         Fit the pipeline and compute the score.
 
@@ -874,18 +792,18 @@ class SequentialCVPipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or IntoDataFrame or IntoSeries
+        X : ArrayLike
             Input data.
-        y : array-like, optional
-            Target values (used during fitting and scoring).
+        y : Optional[ArrayLike]
+            Target values (used during fitting and scoring). Default is None.
 
         Returns
         -------
-        float
+        score : float
             Computed performance score.
 
-        Note
-        ----
-        This method is dynamically injected based on the final estimator's capabilities.
+        Notes
+        -----
+            This method is dynamically injected based on the final estimator's capabilities.
         """
         pass
