@@ -46,7 +46,7 @@ else:
 
 def _safe_indexing(
     obj: Any,
-    indices: Optional[int | NDArray[np.int64]] = None,
+    indices: Optional[Union[int, NDArray[np.int64]]] = None,
     to_native: bool = False,
 ) -> Any:
     """
@@ -55,7 +55,7 @@ def _safe_indexing(
     Parameters
     ----------
     obj : Any
-    indices : Optional[int | NDArray[np.int64]]
+    indices : Optional[Union[int, NDArray[np.int64]]]
         Integer positions to select. If None, no indexing is performed. Default is None.
     to_native : bool
         Whether to convert to native format. Default is False
