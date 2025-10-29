@@ -2,10 +2,10 @@ import warnings
 import inspect
 import importlib
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal, overload
+from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal
 from numpy.typing import NDArray
-from narwhals.typing import IntoSeriesT, IntoDataFrameT, IntoSeries, IntoDataFrame
-from .typing import ArrayLike
+from narwhals.typing import IntoSeriesT, IntoDataFrameT
+from .typing import ArrayLike, EstimatorLike
 
 from collections.abc import Iterable
 
@@ -44,32 +44,6 @@ else:
     BaseEstimator = Any
 
 
-@overload
-def _safe_indexing(
-    obj: NDArray,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> NDArray: ...
-@overload
-def _safe_indexing(
-    obj: IntoSeriesT,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> IntoSeriesT: ...
-@overload
-def _safe_indexing(
-    obj: IntoDataFrameT,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> IntoDataFrameT: ...
-@overload
-def _safe_indexing(
-    obj: PandasIndex,
-    indices: Optional[Union[int, NDArray[np.int64]]] = None,
-    to_native: bool = False,
-) -> PandasIndex: ...
-
-
 def _safe_indexing(
     obj: Any,
     indices: Optional[Union[int, NDArray[np.int64]]] = None,
@@ -80,17 +54,16 @@ def _safe_indexing(
 
     Parameters
     ----------
-    obj : pandas.DataFrame/Series or narwhals-compliant object
-        The object to index and/or convert
-    indices : array-like, optional
-        Integer positions to select. If None, no indexing is performed
-    to_native : bool, optional
+    obj : Any
+    indices : Optional[Union[int, NDArray[np.int64]]]
+        Integer positions to select. If None, no indexing is performed. Default is None.
+    to_native : bool
         Whether to convert to native format. Default is False
 
     Returns
     -------
-    obj : same type as input or native format
-        Processed object (indexed and/or converted)
+    obj : Any
+        Same type as input or native format. Processed object (indexed and/or converted)
     """
     # Handle indexing if indices provided
     if indices is not None:
@@ -140,7 +113,7 @@ def _is_valid_data_type(data: Any, data_name: str = "data") -> bool:
 
 
 def _supports_sample_weights(
-    estimator: BaseEstimator, sample_weight: Optional[Any] = None
+    estimator: EstimatorLike, sample_weight: Optional[Any] = None
 ) -> bool:
     """
     Check whether an estimator supports sample weights in its fit method.
@@ -148,9 +121,9 @@ def _supports_sample_weights(
 
     Parameters
     ----------
-    estimator : object
+    estimator : EstimatorLike
         A scikit-learn style estimator class or instance.
-    sample_weight : array-like, optional
+    sample_weight : Optional[Any]
 
     Returns
     -------
@@ -190,14 +163,6 @@ __pdoc__ = {
     "check_method": False,
     "_check_X_y": False,
 }
-
-
-@overload
-def get_index_or_col_from_df(
-    df: PandasDataFrame, name: str
-) -> Union[PandasSeries, PandasIndex]: ...
-@overload
-def get_index_or_col_from_df(df: IntoDataFrame, name: str) -> IntoSeries: ...
 
 
 def get_index_or_col_from_df(df: Any, name: str) -> Any:
@@ -373,15 +338,14 @@ def _check_X_y(X: ArrayLike, y: Optional[ArrayLike] = None) -> None:
 
     Parameters
     ----------
-    X : array-like, IntoDataFrame, or IntoSeries
+    X : ArrayLike
         Input features.
-    y : array-like, IntoDataFrame, or IntoSeries
+    y : Optional[ArrayLike]
         Target values.
 
     Returns
     -------
-    tuple
-        The validated inputs (X, y).
+    None
 
     Raises
     ------

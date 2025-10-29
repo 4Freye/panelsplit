@@ -33,6 +33,26 @@ jobs:
       - name: Run mypy
         run:  uv run mypy panelsplit --disallow-untyped-defs --disallow-incomplete-defs
 
+  pydoclint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run pydoclint
+        run:  uv run pydoclint panelsplit --check-class-attributes False
+
   ruff:
     runs-on: ubuntu-latest
     steps:

@@ -23,3 +23,17 @@ repos:
         args: [--fix]
       - id: ruff-format
         types_or: [python, pyi]
+
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.7.6
+    hooks:
+      - id: pydoclint
+        files: panelsplit
+        args: [ --style=numpy, --check-class-attributes=False]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2  # Use the sha / tag you want to point at
+    hooks:
+      -   id: mypy
+          files: panelsplit
+          args: [--disallow-untyped-defs, --disallow-incomplete-defs, --ignore-missing-imports]

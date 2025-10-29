@@ -1,12 +1,13 @@
 import inspect
-from typing import Tuple, List, Union, Optional
+from typing import Tuple, List, Optional, Iterable, Union
+from numpy.typing import NDArray
 
 import narwhals as nw
 import numpy as np
 from joblib import Parallel, delayed
 from narwhals.typing import IntoDataFrame, IntoSeries
-from sklearn.base import clone, BaseEstimator
-from .utils.typing import ArrayLike
+from sklearn.base import clone
+from .utils.typing import ArrayLike, EstimatorLike
 from .cross_validation import PanelSplit
 
 from .utils.utils import _split_wrapper
@@ -25,16 +26,16 @@ def _get_non_null_mask(data: IntoSeries) -> IntoSeries:
 
 
 def _predict_split(
-    model: BaseEstimator, X_test: ArrayLike, method: str = "predict"
+    model: EstimatorLike, X_test: ArrayLike, method: str = "predict"
 ) -> np.ndarray:
     """
     Perform predictions for a single split.
 
     Parameters
     ----------
-    model : object
+    model : EstimatorLike
         The machine learning model used for prediction.
-    X_test : IntoDataFrame
+    X_test : ArrayLike
         The input features for testing.
     method : str, optional
         The method to use for prediction. It can be 'predict', 'predict_proba',
@@ -50,34 +51,34 @@ def _predict_split(
 
 
 def _fit_split(
-    estimator: BaseEstimator,
+    estimator: EstimatorLike,
     X: IntoDataFrame,
     y: Optional[IntoSeries],
-    train_indices: np.ndarray,
-    sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
+    train_indices: NDArray,
+    sample_weight: Optional[Union[IntoSeries, NDArray]] = None,
     drop_na_in_y: bool = False,
-) -> BaseEstimator:
+) -> EstimatorLike:
     """
     Fit a cloned estimator on the given training indices.
 
     Parameters
     ----------
-    estimator : object
+    estimator : EstimatorLike
         The machine learning model to be fitted.
     X : IntoDataFrame
         The input features for the estimator.
-    y : IntoSeries or None
-        The target variable for the estimator.
-    train_indices : np.ndarray
+    y : Optional[IntoSeries]
+        The target variable for the estimator. Default is None.
+    train_indices : NDArray
         Integer indices indicating the training data.
-    sample_weight : IntoSeries or np.ndarray, optional
+    sample_weight : Optional[Union[IntoSeries, NDArray]]
         Sample weights for the training data. Default is None.
-    drop_na_in_y : bool, default=False
-        Whether to drop rows with null values in y.
+    drop_na_in_y : bool
+        Whether to drop rows with null values in y. Default is False
 
     Returns
     -------
-    object
+    EstimatorLike
         A fitted estimator.
     """
     local_estimator = clone(estimator)
@@ -156,41 +157,41 @@ def _prediction_order_to_original_order(indices: List[np.ndarray]) -> np.ndarray
 
 
 def cross_val_fit(
-    estimator: BaseEstimator,
+    estimator: EstimatorLike,
     X: IntoDataFrame,
     y: IntoSeries,
-    cv: PanelSplit,
+    cv: Union[PanelSplit, Iterable],
     sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     progress_bar: bool = False,
     drop_na_in_y: bool = False,
-) -> List[BaseEstimator]:
+) -> List[EstimatorLike]:
     """
     Fit the estimator using cross-validation.
 
     Parameters
     ----------
-    estimator : object
+    estimator : EstimatorLike
         The machine learning model to be fitted.
     X : IntoDataFrame
         The input features for the estimator.
     y : IntoSeries
         The target variable for the estimator.
-    cv : object or iterable
+    cv : Union[PanelSplit, Iterable]
         Cross-validation splitter; either an object that generates train/test splits (e.g., an instance of PanelSplit)
         or an iterable of splits.
-    sample_weight : IntoSeries or np.ndarray, optional
+    sample_weight : Optional[Union[IntoSeries, np.ndarray]]
         Sample weights for the training data. Default is None.
-    n_jobs : int, optional
+    n_jobs : int
         The number of jobs to run in parallel. Default is 1.
-    progress_bar : bool, optional
+    progress_bar : bool
         Whether to display a progress bar. Default is False.
-    drop_na_in_y : bool, optional
+    drop_na_in_y : bool
         Whether to drop observations where y is na. Default is False.
 
     Returns
     -------
-    list
+    List[EstimatorLike]
         List containing fitted models for each split.
 
     Examples
@@ -227,9 +228,9 @@ def cross_val_fit(
 
 
 def cross_val_predict(
-    fitted_estimators: List[BaseEstimator],
+    fitted_estimators: List[EstimatorLike],
     X: IntoDataFrame,
-    cv: PanelSplit,
+    cv: Union[PanelSplit, Iterable],
     method: str = "predict",
     n_jobs: int = 1,
     return_train_preds: bool = False,
@@ -239,27 +240,26 @@ def cross_val_predict(
 
     Parameters
     ----------
-    fitted_estimators : list
+    fitted_estimators : List[EstimatorLike]
         List of fitted machine learning models used for prediction.
     X : IntoDataFrame
         The input features for prediction.
-    cv : object or iterable
+    cv : Union[PanelSplit, Iterable]
         Cross-validation splitter; either an object that generates train/test splits or an iterable of splits.
-    method : str, optional
-        The method to use for prediction. It can be whatever methods are available to the estimator
+    method : str
+        The method to use for prediction. It can be whatever methods are available to the estimator.
         (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
-    n_jobs : int, optional
+    n_jobs : int
         The number of jobs to run in parallel. Default is 1.
-    return_train_preds : bool, optional
+    return_train_preds : bool
         If True, return predictions for the training set as well. Default is False.
 
     Returns
     -------
-    test_preds : np.ndarray
-        Array containing test predictions made by the model during cross-validation.
-    train_preds : np.ndarray, optional
-        Array containing train predictions made by the model during cross-validation.
-        Returned only if `return_train_preds` is True.
+    Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
+        If ``return_train_preds`` is False, returns an array of test predictions.
+        If ``return_train_preds`` is True, returns a tuple containing:
+        (test_predictions, train_predictions).
     """
     check_fitted_estimators(fitted_estimators)
     splits = check_cv(cv)
@@ -300,54 +300,59 @@ def cross_val_predict(
 
 
 def cross_val_fit_predict(
-    estimator: BaseEstimator,
+    estimator: EstimatorLike,
     X: IntoDataFrame,
     y: IntoSeries,
-    cv: PanelSplit,
+    cv: Union[PanelSplit, Iterable],
     method: str = "predict",
     sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
     return_train_preds: bool = False,
     drop_na_in_y: bool = False,
 ) -> Union[
-    Tuple[np.ndarray, List[BaseEstimator]],
-    Tuple[np.ndarray, np.ndarray, List[BaseEstimator]],
+    Tuple[np.ndarray, List[EstimatorLike]],
+    Tuple[np.ndarray, np.ndarray, List[EstimatorLike]],
 ]:
     """
     Fit the estimator using cross-validation and then make predictions.
 
     Parameters
     ----------
-    estimator : object
+    estimator : EstimatorLike
         The machine learning model to be fitted.
     X : IntoDataFrame
         The input features for the estimator.
     y : IntoSeries
         The target variable for the estimator.
-    cv : object
+    cv : Union[PanelSplit, Iterable]
         Cross-validation splitter; an object that generates train/test splits.
-     method : str, optional
-        The method to use for prediction. It can be whatever methods are available to the estimator
-        (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
-    sample_weight : IntoSeries or np.ndarray, optional
+    method : str
+        The method to use for prediction. It can be any method available on the estimator
+        (e.g., ``predict_proba`` for classifiers or ``transform`` for transformers). Default is predict.
+    sample_weight : Optional[Union[IntoSeries, np.ndarray]]
         Sample weights for the training data. Default is None.
-    n_jobs : int, optional
+    n_jobs : int
         The number of jobs to run in parallel. Default is 1.
-    return_train_preds : bool, optional
+    return_train_preds : bool
         If True, return predictions for the training set as well. Default is False.
-    drop_na_in_y : bool, optional
-        Whether to drop observations where y is na. Default is False.
+    drop_na_in_y : bool
+        Whether to drop observations where ``y`` is NA. Default is False.
 
     Returns
     -------
-    tuple
-        If `return_train_preds` is False, returns a tuple of:
-            - preds (np.ndarray): Array containing predictions made by the model during cross-validation.
-            - fitted_estimators (list): List containing fitted models for each split.
-        If `return_train_preds` is True, returns a tuple of:
-            - preds (np.ndarray): Array containing test predictions made by the model during cross-validation.
-            - train_preds (np.ndarray): Array containing train predictions made by the model during cross-validation.
-            - fitted_estimators (list): List containing fitted models for each split.
+    Union[Tuple[np.ndarray, List[EstimatorLike]], Tuple[np.ndarray, np.ndarray, List[EstimatorLike]]]
+        If ``return_train_preds`` is False, returns a tuple ``(preds, fitted_estimators)``, where:
+            - preds (*np.ndarray*): Array of predictions made during cross-validation.
+            - fitted_estimators (*list of EstimatorLike*): List of fitted models for each split.
+        If ``return_train_preds`` is True, returns a tuple ``(preds, train_preds, fitted_estimators)``, where:
+            - preds (*np.ndarray*): Array of test predictions made during cross-validation.
+            - train_preds (*np.ndarray*): Array of training predictions.
+            - fitted_estimators (*list of EstimatorLike*): List of fitted models for each split.
+
+    Raises
+    ------
+    TypeError
+        If the provided estimator does not implement the specified ``method`` or has invalid type.
 
     Examples
     --------

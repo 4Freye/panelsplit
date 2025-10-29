@@ -44,35 +44,34 @@ class PanelSplit:
 
     Parameters
     ----------
-    periods : IntoSeries, pd.Index, or np.ndarray
+    periods : Union[IntoSeries, np.ndarray, "pd.Index"]
         A collection of periods for each observation.
-    unique_periods : array-like, optional
-        An array-like object containing unique periods. If None, the unique periods will be
-        computed from `periods`. Default is None.
-    snapshots : IntoSeries, optional
+    unique_periods : Optional[Union[IntoSeries, np.ndarray, "pd.Index"]]
+        An array-like object containing unique periods. If None, they will be computed
+        from ``periods``. Default is None.
+    snapshots : Optional[Union[IntoSeries, np.ndarray, "pd.Index"]]
         A Series defining the snapshot for each observation. Default is None.
-    n_splits : int, optional
-        Number of splits for TimeSeriesSplit. Default is 2.
-    gap : int, optional
+    n_splits : int
+        Number of splits for ``TimeSeriesSplit``. Default is 2.
+    gap : int
         Gap between the training and testing sets. Default is 0.
-    test_size : int, optional
+    test_size : int
         Size of the test set. Default is 1.
-    max_train_size : int, optional
+    max_train_size : Optional[int]
         Maximum size for a single training set. Default is None.
-    include_first_train_in_test : bool, optional
-        Whether to include the first split's training set in the test set. Useful in the context of transforming data. Default is False.
-    include_train_in_test : bool, optional
-        Whether to include the all splits' training sets in their respective test sets. Useful in the context of transforming data that has snapshots. Default is False. If set to True, overrides include_first_train_in_test.
+    include_first_train_in_test : bool
+        Whether to include the first split's training set in the test set. Default is False
+    include_train_in_test : bool
+        Whether to include all training sets in their respective test sets. If set to
+        True, overrides ``include_first_train_in_test``. Default is False.
 
     Attributes
     ----------
     n_splits : int
         The number of splits for cross-validation.
-    train_test_splits : list of tuples
-        A list of train/test splits for the panel data. Each tuple has the form
-        (train_indices, test_indices), representing the indices for the training and testing sets
-        for that split.
-        for that split.
+    train_test_splits : list[tuple[np.ndarray, np.ndarray]]
+        List of train/test splits for the panel data. Each tuple has the form
+        ``(train_indices, test_indices)``.
 
     Notes
     -----
@@ -82,9 +81,9 @@ class PanelSplit:
 
     def __init__(
         self,
-        periods: Union[IntoSeries, np.ndarray],
-        unique_periods: Optional[Union[IntoSeries, np.ndarray]] = None,
-        snapshots: Optional[Union[IntoSeries, np.ndarray]] = None,
+        periods: Union[IntoSeries, np.ndarray, "pd.Index"],
+        unique_periods: Optional[Union[IntoSeries, np.ndarray, "pd.Index"]] = None,
+        snapshots: Optional[Union[IntoSeries, np.ndarray, "pd.Index"]] = None,
         n_splits: int = 2,
         gap: int = 0,
         test_size: int = 1,
@@ -129,19 +128,6 @@ class PanelSplit:
     def _split_unique_periods(self, indices: Any, unique_periods: NDArray) -> CVIndices:
         """
         Split unique periods into training and testing sets based on TimeSeriesSplit indices.
-
-        Parameters
-        ----------
-        indices : iterator
-            An iterator yielding pairs of train and test indices from TimeSeriesSplit.
-        unique_periods : array-like
-            The collection of unique periods.
-
-        Returns
-        -------
-        list of tuple of np.ndarray
-            A list where each tuple contains two numpy arrays:
-            (unique_train_periods, unique_test_periods) for each split.
         """
         unique_periods_array = _to_numpy_array(unique_periods)
         u_periods_cv = []
@@ -205,8 +191,8 @@ class PanelSplit:
 
     def split(
         self,
-        X: Optional[IntoDataFrame] = None,
-        y: Optional[Union[IntoSeries, np.ndarray]] = None,
+        X: Optional[ArrayLike] = None,
+        y: Optional[ArrayLike] = None,
         groups: Optional[np.ndarray] = None,
     ) -> CVIndices:
         """
@@ -214,11 +200,11 @@ class PanelSplit:
 
         Parameters
         ----------
-        X : IntoDataFrame, optional
+        X : Optional[ArrayLike]
             Ignored; included for compatibility.
-        y : IntoSeries or np.ndarray, optional
+        y : Optional[ArrayLike]
             Ignored; included for compatibility.
-        groups : np.ndarray, optional
+        groups : Optional[np.ndarray]
             Ignored; included for compatibility.
 
         Returns
@@ -248,8 +234,8 @@ class PanelSplit:
 
     def get_n_splits(
         self,
-        X: Optional[IntoDataFrame] = None,
-        y: Optional[Union[IntoSeries, np.ndarray]] = None,
+        X: Optional[ArrayLike] = None,
+        y: Optional[ArrayLike] = None,
         groups: Optional[np.ndarray] = None,
     ) -> int:
         """
@@ -257,12 +243,12 @@ class PanelSplit:
 
         Parameters
         ----------
-        X : IntoDataFrame, optional
-            Ignored; included for compatibility.
-        y : IntoSeries or np.ndarray, optional
-            Ignored; included for compatibility.
-        groups : np.ndarray, optional
-            Ignored; included for compatibility.
+        X : Optional[ArrayLike]
+            Ignored; included for compatibility. Default is None.
+        y : Optional[ArrayLike]
+            Ignored; included for compatibility. Default is None.
+        groups : Optional[np.ndarray]
+            Ignored; included for compatibility. Default is None.
 
         Returns
         -------
@@ -281,23 +267,12 @@ class PanelSplit:
 
     def _gen_labels(
         self,
-        labels: Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray],
+        labels: Union["pd.Index", ArrayLike],
         fold_idx: int,
-    ) -> Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]:
+    ) -> Union["pd.Index", ArrayLike]:
         """
         Generate labels for either the training or testing set based on the cross-validation splits.
 
-        Parameters
-        ----------
-        labels : pd.Index, IntoSeries, IntoDataFrame, or np.ndarray
-            The labels corresponding to the observations.
-        fold_idx : int
-            Indicator for the fold to generate labels for (0 for training, 1 for testing).
-
-        Returns
-        -------
-        pd.Index, IntoSeries, IntoDataFrame, or np.ndarray
-            The labels corresponding to the specified fold.
         """
         check_labels(labels)
         # Collect all indices from all splits for the specified fold
@@ -311,20 +286,20 @@ class PanelSplit:
         return _safe_indexing(labels_nw, row_indices, to_native=True)
 
     def gen_train_labels(
-        self, labels: Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]
-    ) -> Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]:
+        self, labels: Union["pd.Index", ArrayLike]
+    ) -> Union["pd.Index", ArrayLike]:
         """
         Generate training set labels based on the provided labels.
 
         Parameters
         ----------
-        labels : pd.Index, IntoSeries, IntoDataFrame, or np.ndarray
+        labels : Union["pd.Index", ArrayLike]
             The labels corresponding to the observations.
 
         Returns
         -------
-        Same type as `labels`
-            The labels for the training set.
+        Union["pd.Index", ArrayLike]
+            The labels for the training set. Same type as labels.
 
         Examples
         --------
@@ -339,20 +314,20 @@ class PanelSplit:
         return self._gen_labels(labels=labels, fold_idx=0)
 
     def gen_test_labels(
-        self, labels: Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]
-    ) -> Union["pd.Index", IntoSeries, IntoDataFrame, np.ndarray]:
+        self, labels: Union["pd.Index", ArrayLike]
+    ) -> Union["pd.Index", ArrayLike]:
         """
         Generate testing set labels based on the provided labels.
 
         Parameters
         ----------
-        labels : pd.Index, IntoSeries, IntoDataFrame, or np.ndarray
+        labels : Union["pd.Index", ArrayLike]
             The labels corresponding to the observations.
 
         Returns
         -------
-        Same type as `labels`
-            The labels for the testing set.
+        Union["pd.Index", ArrayLike]
+            The labels for the testing set. Same type as labels.
 
         Examples
         --------
@@ -376,9 +351,9 @@ class PanelSplit:
         ----------
         data : IntoDataFrame
             The DataFrame from which snapshots are generated.
-        period_col : str, optional
+        period_col : Optional[str]
             The column name (or index) in `data` to derive the snapshot period. If both an index
-            and a column in `data` are named `period_col`, the index is used by default.
+            and a column in `data` are named `period_col`, the index is used by default. Default is None.
 
         Returns
         -------
@@ -446,14 +421,14 @@ def drop_splits(cv: PanelSplit, y: Union[IntoSeries, NDArray]) -> PanelSplit:
 
     Parameters
     ----------
-    cv : PanelSplit object
+    cv : PanelSplit
         The object is expected to have an attribute `n_splits` (an integer) and support the `pop` method.
-    y : IntoSeries
+    y : Union[IntoSeries, NDArray]
         Series of shape (n_samples,) containing target values.
 
     Returns
     -------
-    list
+    PanelSplit
         The modified list of splits with the problematic splits removed.
 
     Examples
