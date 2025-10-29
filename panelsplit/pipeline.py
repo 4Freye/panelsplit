@@ -371,7 +371,7 @@ class SequentialCVPipeline(BaseEstimator):
 
     def _combine(
         transformed_list: List,
-    ) -> Union[ArrayLike | List]:
+    ) -> Union[ArrayLike, List]:
         """
         Combine a list of transformed outputs into a single output.
         """
