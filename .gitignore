@@ -13,7 +13,7 @@ dist/
 
 .DS_Store
 
-debug.ipynb
+debug*
 
 panelsplit.egg-info
 
@@ -23,3 +23,6 @@ panelsplit.egg-info
 # drafts
 examples/Intro to PanelSplit.ipynb
 examples/PanelSplit explanation.ipynb
+htmlcov
+.coverage
+.vscode/
