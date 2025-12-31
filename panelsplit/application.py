@@ -9,6 +9,7 @@ from narwhals.typing import IntoDataFrame, IntoSeries
 from sklearn.base import clone
 from .utils.typing import ArrayLike, EstimatorLike
 from .cross_validation import PanelSplit
+from typing import Literal
 
 from .utils.utils import _split_wrapper
 from .utils.validation import (
@@ -230,8 +231,8 @@ def cross_val_predict(
     cv: Union[PanelSplit, Iterable],
     method: str = "predict",
     n_jobs: int = 1,
-    return_train_preds: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    return_group: Literal["test", "train"] = "test",
+) -> np.ndarray:
     """
     Perform cross-validated predictions using a given predictor model.
 
@@ -248,15 +249,13 @@ def cross_val_predict(
         (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
     n_jobs : int
         The number of jobs to run in parallel. Default is 1.
-    return_train_preds : bool, default = False
-        If True, return predictions for the training set as well.
+    return_group : {"test","train"}
+        Whether to return the train or test predictions. Default is "test".
 
     Returns
     -------
-    Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
-        If ``return_train_preds`` is False, returns an array of test predictions.
-        If ``return_train_preds`` is True, returns a tuple containing:
-        (test_predictions, train_predictions).
+    np.ndarray
+        Predictions (either train or test depending on return_group).
 
     Examples
     --------
@@ -271,48 +270,31 @@ def cross_val_predict(
     >>> preds = cross_val_predict(estimators, X, ps)
     >>> preds.shape
     (4,)
-    >>> test_preds, train_preds = cross_val_predict(
-    ...     estimators, X, ps, return_train_preds=True
-    ... )
-    >>> test_preds.shape, train_preds.shape
-    ((4,), (6,))
     """
     check_fitted_estimators(fitted_estimators)
     splits = check_cv(cv)
+    if return_group not in ["train", "test"]:
+        raise ValueError(
+            f"return_group must be train or test. Got {return_group} instead."
+        )
 
-    test_splits = [split[1] for split in splits]
-    test_indices = _prediction_order_to_original_order(test_splits)
+    group = 0 if return_group == "train" else 1
+    group_splits = [split[group] for split in splits]
+    group_indices = _prediction_order_to_original_order(group_splits)
 
     # Use narwhals for dataframe-agnostic operations
     X_nw = nw.from_native(X, pass_through=True)
 
-    test_preds = Parallel(n_jobs=n_jobs)(
+    preds = Parallel(n_jobs=n_jobs)(
         delayed(_predict_split)(
             fitted_estimators[i],
             _safe_indexing(X_nw, test_idx, to_native=True),
             method,
         )
-        for i, test_idx in enumerate(test_splits)
+        for i, test_idx in enumerate(group_splits)
     )
 
-    if return_train_preds:
-        train_splits = [split[0] for split in splits]
-        train_indices = _prediction_order_to_original_order(train_splits)
-
-        train_preds = Parallel(n_jobs=n_jobs)(
-            delayed(_predict_split)(
-                fitted_estimators[i],
-                _safe_indexing(X_nw, train_idx, to_native=True),
-                method,
-            )
-            for i, train_idx in enumerate(train_splits)
-        )
-
-        return np.concatenate(test_preds, axis=0)[test_indices], np.concatenate(
-            train_preds, axis=0
-        )[train_indices]
-    else:
-        return np.concatenate(test_preds, axis=0)[test_indices]
+    return np.concatenate(preds, axis=0)[group_indices]
 
 
 def cross_val_fit_predict(
@@ -323,12 +305,9 @@ def cross_val_fit_predict(
     method: str = "predict",
     sample_weight: Optional[Union[IntoSeries, np.ndarray]] = None,
     n_jobs: int = 1,
-    return_train_preds: bool = False,
+    return_group: Literal["test", "train"] = "test",
     drop_na_in_y: bool = False,
-) -> Union[
-    Tuple[np.ndarray, List[EstimatorLike]],
-    Tuple[np.ndarray, np.ndarray, List[EstimatorLike]],
-]:
+) -> Tuple[np.ndarray, List[EstimatorLike]]:
     """
     Fit the estimator using cross-validation and then make predictions.
 
@@ -349,21 +328,15 @@ def cross_val_fit_predict(
         Sample weights for the training data. Default is None.
     n_jobs : int
         The number of jobs to run in parallel. Default is 1.
-    return_train_preds : bool
-        If True, return predictions for the training set as well. Default is False.
+    return_group : {"test","train"}
+        Whether to return the train or test predictions. Default is test.
     drop_na_in_y : bool
         Whether to drop observations where ``y`` is NA. Default is False.
 
     Returns
     -------
-    Union[Tuple[np.ndarray, List[EstimatorLike]], Tuple[np.ndarray, np.ndarray, List[EstimatorLike]]]
-        If ``return_train_preds`` is False, returns a tuple ``(preds, fitted_estimators)``, where:
-            - preds (*np.ndarray*): Array of predictions made during cross-validation.
-            - fitted_estimators (*list of EstimatorLike*): List of fitted models for each split.
-        If ``return_train_preds`` is True, returns a tuple ``(preds, train_preds, fitted_estimators)``, where:
-            - preds (*np.ndarray*): Array of test predictions made during cross-validation.
-            - train_preds (*np.ndarray*): Array of training predictions.
-            - fitted_estimators (*list of EstimatorLike*): List of fitted models for each split.
+    Tuple[np.ndarray, List[EstimatorLike]]
+        (predictions (either train or test depending on return_group), fitted_estimators).
 
     Raises
     ------
@@ -393,22 +366,11 @@ def cross_val_fit_predict(
         estimator, X, y, cv, sample_weight, n_jobs, drop_na_in_y=drop_na_in_y
     )
 
-    res = cross_val_predict(
-        fitted_estimators, X, cv, method, n_jobs, return_train_preds
-    )
+    res = cross_val_predict(fitted_estimators, X, cv, method, n_jobs, return_group)
 
-    if return_train_preds:
-        # res should be Tuple[np.ndarray, np.ndarray]
-        if isinstance(res, tuple):
-            preds, train_preds = res
-        else:
-            # defensive: unexpected type at runtime
-            raise TypeError("cross_val_predict returned ndarray but expected tuple")
-        return preds, train_preds, fitted_estimators
+    # res should be np.ndarray
+    if isinstance(res, tuple):
+        preds = res[0]
     else:
-        # res should be np.ndarray
-        if isinstance(res, tuple):
-            preds = res[0]
-        else:
-            preds = res
-        return preds, fitted_estimators
+        preds = res
+    return preds, fitted_estimators
