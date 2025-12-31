@@ -55,8 +55,8 @@ Explore the modules in detail by clicking on the links below to see full documen
 __all__ = [
     "application",
     "cross_validation",
-    "pipeline",
-    "model_selection",
     "metrics",
+    "model_selection",
+    "pipeline",
     "plot",
 ]
