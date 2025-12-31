@@ -124,13 +124,16 @@ class TestNarwhalsCompatibility(unittest.TestCase):
 
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
+                ("scaler", StandardScaler()),
                 (
                     "regressor",
                     RandomForestRegressor(n_estimators=5, random_state=42),
-                    ps,
                 ),
-            ]
+            ],
+            cv_steps=[
+                None,
+                ps,
+            ],
         )
 
         try:
@@ -410,9 +413,13 @@ class TestNarwhalsCompatibility(unittest.TestCase):
 
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), ps_1),
-                ("classifier", LogisticRegression(), ps_2),
-            ]
+                (
+                    "scaler",
+                    StandardScaler(),
+                ),
+                ("classifier", LogisticRegression()),
+            ],
+            cv_steps=[ps_1, ps_2],
         )
 
         try:
@@ -445,9 +452,13 @@ class TestNarwhalsCompatibility(unittest.TestCase):
 
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), ps_1),
-                ("classifier", LogisticRegression(), ps_2),
-            ]
+                (
+                    "scaler",
+                    StandardScaler(),
+                ),
+                ("classifier", LogisticRegression()),
+            ],
+            cv_steps=[ps_1, ps_2],
         )
 
         try:
