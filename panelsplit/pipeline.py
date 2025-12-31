@@ -1061,7 +1061,9 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         elif fitted_step[0] is not None:
             [check_is_fitted(model) for _, _, model in fitted_step]
             assert all([is_classifier(model) for _, _, model in fitted_step])
-            return np.unique(np.concatenate([model[-1].classes_ for model in fitted_step]))
+            return np.unique(
+                np.concatenate([model[-1].classes_ for model in fitted_step])
+            )
         # Case B: direct estimator instance (non-CV)
         else:
             check_is_fitted(fitted_step[-1])
