@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2025-12-31
 ### Changed
 - Switched from `pydoclint` to `numpydoc` for better docstring readability.
-- `SequentialCVPipeline` made more sklearn-like (e.g. added functionality for `set_params` and `get_params`). It arguments also made to match sklearn- steps is a list of tuples of length 2 (name, estimator) instead of (name, estimator, cv). CVs moved to a separate argument, cv_steps
+- `SequentialCVPipeline` made more sklearn-like (e.g. added functionality for `set_params` and `get_params`). Its arguments were also made to match sklearn; `steps` is a list of tuples of length 2 (name, estimator) instead of (name, estimator, cv). CVs were moved to a separate argument, `cv_steps`
 ### Added
 - `panelsplit.model_selection`. This includes `RandomizedSearch` and `GridSearch` in order to allow for hyper-parameter searching with `SequentialCVPipeline`
 - `panelsplit.metrics`. This module includes metrics which work with the `model_selection` module.
