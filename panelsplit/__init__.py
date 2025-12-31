@@ -42,6 +42,21 @@ Explore the modules in detail by clicking on the links below to see full documen
 
 ### `panelsplit.plot`
 - Visualize time series splits easily.
+
+### `panelsplit.model_selection`
+- **Hyperparameter tuning:** Provides GridSearch and RandomizedSearch classes for optimizing model parameters using panel data cross-validation.
+- **Efficient search:** Supports parallel processing and integrates with panelsplit's cross-validation framework.
+
+### `panelsplit.metrics`
+- **Scoring functions:** Offers a range of metrics for evaluating model performance on panel data.
+- **Sequential CV scorers:** Specialized scorers designed for sequential cross-validation splits.
 """
 
-__all__ = ["application", "cross_validation", "pipeline", "plot"]
+__all__ = [
+    "application",
+    "cross_validation",
+    "pipeline",
+    "model_selection",
+    "metrics",
+    "plot",
+]
