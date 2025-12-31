@@ -62,6 +62,7 @@ build-backend = "hatchling.build"
 # Hatch versioning from Git tags
 [tool.hatch.version]
 source = "vcs"               # derive version from Git tags
+write-to = "panelsplit/_version.py"
 
 # Package data configuration for hatchling
 [tool.hatch.build.targets.wheel]
