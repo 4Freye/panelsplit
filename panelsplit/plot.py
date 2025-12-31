@@ -9,39 +9,39 @@ def plot_splits(
     """
     Visualize time series cross-validation splits using a scatter plot.
 
-    This function generates a scatter plot that displays training and test indices
-    for each cross-validation split contained in a PanelSplit instance. Each split
-    is plotted on a separate horizontal line: blue markers represent training indices
+    Each split is plotted on a separate horizontal line: blue markers represent training indices
     and red markers represent test indices.
 
-    Parameters:
-        PanelSplit (object): An instance of PanelSplit containing the cross-validation
-            splits. It must have an attribute `u_periods_cv`, which should be an iterable
-            of tuples, each in the form (train_index, test_index). Here, both `train_index`
-            and `test_index` are array-like collections of period indices.
-        show (bool, optional): If True (default), the plot is immediately displayed
-            using `plt.show()`. If False, the function returns the matplotlib Figure and Axes
-            objects for further customization.
+    Parameters
+    ----------
+    panel_split : PanelSplit
+        An instance of PanelSplit containing the cross-validation splits.
+        It must have an attribute `_u_periods_cv`, which should be an iterable of tuples,
+        each in the form `(train_index, test_index)`. Both `train_index` and `test_index`
+        are array-like collections of period indices.
+    show : bool, default=True
+        If True, the plot is immediately displayed using `plt.show()`.
+        If False, the function returns the matplotlib Figure and Axes objects for further customization.
 
-    Returns:
-        tuple or None:
-            - If show is False, returns a tuple (fig, ax) where fig is the matplotlib Figure
-              and ax is the Axes object.
-            - If show is True, the plot is displayed and the function returns None.
+    Returns
+    -------
+    Optional[Tuple[plt.Figure, plt.Axes]]
+        If `show` is False, returns a tuple `(fig, ax)` where `fig` is the matplotlib Figure
+        and `ax` is the Axes object. If `show` is True, the plot is displayed and the function returns None.
 
-    Example:
-        >>> from panelsplit.cross_validation import PanelSplit
-        >>> import numpy as np
-        >>> import matplotlib.pyplot as plt
-        >>> periods = np.array([1,2,3,4,5,6])
-        >>> # Create a PanelSplit instance with cross-validation splits
-        >>> ps = PanelSplit(periods, n_splits = 3)
-        >>> # To display the plot immediately:
-        >>> plot_splits(ps)
-        >>> # Or, to further customize the plot before displaying:
-        >>> fig, ax = plot_splits(ps, show=False)
-        >>> ax.set_title("A custom plot of cross-validation splits")
-        >>> plt.show()
+    Examples
+    --------
+    >>> from panelsplit.cross_validation import PanelSplit
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> periods = np.array([1, 2, 3, 4, 5, 6])
+    >>> ps = PanelSplit(periods, n_splits=3)
+    >>> # Display the plot immediately
+    >>> plot_splits(ps)
+    >>> # Or return the Figure and Axes for customization
+    >>> fig, ax = plot_splits(ps, show=False)
+    >>> ax.set_title("A custom plot of cross-validation splits")
+    >>> plt.show()
     """
     split_output = panel_split._u_periods_cv
     splits = len(split_output)

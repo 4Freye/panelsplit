@@ -24,12 +24,13 @@ repos:
       - id: ruff-format
         types_or: [python, pyi]
 
-  - repo: https://github.com/jsh9/pydoclint
-    rev: 0.7.6
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.10.0
     hooks:
-      - id: pydoclint
-        files: panelsplit
-        args: [ --style=numpy, --check-class-attributes=False]
+      - id: numpydoc-validation
+        files: ^panelsplit/.*\.py$
+        exclude: ^panelsplit/(_|.*/_)
+
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.2  # Use the sha / tag you want to point at

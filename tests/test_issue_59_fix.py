@@ -74,9 +74,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that fit_score works correctly in pipeline."""
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("classifier", LogisticRegression(max_iter=1000), None),
-            ]
+                ("scaler", StandardScaler()),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ],
+            cv_steps=[None, None],
         )
 
         # This should work without errors (issue #59)
@@ -89,9 +90,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that score works after fitting pipeline."""
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("classifier", LogisticRegression(max_iter=1000), None),
-            ]
+                ("scaler", StandardScaler()),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ],
+            cv_steps=[None, None],
         )
 
         # Fit first
@@ -107,9 +109,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that predict works after fitting pipeline."""
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("classifier", LogisticRegression(max_iter=1000), None),
-            ]
+                ("scaler", StandardScaler()),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ],
+            cv_steps=[None, None],
         )
 
         # Fit first
@@ -123,9 +126,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
         """Test that fit_predict works correctly in pipeline."""
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("classifier", LogisticRegression(max_iter=1000), None),
-            ]
+                ("scaler", StandardScaler()),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ],
+            cv_steps=[None, None],
         )
 
         # This should work without errors
@@ -138,9 +142,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("classifier", LogisticRegression(max_iter=1000), ps),
-            ]
+                ("scaler", StandardScaler()),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ],
+            cv_steps=[None, ps],
         )
 
         # This should work without errors (issue #59 with CV)
@@ -155,9 +160,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("classifier", LogisticRegression(max_iter=1000), ps),
-            ]
+                ("scaler", StandardScaler()),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ],
+            cv_steps=[None, ps],
         )
 
         # Fit first
@@ -175,9 +181,10 @@ class TestDynamicMethodCalling(unittest.TestCase):
 
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),
-                ("regressor", RandomForestRegressor(), None),
-            ]
+                ("scaler", StandardScaler()),
+                ("regressor", RandomForestRegressor()),
+            ],
+            cv_steps=[None, None],
         )
 
         # This should work without errors

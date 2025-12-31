@@ -59,8 +59,8 @@ class PanelSplit:
         Size of the test set. Default is 1.
     max_train_size : Optional[int]
         Maximum size for a single training set. Default is None.
-    include_first_train_in_test : bool
-        Whether to include the first split's training set in the test set. Default is False
+    include_first_train_in_test : bool, default = False
+        Whether to include the first split's training set in the test set.
     include_train_in_test : bool
         Whether to include all training sets in their respective test sets. If set to
         True, overrides ``include_first_train_in_test``. Default is False.
@@ -77,6 +77,17 @@ class PanelSplit:
     -----
     This class is designed for panel data where cross-validation splits must respect
     temporal ordering.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from panelsplit.cross_validation import PanelSplit
+    >>> periods = np.array([1, 1, 2, 2, 3, 3])
+    >>> ps = PanelSplit(periods, n_splits=2, test_size=1)
+    >>> ps.n_splits
+    2
+    >>> ps.train_test_splits
+    [(array([0, 1]), array([2, 3])), (array([0, 1, 2, 3]), array([4, 5]))]
     """
 
     def __init__(
@@ -227,7 +238,7 @@ class PanelSplit:
         >>> splits_modified = ps_modified.split()
         Dropping split 0 as either the test or train set is either empty or contains only one unique value.
         >>> for train, test in splits_modified:
-        ...    print("Train:", train, "Test:", test)
+        ...     print("Train:", train, "Test:", test)
         Train: [0 1] Test: [2]
         """
         return self.train_test_splits
@@ -305,7 +316,7 @@ class PanelSplit:
         --------
         >>> import pandas as pd
         >>> periods = pd.Series([1, 2, 3])
-        >>> labels = np.array(['a', 'b', 'c'])
+        >>> labels = np.array(["a", "b", "c"])
         >>> ps = PanelSplit(periods=periods, n_splits=2)
         >>> train_labels = ps.gen_train_labels(labels)
         >>> train_labels
@@ -333,7 +344,7 @@ class PanelSplit:
         --------
         >>> import pandas as pd
         >>> periods = pd.Series([1, 2, 3])
-        >>> labels = np.array(['a', 'b', 'c'])
+        >>> labels = np.array(["a", "b", "c"])
         >>> ps = PanelSplit(periods=periods, n_splits=2)
         >>> test_labels = ps.gen_test_labels(labels)
         >>> test_labels
@@ -365,12 +376,14 @@ class PanelSplit:
         Examples
         --------
         >>> import pandas as pd
-        >>> data = pd.DataFrame({
-        ... 'value': [10, pd.NA, 30],
-        ... 'period': [1, 2, 3],
-        ... }).astype('Int32')
-        >>> ps = PanelSplit(periods=data['period'], n_splits=2)
-        >>> snapshots = ps.gen_snapshots(data, period_col='period')
+        >>> data = pd.DataFrame(
+        ...     {
+        ...         "value": [10, pd.NA, 30],
+        ...         "period": [1, 2, 3],
+        ...     }
+        ... ).astype("Int32")
+        >>> ps = PanelSplit(periods=data["period"], n_splits=2)
+        >>> snapshots = ps.gen_snapshots(data, period_col="period")
         >>> print(snapshots)
            value  period  split  snapshot_period
         0     10       1      0                2
@@ -434,12 +447,14 @@ def drop_splits(cv: PanelSplit, y: Union[IntoSeries, NDArray]) -> PanelSplit:
     Examples
     --------
     >>> import pandas as pd
-    >>> data = pd.DataFrame({
-    ... 'value': [10, pd.NA, 30],
-    ... 'period': [1, 2, 3],
-    ... }).astype('Int32')
+    >>> data = pd.DataFrame(
+    ...     {
+    ...         "value": [10, pd.NA, 30],
+    ...         "period": [1, 2, 3],
+    ...     }
+    ... ).astype("Int32")
     >>> ps = PanelSplit(periods=periods, n_splits=2)
-    >>> drop_splits(ps, data['value'])
+    >>> drop_splits(ps, data["value"])
     Dropping split 0 as either the test or train set is either empty or contains only one unique value.
     """
     for i, (train_indices, test_indices) in enumerate(cv.split()):
