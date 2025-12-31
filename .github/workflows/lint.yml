@@ -27,12 +27,15 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
 
-      - name: Ensure mypy >= 0.930
-        run: uv run pip install --upgrade "mypy>=1"
+      - name: Install mypy (match pre-commit)
+        run: uv run pip install mypy==1.18.2
 
       - name: Run mypy
-        run:  uv run mypy panelsplit --disallow-untyped-defs --disallow-incomplete-defs
-
+        run: |
+          uv run mypy panelsplit \
+            --disallow-untyped-defs \
+            --disallow-incomplete-defs \
+            --ignore-missing-imports
   numpydoc:
     runs-on: ubuntu-latest
     steps:
