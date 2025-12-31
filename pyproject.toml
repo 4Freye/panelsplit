@@ -64,6 +64,9 @@ build-backend = "hatchling.build"
 source = "vcs"               # derive version from Git tags
 write-to = "panelsplit/_version.py"
 
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
 # Package data configuration for hatchling
 [tool.hatch.build.targets.wheel]
 packages = ["panelsplit"]
