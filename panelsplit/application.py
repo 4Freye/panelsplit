@@ -366,11 +366,6 @@ def cross_val_fit_predict(
         estimator, X, y, cv, sample_weight, n_jobs, drop_na_in_y=drop_na_in_y
     )
 
-    res = cross_val_predict(fitted_estimators, X, cv, method, n_jobs, return_group)
+    preds = cross_val_predict(fitted_estimators, X, cv, method, n_jobs, return_group)
 
-    # res should be np.ndarray
-    if isinstance(res, tuple):
-        preds = res[0]
-    else:
-        preds = res
     return preds, fitted_estimators

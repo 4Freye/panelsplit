@@ -391,7 +391,7 @@ def _fit_and_score(
                 for scorer_name in sorted(test_scores):
                     result_msg += f"mean {scorer_name}: ("
                     if return_train_score:
-                        scorer_scores = train_scores[scorer_name]
+                        scorer_scores = train_scores[scorer_name]  # type: ignore
                         result_msg += f"train={scorer_scores:.3f}, "
                     result_msg += f"test={np.nanmean(test_scores[scorer_name]):.3f})"
             else:

@@ -691,9 +691,8 @@ class BaseSearch(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 if len(out) != n_candidates:
                     raise ValueError(
-                        "_fit_and_score and get_n_splits returned inconsistent results. "
-                        f"Expected {n_candidates * n_splits} results (n_candidates * n_splits), "
-                        f"got {len(out)}"
+                        "_fit_and_score returned inconsistent results. "
+                        f"Expected {n_candidates} results, got {len(out)}"
                     )
 
                 _warn_or_raise_about_fit_failures(
