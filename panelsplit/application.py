@@ -200,14 +200,11 @@ def cross_val_fit(
     >>> from sklearn.linear_model import LinearRegression
     >>> from panelsplit.cross_validation import PanelSplit
     >>> # Create sample data
-    >>> df = pd.DataFrame({
-    ...     'feature': [1, 2, 3, 4, 5, 6],
-    ...     'period': [1, 1, 2, 2, 3, 3]
-    ... })
-    >>> X = df[['feature']]
+    >>> df = pd.DataFrame({"feature": [1, 2, 3, 4, 5, 6], "period": [1, 1, 2, 2, 3, 3]})
+    >>> X = df[["feature"]]
     >>> y = pd.Series([2, 4, 6, 8, 10, 12])
     >>> # Create a PanelSplit instance for cross-validation
-    >>> ps = PanelSplit(periods=df['period'], n_splits=2)
+    >>> ps = PanelSplit(periods=df["period"], n_splits=2)
     >>> fitted_models = cross_val_fit(LinearRegression(), X, y, ps)
     >>> len(fitted_models)
     2
@@ -251,8 +248,8 @@ def cross_val_predict(
         (e.g. predict_proba in the case of a classifier or transform in the case of a transformer). Default is 'predict'.
     n_jobs : int
         The number of jobs to run in parallel. Default is 1.
-    return_train_preds : bool
-        If True, return predictions for the training set as well. Default is False.
+    return_train_preds : bool, default = False
+        If True, return predictions for the training set as well.
 
     Returns
     -------
@@ -260,6 +257,25 @@ def cross_val_predict(
         If ``return_train_preds`` is False, returns an array of test predictions.
         If ``return_train_preds`` is True, returns a tuple containing:
         (test_predictions, train_predictions).
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LinearRegression
+    >>> import numpy as np
+    >>> from panelsplit.cross_validation import PanelSplit,
+    >>> from panelsplit.application import cross_val_predict, cross_val_fit
+    >>> X = np.arange(12).reshape(6, 2)
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> ps = PanelSplit(periods=np.array([1, 1, 2, 2, 3, 3]), n_splits=2)
+    >>> estimators = cross_val_fit(LinearRegression(), X, y, ps)
+    >>> preds = cross_val_predict(estimators, X, ps)
+    >>> preds.shape
+    (4,)
+    >>> test_preds, train_preds = cross_val_predict(
+    ...     estimators, X, ps, return_train_preds=True
+    ... )
+    >>> test_preds.shape, train_preds.shape
+    ((4,), (6,))
     """
     check_fitted_estimators(fitted_estimators)
     splits = check_cv(cv)
@@ -358,16 +374,15 @@ def cross_val_fit_predict(
     --------
     >>> import pandas as pd
     >>> from sklearn.linear_model import LinearRegression
-    >>> from panelsplit.cross_validation import PanelSplit  # assuming PanelSplit is imported from your module
+    >>> from panelsplit.cross_validation import (
+    ...     PanelSplit,
+    ... )  # assuming PanelSplit is imported from your module
     >>> # Create sample data
-    >>> df = pd.DataFrame({
-    ...     'feature': [1, 2, 3, 4, 5, 6],
-    ...     'period': [1, 1, 2, 2, 3, 3]
-    ... })
-    >>> X = df[['feature']]
+    >>> df = pd.DataFrame({"feature": [1, 2, 3, 4, 5, 6], "period": [1, 1, 2, 2, 3, 3]})
+    >>> X = df[["feature"]]
     >>> y = pd.Series([2, 4, 6, 8, 10, 12])
     >>> # Create a PanelSplit instance for cross-validation
-    >>> ps = PanelSplit(periods=df['period'], n_splits=2)
+    >>> ps = PanelSplit(periods=df["period"], n_splits=2)
     >>> # Get test predictions and fitted models
     >>> preds, models = cross_val_fit_predict(LinearRegression(), X, y, ps)
     >>> preds.shape

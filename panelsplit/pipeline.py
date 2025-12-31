@@ -1,3 +1,9 @@
+"""
+Pipeline operations in panelsplit.
+
+Includes SequentialCVPipeline.
+"""
+
 import copy
 import inspect
 import time
@@ -7,14 +13,19 @@ from numpy.typing import NDArray
 from .utils.typing import ArrayLike, EstimatorLike
 from collections.abc import Callable
 from .cross_validation import PanelSplit
-
+import functools
 import narwhals as nw
 import numpy as np
 from sklearn.base import BaseEstimator, clone
+from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
-
+from sklearn.base import is_classifier
 from .utils.validation import _check_X_y, _safe_indexing, check_cv
+from sklearn.utils._tags import get_tags
+from sklearn.utils import Tags, Bunch
+from copy import deepcopy
+from typing import Literal
 
 
 def _log_message(
@@ -33,7 +44,11 @@ def _log_message(
         print("[SequentialCVPipeline] ({}/{}) {}".format(step_idx, total, message))
 
 
-def _sort_and_combine(predictions_with_idx: List[Tuple[int, Any]]) -> Any:
+def _sort_and_combine(
+    predictions_with_idx: List[Tuple[int, Any]],
+    include_indices: bool = False,
+    return_group: Literal["train", "test"] = "test",
+) -> Any:
     """
     Sort and combine predictions from (index, prediction) pairs.
 
@@ -42,23 +57,26 @@ def _sort_and_combine(predictions_with_idx: List[Tuple[int, Any]]) -> Any:
     Otherwise -> returns a numpy array constructed from the list.
     """
     predictions_with_idx.sort(key=lambda pair: pair[0])
-    predictions = [pred for _, pred in predictions_with_idx]
+    indices, _predictions = zip(*predictions_with_idx)
+    predictions: Any = list(_predictions)
 
     # All-ndarray branch
     if predictions and all(isinstance(p, np.ndarray) for p in predictions):
-        arrs = predictions
-        return np.vstack(arrs)
+        predictions = np.vstack(predictions)
 
     # All-narwhals (or series-like) branch: ensure every item looks like a narwhals series/frame
-    if predictions and all(
+    elif predictions and all(
         hasattr(p, "pipe") or hasattr(p, "_compliant_series") for p in predictions
     ):
-        series_list = predictions
         # Cast so nw.concat's generics line up with what we pass
-        return nw.concat(series_list)
-
-    # Fallback: coerce to numpy array
-    return np.array(predictions)
+        predictions = nw.concat(predictions)
+    else:
+        # Fallback: coerce to numpy array
+        predictions = np.array(predictions)
+    if include_indices:
+        return np.array(indices), predictions
+    else:
+        return predictions
 
 
 # Cache for method signature inspection to avoid repeated reflection
@@ -66,7 +84,10 @@ _METHOD_SIGNATURE_CACHE = {}
 
 
 def _call_method_with_correct_args(
-    model: EstimatorLike, method_name: str, X: ArrayLike, y: Optional[ArrayLike] = None
+    model: EstimatorLike,
+    method_name: str,
+    X: ArrayLike,
+    y: Optional[ArrayLike] = None,
 ) -> Any:
     """
     Call a method on a model with the correct arguments.
@@ -101,9 +122,9 @@ def _call_method_with_correct_args(
     >>> from sklearn.linear_model import LogisticRegression
     >>> model = LogisticRegression().fit(X_train, y_train)
     >>> # For predict (doesn't require y)
-    >>> predictions = _call_method_with_correct_args(model, 'predict', X_test)
+    >>> predictions = _call_method_with_correct_args(model, "predict", X_test)
     >>> # For score (requires y)
-    >>> score = _call_method_with_correct_args(model, 'score', X_test, y_test)
+    >>> score = _call_method_with_correct_args(model, "score", X_test, y_test)
     """
 
     method = getattr(model, method_name)
@@ -138,7 +159,6 @@ def _call_method_with_correct_args(
             )
         return method(X, y) if y is not None else method(X)
 
-    # Method doesn't have y parameter
     return method(X)
 
 
@@ -182,7 +202,7 @@ def _make_method(method_name: str, fit: bool = True) -> Callable:
                     "Call 'fit' with appropriate arguments before using this method."
                 )
 
-        for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
+        for step_idx, (name, transformer) in enumerate(self.steps, start=1):
             t_start = time.time()
             not_final_step = total_steps != step_idx
             # Use 'transform' for intermediate steps and the provided method for the final step.
@@ -200,12 +220,12 @@ def _make_method(method_name: str, fit: bool = True) -> Callable:
                     transformer,
                     current_output,
                     y,
-                    cv,
+                    self.cv_steps[step_idx - 1],
                     return_output=True,
                     method=method,
                 )
 
-                self.fitted_steps_[name] = fitted_model
+                self.fitted_steps_[name] = tuple(fitted_model)
             else:
                 # Check if pipeline has been fitted
                 if not hasattr(self, "fitted_steps_"):
@@ -235,52 +255,114 @@ def _make_method(method_name: str, fit: bool = True) -> Callable:
 
         return current_output
 
+    # Make the wrapper look like the real method to sklearn introspection:
+    # set __name__ and __qualname__ and copy basic attributes.
+    try:
+        _method.__name__ = method_name
+        _method.__qualname__ = method_name
+        functools.update_wrapper(_method, _method)  # noop to ensure attributes exist
+    except Exception:
+        # Non-fatal: continue even if we can't set metadata
+        pass
+
     return _method
 
 
-class SequentialCVPipeline(BaseEstimator):
+class SequentialCVPipeline(_BaseComposition, BaseEstimator):
     """
-    A sequential pipeline that applies a series of transformers/estimators with
-    optional cross-validation (CV).
+    A pipeline that applies a series of transformers/estimators with optional cross-validation (CV).
 
-    Each step is a tuple of (name, transformer, cv). If cv is provided, out-of-fold
-    outputs are reassembled.
+    Each step is a tuple of (name, transformer).
 
     Parameters
     ----------
-    steps : List[Tuple[str, BaseEstimator, Union[PanelSplit, Iterable, None]]]
-        List where each tuple is (name, transformer, cv). 'name' is a string identifier,
-        'transformer' is an estimator or transformer, and 'cv' is a cross-validation
-        splitter or None.
+    steps : List[Tuple[str, BaseEstimator]]
+        List where each tuple is (name, transformer, cv). 'name' is a string identifier and
+        'transformer' is an estimator or transformer.
+    cv_steps : List[Union[PanelSplit, Iterable, None]]
+        A list of PanelSplit or None. Must be the same length as steps.
+    verbose : bool, default = False
+        Whether to print verbose output during fitting and transformation.
+    include_indices : bool, default = False
+        If True, include the indices in the output.
+    return_group : {"test", "train"}, default = "test"
+        Which group to return e.g. when calling predict().
+
+    Attributes
+    ----------
+    steps : List[Tuple[str, BaseEstimator]]
+        The list of pipeline steps.
+    cv_steps : List[Union[PanelSplit, Iterable, None]]
+        A list of PanelSplit or None.
     verbose : bool
-        Whether to print verbose output during fitting and transformation. Default is False
+        Verbosity flag.
+    fitted_steps_ : dict
+        Dictionary storing fitted transformers for each step.
 
     Raises
     ------
     ValueError
         If any of the tuples provided in ``steps`` are not of length 3.
 
-    Attributes
-    ----------
-    steps : List[Tuple[str, BaseEstimator, Union[PanelSplit, Iterable, None]]]
-        The list of pipeline steps.
-    verbose : bool
-        Verbosity flag.
-    fitted_steps_ : dict
-        Dictionary storing fitted transformers for each step.
-
     Examples
     --------
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.model_selection import KFold
-    >>> pipeline = SequentialCVPipeline([
-    ...     ('scaler', StandardScaler(), None),
-    ...     ('classifier', LogisticRegression(), KFold(n_splits=3))
-    ... ], verbose=False)
+    >>> pipeline = SequentialCVPipeline(
+    ...     steps=[("scaler", StandardScaler()), ("classifier", LogisticRegression())],
+    ...     cv_steps=[None, KFold(n_splits=3)],
+    ...     verbose=False,
+    ... )
     >>> print(pipeline.steps)
-    [('scaler', StandardScaler(), None), ('classifier', LogisticRegression(), KFold(n_splits=3))]
+    [('scaler', StandardScaler()), ('classifier', LogisticRegression())]
     """
+
+    def __init__(
+        self,
+        steps: List[Tuple[str, BaseEstimator]],
+        cv_steps: List[Union[PanelSplit, Iterable, None]],
+        verbose: bool = False,
+        include_indices: bool = False,
+        return_group: Literal["test", "train"] = "test",
+    ):
+        # Each step must be a tuple: (name, transformer)
+        if not len(steps) == len(cv_steps):
+            raise ValueError("The length of steps and cv_steps must match")
+
+        for step in steps:
+            if not (isinstance(step, tuple) and len(step) == 2):
+                raise ValueError("Each step must be a tuple of (name, transformer)")
+
+        assert return_group in ["test", "train"], (
+            "return_group must be either test or train."
+        )
+
+        self.return_group = return_group
+
+        # just the cv of each step
+        self.cv_steps = cv_steps
+
+        # create sklearn-compatible steps attribute (list of (name, estimator))
+        self.steps = steps
+
+        self.verbose = verbose
+        self.include_indices = include_indices
+
+        final_tr = self.steps[-1][1]
+
+        # Add _estimator_type attribute
+        if hasattr(final_tr, "_estimator_type"):
+            # copy string like "classifier" or "regressor"
+            self._estimator_type = getattr(final_tr, "_estimator_type")
+        else:
+            # No final estimator_type available — remove attribute if present
+            if hasattr(self, "_estimator_type"):
+                delattr(self, "_estimator_type")
+
+        # Note: fitted_steps_ is NOT initialized here to comply with sklearn conventions
+        # It will be created during fit() to properly indicate fitted state
+        self._inject_dynamic_methods()
 
     def _inject_dynamic_methods(self) -> None:
         """Inject dynamic pipeline methods based on the final step's transformer."""
@@ -291,7 +373,7 @@ class SequentialCVPipeline(BaseEstimator):
             "predict_log_proba",
             "score",
         ]
-        final_transformer = self.steps[-1][1]
+        final_transformer = self.steps[-1][-1]
         for method_name in method_names:
             fit_method_name = f"fit_{method_name}"
             if hasattr(final_transformer, method_name):
@@ -313,20 +395,60 @@ class SequentialCVPipeline(BaseEstimator):
                 if method_name in self.__dict__:
                     del self.__dict__[method_name]
 
-    def __init__(
-        self,
-        steps: List[Tuple[str, BaseEstimator, Union[PanelSplit, Iterable, None]]],
-        verbose: bool = False,
-    ) -> None:
-        # Each step must be a tuple: (name, transformer, cv)
-        for step in steps:
-            if not (isinstance(step, tuple) and len(step) == 3):
-                raise ValueError("Each step must be a tuple of (name, transformer, cv)")
-        self.steps = steps
-        self.verbose = verbose
-        # Note: fitted_steps_ is NOT initialized here to comply with sklearn conventions
-        # It will be created during fit() to properly indicate fitted state
-        self._inject_dynamic_methods()
+    def get_params(self, deep: bool = True) -> Dict[str, Any]:
+        """
+        Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            Ignored.
+
+        Returns
+        -------
+        dict
+            Parameter names mapped to their values.
+
+        Examples
+        --------
+        >>> pipeline.get_params()
+        {'include_indices': True, 'verbose': , ...}
+        """
+        params = self._get_params("steps", deep=deep)
+        # Ensure top-level params are present as well so set_params can set them
+        params.update(
+            {"include_indices": self.include_indices, "verbose": self.verbose}
+        )
+        return params
+
+    def set_params(self, **params: Any) -> "SequentialCVPipeline":
+        """
+        Set parameters for this estimator and delegated steps.
+
+        Parameters
+        ----------
+        **params : dict
+            Pipeline-level and nested step parameters.
+
+        Returns
+        -------
+        SequentialCVPipeline
+            The estimator instance.
+
+        Examples
+        --------
+        >>> pipeline.set_params(verbose=True)
+        SequentialCVPipeline(...)
+        """
+        # handle pipeline-level params first
+        if "include_indices" in params:
+            self.include_indices = params.pop("include_indices")
+        if "verbose" in params:
+            self.verbose = params.pop("verbose")
+
+        # delegate the rest (nested step params) to helper
+        self._set_params("steps", **params)
+        return self
 
     def __getitem__(
         self, key: Union[int, slice]
@@ -335,10 +457,11 @@ class SequentialCVPipeline(BaseEstimator):
             # Create a deep copy to include the fitted state.
             new_pipe = copy.deepcopy(self)
             new_pipe.steps = self.steps[key]
+            new_pipe.cv_steps = self.cv_steps[key]
             new_pipe._inject_dynamic_methods()
             return new_pipe
         elif isinstance(key, int):
-            return self.steps[key]
+            return self.steps[key][1]
         else:
             raise TypeError("Invalid index type. Expected int or slice.")
 
@@ -427,7 +550,7 @@ class SequentialCVPipeline(BaseEstimator):
         output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
         return output
 
-    def _fit_method_step(
+    def _fit_method_step(  # type: ignore
         self,
         transformer: EstimatorLike,
         X: ArrayLike,
@@ -435,7 +558,7 @@ class SequentialCVPipeline(BaseEstimator):
         cv: Optional[Union[PanelSplit, Iterable]] = None,
         return_output: bool = True,
         method: str = "transform",
-    ) -> Tuple:
+    ):
         """
         Fit one pipeline step and optionally transform the data.
 
@@ -467,10 +590,16 @@ class SequentialCVPipeline(BaseEstimator):
         if cv is None:
             model = clone(transformer)
             model.fit(X, y)
-            fitted = model
+            fitted = (None, None, model)
             if return_output:
-                # Use _call_method_with_correct_args to handle methods like score that need y
-                output = _call_method_with_correct_args(model, method, X, y)
+                # return_group is not considered here as cv == None.
+                if self.include_indices:
+                    output = (
+                        np.arange(len(X)),
+                        _call_method_with_correct_args(model, method, X, y),
+                    )
+                else:
+                    output = _call_method_with_correct_args(model, method, X, y)
         else:
             splits = check_cv(cv, X=X, y=y)
             idx_trans: List = []
@@ -482,17 +611,28 @@ class SequentialCVPipeline(BaseEstimator):
                 X_test = self._subset(X, test_idx)
                 y_test = None if y is None else self._subset(y, test_idx)
                 model_fold.fit(X_train, y_train)
-                folds_models.append((test_idx, model_fold))
+
+                folds_models.append((train_idx, test_idx, model_fold))
+
                 if return_output:
-                    # Use _call_method_with_correct_args to handle methods like score that need y
-                    output_trans = _call_method_with_correct_args(
-                        model_fold, method, X_test, y_test
-                    )
-                    # Pair each output with its original index
-                    self._append_indexed_output(idx_trans, test_idx, output_trans)
+                    if self.return_group == "test":
+                        # Use _call_method_with_correct_args to handle methods like score that need y
+                        output_trans = _call_method_with_correct_args(
+                            model_fold, method, X_test, y_test
+                        )
+                        # Pair each output with its original index
+                        self._append_indexed_output(idx_trans, test_idx, output_trans)
+                    else:
+                        output_trans = _call_method_with_correct_args(
+                            model_fold, method, X_train, y_train
+                        )
+                        self._append_indexed_output(idx_trans, train_idx, output_trans)
             if return_output:
-                output = _sort_and_combine(idx_trans)
-            fitted = {"splits": folds_models}
+                output = _sort_and_combine(
+                    idx_trans, include_indices=self.include_indices
+                )
+
+            fitted = folds_models  # type: ignore
         if return_output:
             return output, fitted
         else:
@@ -504,25 +644,44 @@ class SequentialCVPipeline(BaseEstimator):
         method_name: str,
         X: ArrayLike,
         y: Optional[ArrayLike] = None,
-    ) -> Union[NDArray, IntoDataFrame, IntoSeries]:
+    ) -> Union[NDArray, IntoDataFrame, IntoSeries, Tuple[NDArray, Any]]:
         """
         Apply a method of a fitted model (or models) to input X.
 
         For steps with CV, this method applies the given method to each fold's model and
         reassembles the predictions.
         """
-        if not (isinstance(fitted_model, dict) and "splits" in fitted_model):
-            if hasattr(fitted_model, method_name):
-                return _call_method_with_correct_args(fitted_model, method_name, X, y)
+        if fitted_model[0] is None:
+            if hasattr(fitted_model[-1], method_name):
+                output = _call_method_with_correct_args(
+                    fitted_model[-1], method_name, X, y
+                )
+                if self.include_indices:
+                    return np.arange(len(X)), output
+                else:
+                    return output
             else:
                 raise ValueError(f"Fitted model does not have a {method_name} method.")
         predictions_with_idx: List = []
-        for test_idx, model in fitted_model["splits"]:
-            output_list = self._apply_method_to_indices(
-                model, method_name, X, test_idx, y
-            )
-            self._append_indexed_output(predictions_with_idx, test_idx, output_list)
-        return _sort_and_combine(predictions_with_idx)
+        for train_idx, test_idx, model in fitted_model:
+            if self.return_group == "test":
+                output_list = self._apply_method_to_indices(
+                    model, method_name, X, test_idx, y
+                )
+
+                self._append_indexed_output(predictions_with_idx, test_idx, output_list)
+            else:
+                output_list = self._apply_method_to_indices(
+                    model, method_name, X, train_idx, y
+                )
+
+                self._append_indexed_output(
+                    predictions_with_idx, train_idx, output_list
+                )
+
+        return _sort_and_combine(
+            predictions_with_idx, include_indices=self.include_indices
+        )
 
     def _fit(self, X: ArrayLike, y: Optional[ArrayLike] = None) -> ArrayLike:
         """
@@ -535,13 +694,17 @@ class SequentialCVPipeline(BaseEstimator):
 
         X_current = X
         total_steps = len(self.steps)
-        for step_idx, (name, transformer, cv) in enumerate(self.steps, start=1):
+        for step_idx, (name, transformer) in enumerate(self.steps, start=1):
             if transformer is None or transformer == "passthrough":
                 self.fitted_steps_[name] = None
                 continue
             not_final_step = not step_idx == total_steps
             X_current, fitted_model = self._fit_method_step(
-                transformer, X_current, y, cv, return_output=not_final_step
+                transformer,
+                X_current,
+                y,
+                self.cv_steps[step_idx - 1],
+                return_output=not_final_step,
             )
 
             self.fitted_steps_[name] = fitted_model
@@ -582,12 +745,17 @@ class SequentialCVPipeline(BaseEstimator):
         >>> period = np.array([1, 2, 3, 4])
         >>> X = np.array([[4, 1], [1, 3], [5, 7], [6, 7]])
         >>> y = np.array([0, 1, 1, 0])
-        >>> ps_1 = PanelSplit(periods=period, n_splits=2, include_first_train_in_test = True)
+        >>> ps_1 = PanelSplit(
+        ...     periods=period, n_splits=2, include_first_train_in_test=True
+        ... )
         >>> ps_2 = PanelSplit(periods=period, n_splits=2)
-        >>> pipeline = SequentialCVPipeline([
-        ...     ('scaler', StandardScaler(), ps_1),
-        ...     ('classifier', LogisticRegression(), ps_2)
-        ... ])
+        >>> pipeline = SequentialCVPipeline(
+        ...     [
+        ...         ("scaler", StandardScaler()),
+        ...         ("classifier", LogisticRegression()),
+        ...     ],
+        ...     cv_steps=[ps_1, ps_2],
+        ... )
         >>> pipeline.fit(X, y)
         """
         _ = self._fit(X, y)
@@ -609,6 +777,11 @@ class SequentialCVPipeline(BaseEstimator):
         -------
         ArrayLike
             Transformed output.
+
+        Examples
+        --------
+        >>> pipeline.transform(X)
+        array([[...], [...]])
         """
         ...
         pass
@@ -629,12 +802,13 @@ class SequentialCVPipeline(BaseEstimator):
 
         Returns
         -------
-        output : ArrayLike
+        ArrayLike
             Transformed output, in the same format as X.
 
-        Notes
-        -----
-        This method is dynamically injected based on the final estimator's capabilities.
+        Examples
+        --------
+        >>> pipeline.fit_transform(X, y)
+        array([[...], [...]])
         """
         pass
 
@@ -658,6 +832,11 @@ class SequentialCVPipeline(BaseEstimator):
         Notes
         -----
             This method is dynamically injected based on the final estimator's capabilities.
+
+        Examples
+        --------
+        >>> pipeline.predict(X)
+        array([0, 1, 1, 0])
         """
         pass
 
@@ -665,26 +844,31 @@ class SequentialCVPipeline(BaseEstimator):
         """
         Fit the pipeline and predict target values.
 
-         This method dynamically fits the pipeline on the provided data and then applies the final estimator's
-         predict method to generate predictions.
-         This method dynamically fits the pipeline on the provided data and then applies the final estimator's
-         predict method to generate predictions.
+        This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+        predict method to generate predictions.
+        This method dynamically fits the pipeline on the provided data and then applies the final estimator's
+        predict method to generate predictions.
 
-         Parameters
-         ----------
-         X : ArrayLike
-             Input data.
-         y : Optional[ArrayLike]
-             Target values (used during fitting).
+        Parameters
+        ----------
+        X : ArrayLike
+            Input data.
+        y : Optional[ArrayLike]
+            Target values (used during fitting).
 
-         Returns
-         -------
-         output : ArrayLike
-             Predicted target values.
+        Returns
+        -------
+        ArrayLike
+            Predicted target values.
 
         Notes
         ------
         This method is dynamically injected based on the final step of the pipeline.
+
+        Examples
+        --------
+        >>> pipeline.fit_predict(X, y)
+        array([0, 1, 1, 0])
         """
         pass
 
@@ -701,14 +885,18 @@ class SequentialCVPipeline(BaseEstimator):
 
         Returns
         -------
-        output : ArrayLike
+        ArrayLike
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in ``self.classes_``
+            where classes are ordered as they are in ``self.classes_``.
 
         Notes
         -----
-        This is a placeholder method for documentation purposes only.
-        The actual method is dynamically generated based on the final estimator's capabilities.
+        This method is dynamically generated based on the final estimator's capabilities.
+
+        Examples
+        --------
+        >>> pipeline.predict_proba(X)
+        array([[0.1, 0.9], [0.8, 0.2]])
         """
         pass
 
@@ -728,7 +916,7 @@ class SequentialCVPipeline(BaseEstimator):
         X : ArrayLike
             Input data.
         y : Optional[ArrayLike]
-            array-like of shape (n_samples, n_classes)
+            Target data.
 
         Returns
         -------
@@ -738,6 +926,11 @@ class SequentialCVPipeline(BaseEstimator):
         Notes
         -----
         This method is dynamically injected based on the final estimator's capabilities.
+
+        Examples
+        --------
+        >>> pipeline.fit_predict_proba(X, y)
+        array([[0.1, 0.9], [0.8, 0.2]])
         """
         pass
 
@@ -756,12 +949,17 @@ class SequentialCVPipeline(BaseEstimator):
 
         Returns
         -------
-        score : float
+        float
             Computed performance score.
 
         Notes
         -----
         This method is dynamically injected based on the final estimator's capabilities.
+
+        Examples
+        --------
+        >>> pipeline.score(X, y)
+        0.85
         """
         pass
 
@@ -776,16 +974,237 @@ class SequentialCVPipeline(BaseEstimator):
         ----------
         X : ArrayLike
             Input data.
-        y : Optional[ArrayLike]
-            Target values (used during fitting and scoring). Default is None.
+        y : ArrayLike, default = None
+            Target values (used during fitting and scoring).
 
         Returns
         -------
-        score : float
+        float
             Computed performance score.
 
         Notes
         -----
-            This method is dynamically injected based on the final estimator's capabilities.
+        This method is dynamically injected based on the final estimator's capabilities.
+
+        Examples
+        --------
+        >>> pipeline.fit_score(X, y)
+        0.87
         """
         pass
+
+    @property
+    def named_steps(self) -> Bunch:
+        """
+        Access the steps by name.
+
+        Read-only attribute to access any step by given name.
+        Keys are steps names and values are the steps objects.
+
+        Returns
+        -------
+        Bunch
+            A Bunch object containing steps keyed by name.
+
+        Examples
+        --------
+        >>> pipeline.named_steps["scaler"]
+        StandardScaler(...)
+        >>> pipeline.named_steps["classifier"]
+        LogisticRegression(...)
+        """
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.steps))
+
+    @property
+    def _final_estimator(self) -> Optional[Union[str, EstimatorLike]]:
+        try:
+            estimator = self.steps[-1][1]
+            return "passthrough" if estimator is None else estimator
+        except (ValueError, AttributeError, TypeError):
+            # This condition happens when a call to a method is first calling
+            # `_available_if` and `fit` did not validate `steps` yet. We
+            # return `None` and an `InvalidParameterError` will be raised
+            # right after.
+            return None
+
+    @property
+    def classes_(self) -> Optional[NDArray]:
+        """
+        The class labels of the final step.
+
+        This property is available only if the last step of the pipeline is a classifier.
+        Raises a `NotFittedError` if the pipeline has not been fitted yet.
+
+        Returns
+        -------
+        Optional[NDArray]
+            Array of class labels from the final classifier step, or None if unavailable.
+
+        Examples
+        --------
+        >>> pipeline.fit(X, y)
+        >>> pipeline.classes_
+        array([0, 1])
+        """
+        if not hasattr(self, "fitted_steps_") or not self.fitted_steps_:
+            raise NotFittedError(f"{type(self).__name__} instance is not fitted yet.")
+
+        last_step_name = self.steps[-1][0]
+        fitted_step = self.fitted_steps_.get(last_step_name, None)
+
+        if fitted_step is None:
+            raise NotFittedError(
+                f"No fitted model found for final step '{last_step_name}'."
+            )
+        # Case A: cross-validated storage: dict with 'splits': [(test_idx, model), ...]
+        elif fitted_step[0] is not None:
+            [check_is_fitted(model) for _, _, model in fitted_step]
+            assert all([is_classifier(model) for _, _, model in fitted_step])
+            return np.unique([model[-1].classes_ for model in fitted_step])
+        # Case B: direct estimator instance (non-CV)
+        else:
+            check_is_fitted(fitted_step[-1])
+            assert is_classifier(fitted_step[-1])
+            return getattr(fitted_step[-1], "classes_", None)
+
+    def __sklearn_tags__(self) -> Tags:
+        tags = super().__sklearn_tags__()
+
+        if not self.steps:
+            return tags
+
+        try:
+            if self.steps[0][1] is not None and self.steps[0][1] != "passthrough":
+                tags.input_tags.pairwise = get_tags(
+                    self.steps[0][1]
+                ).input_tags.pairwise
+            # WARNING: the sparse tag can be incorrect.
+            # Some Pipelines accepting sparse data are wrongly tagged sparse=False.
+            # For example Pipeline([PCA(), estimator]) accepts sparse data
+            # even if the estimator doesn't as PCA outputs a dense array.
+            tags.input_tags.sparse = all(
+                get_tags(step).input_tags.sparse
+                for name, step in self.steps
+                if step is not None and step != "passthrough"
+            )
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        try:
+            if self.steps[-1][1] is not None and self.steps[-1][1] != "passthrough":
+                last_step_tags = get_tags(self.steps[-1][1])
+                tags.estimator_type = last_step_tags.estimator_type
+                tags.target_tags.multi_output = last_step_tags.target_tags.multi_output
+                tags.classifier_tags = deepcopy(last_step_tags.classifier_tags)
+                tags.regressor_tags = deepcopy(last_step_tags.regressor_tags)
+                tags.transformer_tags = deepcopy(last_step_tags.transformer_tags)
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
+
+    def __getstate__(self) -> dict:
+        """
+        Prepare instance dictionary for pickling.
+
+        Removes dynamically injected method attributes (bound methods and fit_* wrappers)
+        that may not be reliably picklable across process boundaries.
+
+        Returns
+        -------
+        dict
+            The instance dictionary suitable for pickling.
+
+        Examples
+        --------
+        >>> state = pipeline.__getstate__()
+        >>> isinstance(state, dict)
+        True
+        """
+        state = self.__dict__.copy()
+
+        # Names of methods injected by _inject_dynamic_methods
+        injected_method_names = [
+            "transform",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "score",
+            "fit_transform",
+            "fit_predict",
+            "fit_predict_proba",
+            "fit_score",
+            "fit_transform",
+            "fit_predict",
+            "fit_predict_proba",
+            "fit_score",
+        ]
+        # Also remove corresponding 'fit_<method>' names if present.
+        injected_method_names += [
+            f"fit_{name}"
+            for name in [
+                "transform",
+                "predict",
+                "predict_proba",
+                "predict_log_proba",
+                "score",
+            ]
+        ]
+
+        for name in injected_method_names:
+            if name in state:
+                state.pop(name, None)
+
+        # Defensive: remove any other attributes that are callables and likely to be bound methods
+        # but keep key estimator state like fitted_steps_ etc.
+        for k, v in list(state.items()):
+            # don't remove core attributes (heuristic)
+            if k in {
+                "steps",
+                "cv_steps",
+                "fitted_steps_",
+                "include_indices",
+                "verbose",
+                "return_group",
+                "_estimator_type",
+            }:
+                continue
+            if callable(v):
+                state.pop(k, None)
+
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        """
+        Restore state after unpickling.
+
+        Re-injects dynamic methods based on the (restored) final estimator.
+
+        Parameters
+        ----------
+        state : dict
+            The instance dictionary previously returned by `__getstate__`.
+
+        Examples
+        --------
+        >>> pipeline.__setstate__(state)
+        """
+        self.__dict__.update(state)
+        # Re-create the injected convenience methods (only if final estimator supports them)
+        try:
+            # _inject_dynamic_methods checks the final estimator and only adds methods that exist.
+            self._inject_dynamic_methods()
+        except Exception:
+            # If anything goes wrong here, we don't want to raise during unpickling.
+            # Swallow but log to stderr so developer can notice during debugging.
+            import warnings
+
+            warnings.warn(
+                "Could not re-inject dynamic methods on SequentialCVPipeline after unpickling.",
+                RuntimeWarning,
+            )

@@ -47,9 +47,8 @@ dev = [
     "mypy>=1.14.1",
     "tqdm-stubs>=0.2.1",
     "pandas-stubs>=2.0.2.230605",
-    "pydoclint>=0.5.11",
-    "pytest-cov>=5.0.0",
     "typing-extensions>=4.13.2",
+    "numpydoc>=1.7.0",
 ]
 
 
@@ -63,7 +62,8 @@ build-backend = "hatchling.build"
 # Hatch versioning from Git tags
 [tool.hatch.version]
 source = "vcs"               # derive version from Git tags
-write-to = "panelsplit/_version.py"  # optional: writes version to package
+write-to = "panelsplit/_version.py"
+fallback-version = "1.1.2"
 
 # Package data configuration for hatchling
 [tool.hatch.build.targets.wheel]
@@ -72,8 +72,32 @@ packages = ["panelsplit"]
 [tool.mypy]
 disable_error_code = ["import-untyped"]
 
-[tool.pydoclint]
-ignore-underscore-args = true
-
 [tool.ruff]
 target-version = "py39"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.numpydoc_validation]
+# keep your checks selection (example: use "all" or pick specific checks)
+checks = [
+"all",
+"SA01",
+"GL08",
+"ES01"
+]
+
+# Exclude objects whose final (dotted) name starts with a single leading underscore
+# (this will skip names like `mypkg.mymodule._private_func` but NOT `__init__`)
+exclude = [
+  '^.*\._[^_]',        # skip any object whose last name starts with a single underscore
+]
+
+# You can still exclude whole files (e.g. tests) using exclude_files
+exclude_files = [
+'^tests/.*$',
+'panelsplit/utils/validation.py'
+]
