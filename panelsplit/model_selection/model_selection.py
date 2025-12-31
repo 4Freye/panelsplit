@@ -988,9 +988,6 @@ class GridSearch(BaseSearch):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
 
-        .. versionchanged:: v0.20
-           `n_jobs` default changed from 1 to None
-
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
@@ -1054,71 +1051,11 @@ class GridSearch(BaseSearch):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
-
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
-
-        For instance the below given table
-
-        +------------+-----------+------------+-----------------+---+---------+
-        |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_t...|
-        +============+===========+============+=================+===+=========+
-        |  'poly'    |     --    |      2     |       0.80      |...|    2    |
-        +------------+-----------+------------+-----------------+---+---------+
-        |  'poly'    |     --    |      3     |       0.70      |...|    4    |
-        +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.1   |     --     |       0.80      |...|    3    |
-        +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.2   |     --     |       0.93      |...|    1    |
-        +------------+-----------+------------+-----------------+---+---------+
-
-        will be represented by a ``cv_results_`` dict of::
-
-            {
-            'param_kernel': masked_array(data = ['poly', 'poly', 'rbf', 'rbf'],
-                                         mask = [False False False False]...)
-            'param_gamma': masked_array(data = [-- -- 0.1 0.2],
-                                        mask = [ True  True False False]...),
-            'param_degree': masked_array(data = [2.0 3.0 -- --],
-                                         mask = [False False  True  True]...),
-            'split0_test_score'  : [0.80, 0.70, 0.80, 0.93],
-            'split1_test_score'  : [0.82, 0.50, 0.70, 0.78],
-            'mean_test_score'    : [0.81, 0.60, 0.75, 0.85],
-            'std_test_score'     : [0.01, 0.10, 0.05, 0.08],
-            'rank_test_score'    : [2, 4, 3, 1],
-            'split0_train_score' : [0.80, 0.92, 0.70, 0.93],
-            'split1_train_score' : [0.82, 0.55, 0.70, 0.87],
-            'mean_train_score'   : [0.81, 0.74, 0.70, 0.90],
-            'std_train_score'    : [0.01, 0.19, 0.00, 0.03],
-            'mean_fit_time'      : [0.73, 0.63, 0.43, 0.49],
-            'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
-            'mean_score_time'    : [0.01, 0.06, 0.04, 0.04],
-            'std_score_time'     : [0.00, 0.00, 0.00, 0.01],
-            'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
-            }
-
-        For an example of visualization and interpretation of GridSearch results,
-        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
-
-        NOTE
-
-        The key ``'params'`` is used to store a list of parameter
-        settings dicts for all the parameter candidates.
-
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
-
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
@@ -1167,8 +1104,6 @@ class GridSearch(BaseSearch):
 
         This is present only if ``refit`` is not False.
 
-        .. versionadded:: 0.20
-
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
@@ -1182,15 +1117,11 @@ class GridSearch(BaseSearch):
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `feature_names_in_` when fit.
-
-        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1341,9 +1272,6 @@ class RandomizedSearch(BaseSearch):
         ``-1`` means using all processors.
         for more details.
 
-        .. versionchanged:: v0.20
-           `n_jobs` default changed from 1 to None
-
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
@@ -1413,66 +1341,11 @@ class RandomizedSearch(BaseSearch):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
-
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
-
-        For instance the below given table
-
-        +--------------+-------------+-------------------+---+---------------+
-        | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
-        +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |       0.80        |...|       1       |
-        +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |       0.84        |...|       3       |
-        +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |       0.70        |...|       2       |
-        +--------------+-------------+-------------------+---+---------------+
-
-        will be represented by a ``cv_results_`` dict of::
-
-            {
-            'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
-                                          mask = False),
-            'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.80, 0.84, 0.70],
-            'split1_test_score'  : [0.82, 0.50, 0.70],
-            'mean_test_score'    : [0.81, 0.67, 0.70],
-            'std_test_score'     : [0.01, 0.24, 0.00],
-            'rank_test_score'    : [1, 3, 2],
-            'split0_train_score' : [0.80, 0.92, 0.70],
-            'split1_train_score' : [0.82, 0.55, 0.70],
-            'mean_train_score'   : [0.81, 0.74, 0.70],
-            'std_train_score'    : [0.01, 0.19, 0.00],
-            'mean_fit_time'      : [0.73, 0.63, 0.43],
-            'std_fit_time'       : [0.01, 0.02, 0.01],
-            'mean_score_time'    : [0.01, 0.06, 0.04],
-            'std_score_time'     : [0.00, 0.00, 0.00],
-            'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
-            }
-
-        For an example of analysing ``cv_results_``,
-        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
-
-        NOTE
-
-        The key ``'params'`` is used to store a list of parameter
-        settings dicts for all the parameter candidates.
-
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
-
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
@@ -1524,8 +1397,6 @@ class RandomizedSearch(BaseSearch):
 
         This is present only if ``refit`` is not False.
 
-        .. versionadded:: 0.20
-
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
@@ -1539,15 +1410,11 @@ class RandomizedSearch(BaseSearch):
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `feature_names_in_` when fit.
-
-        .. versionadded:: 1.0
 
     See Also
     --------
