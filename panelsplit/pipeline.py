@@ -651,7 +651,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         For steps with CV, this method applies the given method to each fold's model and
         reassembles the predictions.
         """
-        if fitted_model[0] is None:
+        if not isinstance(fitted_model, list):
             if hasattr(fitted_model[-1], method_name):
                 output = _call_method_with_correct_args(
                     fitted_model[-1], method_name, X, y
