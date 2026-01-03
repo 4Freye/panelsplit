@@ -1,37 +1,42 @@
-from .utils.validation import _safe_indexing
+"""
+Metrics that are equivalent their sklearn counterparts, except for the fact that they work with SequentialCVPipeline.
+"""
+
+# Standard library
+import warnings
 from inspect import signature
 from collections.abc import Iterable
 from functools import partial
-from sklearn.metrics._scorer import _MultimetricScorer
-from sklearn.utils._param_validation import (
-    validate_params,
-)
-from sklearn.metrics._scorer import _PassthroughScorer, _get_response_method_name
 from copy import deepcopy
-from sklearn.utils.validation import _check_response_method
-import warnings
-from sklearn.base import is_regressor
-from panelsplit.utils._response import _get_response_values
-from sklearn.utils.metadata_routing import (
-    _MetadataRequester,
-    _raise_for_params,
-    _routing_enabled,
-    MetadataRequest,
-)
-from .utils.typing import EstimatorLike, ArrayLike
-from numpy.typing import NDArray
 from typing import Callable, Optional, List, Union, Any, Dict
-from typing_extensions import Self
 
-# all the error scores:
+# Third-party / typing
+from typing_extensions import Self
+from numpy.typing import NDArray
+
+# Local package utilities
+from .utils.validation import _safe_indexing
+from .utils.typing import EstimatorLike, ArrayLike
+from panelsplit.utils._response import _get_response_values
+
+# sklearn public metrics (single consolidated import)
 from sklearn.metrics import (
     accuracy_score,
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
     class_likelihood_ratios,
+    completeness_score,
     d2_absolute_error_score,
+    d2_brier_score,
+    d2_log_loss_score,
     explained_variance_score,
+    f1_score,
+    fowlkes_mallows_score,
+    jaccard_score,
+    homogeneity_score,
     log_loss,
     matthews_corrcoef,
     max_error,
@@ -42,22 +47,35 @@ from sklearn.metrics import (
     mean_squared_error,
     mean_squared_log_error,
     median_absolute_error,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    precision_score,
+    rand_score,
     r2_score,
+    recall_score,
     roc_auc_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
     top_k_accuracy_score,
-)
-from sklearn.metrics.cluster import (
-    adjusted_mutual_info_score,
-    adjusted_rand_score,
-    completeness_score,
-    fowlkes_mallows_score,
-    homogeneity_score,
-    mutual_info_score,
-    normalized_mutual_info_score,
-    rand_score,
     v_measure_score,
+)
+
+# sklearn internals / utilities (note: private APIs)
+from sklearn.metrics._scorer import (
+    _MultimetricScorer,
+    _PassthroughScorer,
+    _get_response_method_name,
+)
+from sklearn.utils._param_validation import validate_params
+from sklearn.utils.validation import _check_response_method
+from sklearn.base import is_regressor
+
+# metadata routing utilities (used by some sklearn internals)
+from sklearn.utils.metadata_routing import (
+    _MetadataRequester,
+    _raise_for_params,
+    _routing_enabled,
+    MetadataRequest,
 )
 
 
@@ -88,14 +106,63 @@ def make_SequentialCV_scorer(
     greater_is_better: bool = True,
     **kwargs: Any,
 ) -> Callable[..., float]:
+    """
+    Make a SequentialCVPipeline-compatible scorer from a performance metric.
+
+    A scorer is a wrapper around an arbitrary metric or loss function that is called
+    with the signature `scorer(estimator, X, y_true, **kwargs)`.
+
+    The parameter `response_method` allows to specify which method of the estimator
+    should be used to feed the scoring/loss function.
+
+    Parameters
+    ----------
+    score_func : callable
+        Score function (or loss function) with signature
+        ``score_func(y, y_pred, **kwargs)``.
+
+    response_method : {"predict_proba", "decision_function", "predict"} or \
+            list/tuple of such str, default="predict"
+
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`). Possible choices are:
+
+        - if `str`, it corresponds to the name to the method to return;
+        - if a list or tuple of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`.
+
+    greater_is_better : bool, default=True
+        Whether `score_func` is a score function (default), meaning high is
+        good, or a loss function, meaning low is good. In the latter case, the
+        scorer object will sign-flip the outcome of the `score_func`.
+
+    **kwargs : additional arguments
+        Additional parameters to be passed to `score_func`.
+
+    Returns
+    -------
+    Callable
+        Callable object that returns a scalar score; greater is better.
+
+    Examples
+    --------
+    >>> from panelsplit.metrics import make_SequentialCV_scorer
+    >>> from sklearn.metrics import brier_score_loss
+    >>> brier_loss_scorer= make_SequentialCV_scorer(brier_score_loss, response_method='predict_proba', greater_is_better=False)
+
+    >>> from panelsplit.pipeline import SequentialCVPipeline
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> X, y  = load_iris(return_X_y=True)
+    >>> p = SequentialCVPipeline(steps = [('rf', RandomForestClassifier())], cv_steps = [None])
+    >>> p.fit(X, y)
+    >>> brier_loss_scorer(p, X, y)
+    """
     sign = 1 if greater_is_better else -1
 
     if response_method is None:
-        warnings.warn(
-            "response_method=None is deprecated in version 1.6 and will be removed "
-            "in version 1.8. Leave it to its default value to avoid this warning.",
-            FutureWarning,
-        )
         response_method = "predict"
     elif response_method == "default":
         response_method = "predict"
@@ -158,7 +225,6 @@ class _BaseScorer(_MetadataRequester):
         self._sign = sign
         self._kwargs = kwargs
         self._response_method = response_method
-        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
         self._deprecation_msg = None
 
     def _get_pos_label(self) -> Optional[Any]:
@@ -170,7 +236,6 @@ class _BaseScorer(_MetadataRequester):
         return None
 
     def _accept_sample_weight(self) -> bool:
-        # TODO(slep006): remove when metadata routing is the only way
         return "sample_weight" in signature(self._score_func).parameters
 
     def __repr__(self) -> str:
@@ -217,7 +282,6 @@ class _BaseScorer(_MetadataRequester):
         float
             Score function applied to prediction of estimator on X.
         """
-        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
         if self._deprecation_msg is not None:
             warnings.warn(
                 self._deprecation_msg, category=DeprecationWarning, stacklevel=2
@@ -314,6 +378,7 @@ class _Scorer(_BaseScorer):
             X,
             pos_label=pos_label,
         )
+
         # make lookup dict for fast matching
         pred_dict = dict(zip(idx, y_pred))
 
@@ -340,6 +405,36 @@ class _Scorer(_BaseScorer):
     prefer_skip_nested_validation=True,
 )
 def get_scorer(scoring: Union[str, Callable]) -> Any:
+    """
+    Get a scorer from string.
+
+    `sklearn.metrics.get_scorer_names` can be used to retrieve the names
+    of all available scorers.
+
+    Parameters
+    ----------
+    scoring : str, callable or None
+        Scoring method as string. If callable it is returned as is.
+        If None, returns None.
+
+    Returns
+    -------
+    callable
+        The scorer.
+
+    Notes
+    -----
+    When passed a string, this function always returns a copy of the scorer
+    object. Calling `get_scorer` twice for the same scorer results in two
+    separate scorer objects.
+
+    Examples
+    --------
+    >>> from panelsplit.metrics import get_scorer
+    >>> accuracy = get_scorer("accuracy")
+    >>> accuracy(classifier, X, y)
+    """
+
     if isinstance(scoring, str):
         try:
             scorer = deepcopy(_SCORERS[scoring])
@@ -489,7 +584,11 @@ neg_mean_poisson_deviance_scorer = make_SequentialCV_scorer(
 neg_mean_gamma_deviance_scorer = make_SequentialCV_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
+# D^2 scorers (fraction of explained Brier / log-loss)
 d2_absolute_error_scorer = make_SequentialCV_scorer(d2_absolute_error_score)
+d2_brier_scorer = make_SequentialCV_scorer(d2_brier_score)
+d2_log_loss_scorer = make_SequentialCV_scorer(d2_log_loss_score)
+
 
 # Standard Classification Scores
 accuracy_scorer = make_SequentialCV_scorer(accuracy_score)
@@ -583,6 +682,8 @@ _SCORERS = dict(
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
     d2_absolute_error_score=d2_absolute_error_scorer,
+    d2_brier_score=d2_brier_scorer,
+    d2_log_loss_score=d2_log_loss_scorer,
     accuracy=accuracy_scorer,
     top_k_accuracy=top_k_accuracy_scorer,
     roc_auc=roc_auc_scorer,
@@ -607,3 +708,17 @@ _SCORERS = dict(
     normalized_mutual_info_score=normalized_mutual_info_scorer,
     fowlkes_mallows_score=fowlkes_mallows_scorer,
 )
+
+
+for name, metric in [
+    ("precision", precision_score),
+    ("recall", recall_score),
+    ("f1", f1_score),
+    ("jaccard", jaccard_score),
+]:
+    _SCORERS[name] = make_SequentialCV_scorer(metric, average="binary")
+    for average in ["macro", "micro", "samples", "weighted"]:
+        qualified_name = "{0}_{1}".format(name, average)
+        _SCORERS[qualified_name] = make_SequentialCV_scorer(
+            metric, pos_label=None, average=average
+        )

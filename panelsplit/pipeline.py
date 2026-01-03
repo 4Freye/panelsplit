@@ -204,9 +204,9 @@ def _make_method(method_name: str, fit: bool = True) -> Callable:
 
         for step_idx, (name, transformer) in enumerate(self.steps, start=1):
             t_start = time.time()
-            not_final_step = total_steps != step_idx
+            is_final = step_idx == total_steps
             # Use 'transform' for intermediate steps and the provided method for the final step.
-            method = "transform" if not_final_step else method_name
+            method = "transform" if not is_final else method_name
             if fit:
                 # Initialize fitted_steps_ if not already done (for dynamic methods)
                 if not hasattr(self, "fitted_steps_"):
@@ -242,7 +242,8 @@ def _make_method(method_name: str, fit: bool = True) -> Callable:
                     fitted_model,
                     method,
                     current_output,
-                    y if not not_final_step else None,
+                    y if is_final else None,
+                    use_indices=(self.include_indices and is_final),
                 )
 
             _log_message(
@@ -538,6 +539,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         List
             List of predictions or transformed values.
         """
+
         X_subset = self._subset(X, indices)
         y_subset = None if y is None else self._subset(y, indices)
         if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
@@ -550,7 +552,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
         return output
 
-    def _fit_method_step(  # type: ignore
+    def _fit_method_step(  # ignore : type
         self,
         transformer: EstimatorLike,
         X: ArrayLike,
@@ -558,7 +560,8 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         cv: Optional[Union[PanelSplit, Iterable]] = None,
         return_output: bool = True,
         method: str = "transform",
-    ):
+        use_indices: bool = False,
+    ) -> Tuple:
         """
         Fit one pipeline step and optionally transform the data.
 
@@ -593,7 +596,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
             fitted = (None, None, model)
             if return_output:
                 # return_group is not considered here as cv == None.
-                if self.include_indices:
+                if use_indices:
                     output = (
                         np.arange(len(X)),
                         _call_method_with_correct_args(model, method, X, y),
@@ -628,9 +631,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
                         )
                         self._append_indexed_output(idx_trans, train_idx, output_trans)
             if return_output:
-                output = _sort_and_combine(
-                    idx_trans, include_indices=self.include_indices
-                )
+                output = _sort_and_combine(idx_trans, include_indices=use_indices)
 
             fitted = folds_models  # type: ignore
         if return_output:
@@ -644,6 +645,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         method_name: str,
         X: ArrayLike,
         y: Optional[ArrayLike] = None,
+        use_indices: bool = False,
     ) -> Union[NDArray, IntoDataFrame, IntoSeries, Tuple[NDArray, Any]]:
         """
         Apply a method of a fitted model (or models) to input X.
@@ -656,7 +658,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
                 output = _call_method_with_correct_args(
                     fitted_model[-1], method_name, X, y
                 )
-                if self.include_indices:
+                if self.include_indices and use_indices:
                     return np.arange(len(X)), output
                 else:
                     return output
@@ -679,9 +681,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
                     predictions_with_idx, train_idx, output_list
                 )
 
-        return _sort_and_combine(
-            predictions_with_idx, include_indices=self.include_indices
-        )
+        return _sort_and_combine(predictions_with_idx, include_indices=use_indices)
 
     def _fit(self, X: ArrayLike, y: Optional[ArrayLike] = None) -> ArrayLike:
         """
@@ -698,13 +698,14 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
             if transformer is None or transformer == "passthrough":
                 self.fitted_steps_[name] = None
                 continue
-            not_final_step = not step_idx == total_steps
+            is_final = step_idx == total_steps
             X_current, fitted_model = self._fit_method_step(
                 transformer,
                 X_current,
                 y,
                 self.cv_steps[step_idx - 1],
-                return_output=not_final_step,
+                return_output=not is_final,
+                use_indices=is_final,  # enforce no indices for intermediate steps
             )
 
             self.fitted_steps_[name] = fitted_model
@@ -1041,6 +1042,11 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         Optional[NDArray]
             Array of class labels from the final classifier step, or None if unavailable.
 
+        Note
+        -------
+        Keep in mind that this aggregates all classes seen across all splits. Each split's
+        classifier may vary in its classes (e.g. in the case of few observations and high class imabalance.)
+
         Examples
         --------
         >>> pipeline.fit(X, y)
@@ -1057,18 +1063,44 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
             raise NotFittedError(
                 f"No fitted model found for final step '{last_step_name}'."
             )
-        # Case A: cross-validated storage: dict with 'splits': [(test_idx, model), ...]
-        elif fitted_step[0] is not None:
-            [check_is_fitted(model) for _, _, model in fitted_step]
-            assert all([is_classifier(model) for _, _, model in fitted_step])
+
+        # Case A: cross-validated storage is a list of (train_idx, test_idx, model)
+        if isinstance(fitted_step, list) and fitted_step and fitted_step[0] is not None:
+            # ensure fitted and classifier
+            try:
+                for _, _, model in fitted_step:
+                    check_is_fitted(model)
+            except Exception:
+                # treat as absent (avoids raising NotFittedError during dir())
+                raise AttributeError(
+                    "Final estimator(s) not fitted or otherwise unavailable"
+                )
+
+            if not all(is_classifier(model) for _, _, model in fitted_step):
+                # Not a classifier -> attribute should be considered absent
+                raise AttributeError("Final estimator is not a classifier")
+
+            # collect classes_ from each fold
             return np.unique(
-                np.concatenate([model[-1].classes_ for model in fitted_step])
+                np.concatenate([model.classes_ for _, _, model in fitted_step])
             )
-        # Case B: direct estimator instance (non-CV)
-        else:
-            check_is_fitted(fitted_step[-1])
-            assert is_classifier(fitted_step[-1])
-            return getattr(fitted_step[-1], "classes_", None)
+
+        # Case B: non-CV: fitted_step is (None, None, model)
+        # defensive handling in case representation differs slightly
+        try:
+            model = fitted_step[-1]
+        except Exception:
+            raise AttributeError("Unexpected fitted-step format for final estimator")
+
+        try:
+            check_is_fitted(model)
+        except Exception:
+            raise AttributeError("Final estimator is not fitted")
+
+        if not is_classifier(model):
+            raise AttributeError("Final estimator is not a classifier")
+
+        return getattr(model, "classes_", None)
 
     def __sklearn_tags__(self) -> Tags:
         tags = super().__sklearn_tags__()

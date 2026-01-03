@@ -4,7 +4,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.ensemble import RandomForestRegressor
 from panelsplit.pipeline import SequentialCVPipeline
 from panelsplit.cross_validation import PanelSplit
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
 import pandas as pd
+from .df_generation import create_rf_friendly_dataset
 
 
 # Dummy transformer that doubles the input.
@@ -295,6 +298,24 @@ def test_score_order():
 
     where_is_first_instance_of_first_test_period = np.where(unique_periods == 1)[0]
     assert where_is_first_instance_of_first_test_period == where_is_first_score
+
+
+def test_score_on_sequentialCVpipeline():
+    df = create_rf_friendly_dataset()
+    X = df[[col for col in df.columns if "X" in col]]
+    y = df["y_binary"]
+
+    ps = PanelSplit(df.year, n_splits=9)
+
+    pipe = SequentialCVPipeline(
+        [("imputer", SimpleImputer()), ("rf", RandomForestClassifier(n_estimators=10))],
+        cv_steps=[None, ps],
+        include_indices=False,
+    )
+
+    pipe.fit(X, y)
+    pipe.set_params(include_indices=False)
+    pipe.score(X, y)
 
 
 # %%

@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import average_precision_score, roc_auc_score
 from panelsplit.metrics import get_scorer
 from sklearn.utils._param_validation import InvalidParameterError
@@ -254,6 +255,23 @@ class TestSearchesExtensive(unittest.TestCase):
 
         reference = get_scorer("roc_auc")(gs.best_estimator_, self.X, self.y_binary)
         self.assertAlmostEqual(score_from_method, reference, places=7)
+
+    def test_pipeline_gridsearch_no_nan(self):
+        df = create_rf_friendly_dataset(n_samples=10)
+        X = df[[c for c in df.columns if "X" in c]]
+        y = df["y_binary"]
+        ps = PanelSplit(df.year, n_splits=2)
+        pipe = SequentialCVPipeline(
+            [
+                ("imputer", SimpleImputer()),
+                ("rf", RandomForestClassifier(n_estimators=10)),
+            ],
+            cv_steps=[None, ps],
+        )
+        gs = GridSearch(pipe, {"rf__n_estimators": [10, 20]}, scoring="accuracy")
+        # should not raise and should not produce all-nan results
+        gs.fit(X, y)
+        assert not np.all(np.isnan(gs.cv_results_["mean_test_score"]))
 
 
 if __name__ == "__main__":

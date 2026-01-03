@@ -3,10 +3,13 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator
+from sklearn.metrics import get_scorer_names
+
 
 from panelsplit.metrics import (
     _get_idx_from_last_cv,
     make_SequentialCV_scorer,
+    get_scorer,
 )
 
 
@@ -137,3 +140,8 @@ def test_make_seqcv_scorer_plain_metric_with_cv_iterable():
     # compute expected manually: fold 1 test idx [0,1] -> preds [1,1] vs y [1,0] => mean([True, False]) = 0.5
     assert pytest.approx(per_fold_scores[0]) == 0.5
     # fold 2 test idx [2]()
+
+
+def test_scorers_available():
+    scorers = get_scorer_names()
+    [get_scorer(s) for s in scorers]

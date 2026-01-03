@@ -970,8 +970,8 @@ class GridSearch(BaseSearch):
 
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_string_names`);
-        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - a single string (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-string-names);
+        - a callable (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable) that returns a single value;
         - `None`, the `estimator`'s default evaluation criterion is used.
 
         If `scoring` represents multiple scores, one can use:
@@ -981,7 +981,7 @@ class GridSearch(BaseSearch):
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
 
-        See :ref:`multimetric_grid_search` for an example.
+        See https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search for an example.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -1056,6 +1056,19 @@ class GridSearch(BaseSearch):
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
+
+        For an example of visualization and interpretation of GridSearch results,
+        see https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py.
+
+        NOTE
+
+        The key ``'params'`` is used to store a list of parameter
+        settings dicts for all the parameter candidates.
+
+        For multi-metric evaluation, the scores for all the scorers are
+        available in the ``cv_results_`` dict at the keys ending with that
+        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
+        above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
@@ -1157,11 +1170,11 @@ class GridSearch(BaseSearch):
     GridSearch(estimator=SVC(),
                  param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
     >>> sorted(clf.cv_results_.keys())
-    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
+    ['mean_test_score',...
      'param_C', 'param_kernel', 'params',...
      'rank_test_score', 'split0_test_score',...
      'split2_test_score', ...
-     'std_fit_time', 'std_score_time', 'std_test_score']
+     'std_test_score']
     """
 
     _parameter_constraints: dict = {
@@ -1251,8 +1264,8 @@ class RandomizedSearch(BaseSearch):
 
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_string_names`);
-        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - a single string (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-string-names);
+        - a callable (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable) that returns a single value;
         - `None`, the `estimator`'s default evaluation criterion is used.
 
         If `scoring` represents multiple scores, one can use:
@@ -1262,7 +1275,7 @@ class RandomizedSearch(BaseSearch):
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
 
-        See :ref:`multimetric_grid_search` for an example.
+        See https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search for an example.
 
         If None, the estimator's score method is used.
 
@@ -1346,6 +1359,19 @@ class RandomizedSearch(BaseSearch):
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
+
+        For an example of analysing ``cv_results_``,
+        see https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py.
+
+        NOTE
+
+        The key ``'params'`` is used to store a list of parameter
+        settings dicts for all the parameter candidates.
+
+        For multi-metric evaluation, the scores for all the scorers are
+        available in the ``cv_results_`` dict at the keys ending with that
+        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
+        above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
