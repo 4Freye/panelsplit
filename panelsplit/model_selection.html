@@ -121,8 +121,8 @@
 </span><span id="GridSearch-971"><a href="#GridSearch-971"><span class="linenos"> 971</span></a>
 </span><span id="GridSearch-972"><a href="#GridSearch-972"><span class="linenos"> 972</span></a><span class="sd">        If `scoring` represents a single score, one can use:</span>
 </span><span id="GridSearch-973"><a href="#GridSearch-973"><span class="linenos"> 973</span></a>
-</span><span id="GridSearch-974"><a href="#GridSearch-974"><span class="linenos"> 974</span></a><span class="sd">        - a single string (see :ref:`scoring_string_names`);</span>
-</span><span id="GridSearch-975"><a href="#GridSearch-975"><span class="linenos"> 975</span></a><span class="sd">        - a callable (see :ref:`scoring_callable`) that returns a single value;</span>
+</span><span id="GridSearch-974"><a href="#GridSearch-974"><span class="linenos"> 974</span></a><span class="sd">        - a single string (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-string-names);</span>
+</span><span id="GridSearch-975"><a href="#GridSearch-975"><span class="linenos"> 975</span></a><span class="sd">        - a callable (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable) that returns a single value;</span>
 </span><span id="GridSearch-976"><a href="#GridSearch-976"><span class="linenos"> 976</span></a><span class="sd">        - `None`, the `estimator`&#39;s default evaluation criterion is used.</span>
 </span><span id="GridSearch-977"><a href="#GridSearch-977"><span class="linenos"> 977</span></a>
 </span><span id="GridSearch-978"><a href="#GridSearch-978"><span class="linenos"> 978</span></a><span class="sd">        If `scoring` represents multiple scores, one can use:</span>
@@ -132,7 +132,7 @@
 </span><span id="GridSearch-982"><a href="#GridSearch-982"><span class="linenos"> 982</span></a><span class="sd">          names and the values are the metric scores;</span>
 </span><span id="GridSearch-983"><a href="#GridSearch-983"><span class="linenos"> 983</span></a><span class="sd">        - a dictionary with metric names as keys and callables as values.</span>
 </span><span id="GridSearch-984"><a href="#GridSearch-984"><span class="linenos"> 984</span></a>
-</span><span id="GridSearch-985"><a href="#GridSearch-985"><span class="linenos"> 985</span></a><span class="sd">        See :ref:`multimetric_grid_search` for an example.</span>
+</span><span id="GridSearch-985"><a href="#GridSearch-985"><span class="linenos"> 985</span></a><span class="sd">        See https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search for an example.</span>
 </span><span id="GridSearch-986"><a href="#GridSearch-986"><span class="linenos"> 986</span></a>
 </span><span id="GridSearch-987"><a href="#GridSearch-987"><span class="linenos"> 987</span></a><span class="sd">    n_jobs : int, default=None</span>
 </span><span id="GridSearch-988"><a href="#GridSearch-988"><span class="linenos"> 988</span></a><span class="sd">        Number of jobs to run in parallel.</span>
@@ -208,146 +208,159 @@
 </span><span id="GridSearch-1058"><a href="#GridSearch-1058"><span class="linenos">1058</span></a><span class="sd">        A dict with keys as column headers and values as columns, that can be</span>
 </span><span id="GridSearch-1059"><a href="#GridSearch-1059"><span class="linenos">1059</span></a><span class="sd">        imported into a pandas ``DataFrame``.</span>
 </span><span id="GridSearch-1060"><a href="#GridSearch-1060"><span class="linenos">1060</span></a>
-</span><span id="GridSearch-1061"><a href="#GridSearch-1061"><span class="linenos">1061</span></a><span class="sd">    best_estimator_ : estimator</span>
-</span><span id="GridSearch-1062"><a href="#GridSearch-1062"><span class="linenos">1062</span></a><span class="sd">        Estimator that was chosen by the search, i.e. estimator</span>
-</span><span id="GridSearch-1063"><a href="#GridSearch-1063"><span class="linenos">1063</span></a><span class="sd">        which gave highest score (or smallest loss if specified)</span>
-</span><span id="GridSearch-1064"><a href="#GridSearch-1064"><span class="linenos">1064</span></a><span class="sd">        on the left out data. Not available if ``refit=False``.</span>
+</span><span id="GridSearch-1061"><a href="#GridSearch-1061"><span class="linenos">1061</span></a><span class="sd">        For an example of visualization and interpretation of GridSearch results,</span>
+</span><span id="GridSearch-1062"><a href="#GridSearch-1062"><span class="linenos">1062</span></a><span class="sd">        see https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py.</span>
+</span><span id="GridSearch-1063"><a href="#GridSearch-1063"><span class="linenos">1063</span></a>
+</span><span id="GridSearch-1064"><a href="#GridSearch-1064"><span class="linenos">1064</span></a><span class="sd">        NOTE</span>
 </span><span id="GridSearch-1065"><a href="#GridSearch-1065"><span class="linenos">1065</span></a>
-</span><span id="GridSearch-1066"><a href="#GridSearch-1066"><span class="linenos">1066</span></a><span class="sd">        See ``refit`` parameter for more information on allowed values.</span>
-</span><span id="GridSearch-1067"><a href="#GridSearch-1067"><span class="linenos">1067</span></a>
-</span><span id="GridSearch-1068"><a href="#GridSearch-1068"><span class="linenos">1068</span></a><span class="sd">    best_score_ : float</span>
-</span><span id="GridSearch-1069"><a href="#GridSearch-1069"><span class="linenos">1069</span></a><span class="sd">        Mean cross-validated score of the best_estimator</span>
-</span><span id="GridSearch-1070"><a href="#GridSearch-1070"><span class="linenos">1070</span></a>
-</span><span id="GridSearch-1071"><a href="#GridSearch-1071"><span class="linenos">1071</span></a><span class="sd">        For multi-metric evaluation, this is present only if ``refit`` is</span>
-</span><span id="GridSearch-1072"><a href="#GridSearch-1072"><span class="linenos">1072</span></a><span class="sd">        specified.</span>
+</span><span id="GridSearch-1066"><a href="#GridSearch-1066"><span class="linenos">1066</span></a><span class="sd">        The key ``&#39;params&#39;`` is used to store a list of parameter</span>
+</span><span id="GridSearch-1067"><a href="#GridSearch-1067"><span class="linenos">1067</span></a><span class="sd">        settings dicts for all the parameter candidates.</span>
+</span><span id="GridSearch-1068"><a href="#GridSearch-1068"><span class="linenos">1068</span></a>
+</span><span id="GridSearch-1069"><a href="#GridSearch-1069"><span class="linenos">1069</span></a><span class="sd">        For multi-metric evaluation, the scores for all the scorers are</span>
+</span><span id="GridSearch-1070"><a href="#GridSearch-1070"><span class="linenos">1070</span></a><span class="sd">        available in the ``cv_results_`` dict at the keys ending with that</span>
+</span><span id="GridSearch-1071"><a href="#GridSearch-1071"><span class="linenos">1071</span></a><span class="sd">        scorer&#39;s name (``&#39;_&lt;scorer_name&gt;&#39;``) instead of ``&#39;_score&#39;`` shown</span>
+</span><span id="GridSearch-1072"><a href="#GridSearch-1072"><span class="linenos">1072</span></a><span class="sd">        above. (&#39;split0_test_precision&#39;, &#39;mean_train_precision&#39; etc.)</span>
 </span><span id="GridSearch-1073"><a href="#GridSearch-1073"><span class="linenos">1073</span></a>
-</span><span id="GridSearch-1074"><a href="#GridSearch-1074"><span class="linenos">1074</span></a><span class="sd">        This attribute is not available if ``refit`` is a function.</span>
-</span><span id="GridSearch-1075"><a href="#GridSearch-1075"><span class="linenos">1075</span></a>
-</span><span id="GridSearch-1076"><a href="#GridSearch-1076"><span class="linenos">1076</span></a><span class="sd">    best_params_ : dict</span>
-</span><span id="GridSearch-1077"><a href="#GridSearch-1077"><span class="linenos">1077</span></a><span class="sd">        Parameter setting that gave the best results on the hold out data.</span>
+</span><span id="GridSearch-1074"><a href="#GridSearch-1074"><span class="linenos">1074</span></a><span class="sd">    best_estimator_ : estimator</span>
+</span><span id="GridSearch-1075"><a href="#GridSearch-1075"><span class="linenos">1075</span></a><span class="sd">        Estimator that was chosen by the search, i.e. estimator</span>
+</span><span id="GridSearch-1076"><a href="#GridSearch-1076"><span class="linenos">1076</span></a><span class="sd">        which gave highest score (or smallest loss if specified)</span>
+</span><span id="GridSearch-1077"><a href="#GridSearch-1077"><span class="linenos">1077</span></a><span class="sd">        on the left out data. Not available if ``refit=False``.</span>
 </span><span id="GridSearch-1078"><a href="#GridSearch-1078"><span class="linenos">1078</span></a>
-</span><span id="GridSearch-1079"><a href="#GridSearch-1079"><span class="linenos">1079</span></a><span class="sd">        For multi-metric evaluation, this is present only if ``refit`` is</span>
-</span><span id="GridSearch-1080"><a href="#GridSearch-1080"><span class="linenos">1080</span></a><span class="sd">        specified.</span>
-</span><span id="GridSearch-1081"><a href="#GridSearch-1081"><span class="linenos">1081</span></a>
-</span><span id="GridSearch-1082"><a href="#GridSearch-1082"><span class="linenos">1082</span></a><span class="sd">    best_index_ : int</span>
-</span><span id="GridSearch-1083"><a href="#GridSearch-1083"><span class="linenos">1083</span></a><span class="sd">        The index (of the ``cv_results_`` arrays) which corresponds to the best</span>
-</span><span id="GridSearch-1084"><a href="#GridSearch-1084"><span class="linenos">1084</span></a><span class="sd">        candidate parameter setting.</span>
-</span><span id="GridSearch-1085"><a href="#GridSearch-1085"><span class="linenos">1085</span></a>
-</span><span id="GridSearch-1086"><a href="#GridSearch-1086"><span class="linenos">1086</span></a><span class="sd">        The dict at ``search.cv_results_[&#39;params&#39;][search.best_index_]`` gives</span>
-</span><span id="GridSearch-1087"><a href="#GridSearch-1087"><span class="linenos">1087</span></a><span class="sd">        the parameter setting for the best model, that gives the highest</span>
-</span><span id="GridSearch-1088"><a href="#GridSearch-1088"><span class="linenos">1088</span></a><span class="sd">        mean score (``search.best_score_``).</span>
-</span><span id="GridSearch-1089"><a href="#GridSearch-1089"><span class="linenos">1089</span></a>
-</span><span id="GridSearch-1090"><a href="#GridSearch-1090"><span class="linenos">1090</span></a><span class="sd">        For multi-metric evaluation, this is present only if ``refit`` is</span>
-</span><span id="GridSearch-1091"><a href="#GridSearch-1091"><span class="linenos">1091</span></a><span class="sd">        specified.</span>
-</span><span id="GridSearch-1092"><a href="#GridSearch-1092"><span class="linenos">1092</span></a>
-</span><span id="GridSearch-1093"><a href="#GridSearch-1093"><span class="linenos">1093</span></a><span class="sd">    scorer_ : function or a dict</span>
-</span><span id="GridSearch-1094"><a href="#GridSearch-1094"><span class="linenos">1094</span></a><span class="sd">        Scorer function used on the held out data to choose the best</span>
-</span><span id="GridSearch-1095"><a href="#GridSearch-1095"><span class="linenos">1095</span></a><span class="sd">        parameters for the model.</span>
-</span><span id="GridSearch-1096"><a href="#GridSearch-1096"><span class="linenos">1096</span></a>
-</span><span id="GridSearch-1097"><a href="#GridSearch-1097"><span class="linenos">1097</span></a><span class="sd">        For multi-metric evaluation, this attribute holds the validated</span>
-</span><span id="GridSearch-1098"><a href="#GridSearch-1098"><span class="linenos">1098</span></a><span class="sd">        ``scoring`` dict which maps the scorer key to the scorer callable.</span>
-</span><span id="GridSearch-1099"><a href="#GridSearch-1099"><span class="linenos">1099</span></a>
-</span><span id="GridSearch-1100"><a href="#GridSearch-1100"><span class="linenos">1100</span></a><span class="sd">    n_splits_ : int</span>
-</span><span id="GridSearch-1101"><a href="#GridSearch-1101"><span class="linenos">1101</span></a><span class="sd">        The number of cross-validation splits (folds/iterations).</span>
+</span><span id="GridSearch-1079"><a href="#GridSearch-1079"><span class="linenos">1079</span></a><span class="sd">        See ``refit`` parameter for more information on allowed values.</span>
+</span><span id="GridSearch-1080"><a href="#GridSearch-1080"><span class="linenos">1080</span></a>
+</span><span id="GridSearch-1081"><a href="#GridSearch-1081"><span class="linenos">1081</span></a><span class="sd">    best_score_ : float</span>
+</span><span id="GridSearch-1082"><a href="#GridSearch-1082"><span class="linenos">1082</span></a><span class="sd">        Mean cross-validated score of the best_estimator</span>
+</span><span id="GridSearch-1083"><a href="#GridSearch-1083"><span class="linenos">1083</span></a>
+</span><span id="GridSearch-1084"><a href="#GridSearch-1084"><span class="linenos">1084</span></a><span class="sd">        For multi-metric evaluation, this is present only if ``refit`` is</span>
+</span><span id="GridSearch-1085"><a href="#GridSearch-1085"><span class="linenos">1085</span></a><span class="sd">        specified.</span>
+</span><span id="GridSearch-1086"><a href="#GridSearch-1086"><span class="linenos">1086</span></a>
+</span><span id="GridSearch-1087"><a href="#GridSearch-1087"><span class="linenos">1087</span></a><span class="sd">        This attribute is not available if ``refit`` is a function.</span>
+</span><span id="GridSearch-1088"><a href="#GridSearch-1088"><span class="linenos">1088</span></a>
+</span><span id="GridSearch-1089"><a href="#GridSearch-1089"><span class="linenos">1089</span></a><span class="sd">    best_params_ : dict</span>
+</span><span id="GridSearch-1090"><a href="#GridSearch-1090"><span class="linenos">1090</span></a><span class="sd">        Parameter setting that gave the best results on the hold out data.</span>
+</span><span id="GridSearch-1091"><a href="#GridSearch-1091"><span class="linenos">1091</span></a>
+</span><span id="GridSearch-1092"><a href="#GridSearch-1092"><span class="linenos">1092</span></a><span class="sd">        For multi-metric evaluation, this is present only if ``refit`` is</span>
+</span><span id="GridSearch-1093"><a href="#GridSearch-1093"><span class="linenos">1093</span></a><span class="sd">        specified.</span>
+</span><span id="GridSearch-1094"><a href="#GridSearch-1094"><span class="linenos">1094</span></a>
+</span><span id="GridSearch-1095"><a href="#GridSearch-1095"><span class="linenos">1095</span></a><span class="sd">    best_index_ : int</span>
+</span><span id="GridSearch-1096"><a href="#GridSearch-1096"><span class="linenos">1096</span></a><span class="sd">        The index (of the ``cv_results_`` arrays) which corresponds to the best</span>
+</span><span id="GridSearch-1097"><a href="#GridSearch-1097"><span class="linenos">1097</span></a><span class="sd">        candidate parameter setting.</span>
+</span><span id="GridSearch-1098"><a href="#GridSearch-1098"><span class="linenos">1098</span></a>
+</span><span id="GridSearch-1099"><a href="#GridSearch-1099"><span class="linenos">1099</span></a><span class="sd">        The dict at ``search.cv_results_[&#39;params&#39;][search.best_index_]`` gives</span>
+</span><span id="GridSearch-1100"><a href="#GridSearch-1100"><span class="linenos">1100</span></a><span class="sd">        the parameter setting for the best model, that gives the highest</span>
+</span><span id="GridSearch-1101"><a href="#GridSearch-1101"><span class="linenos">1101</span></a><span class="sd">        mean score (``search.best_score_``).</span>
 </span><span id="GridSearch-1102"><a href="#GridSearch-1102"><span class="linenos">1102</span></a>
-</span><span id="GridSearch-1103"><a href="#GridSearch-1103"><span class="linenos">1103</span></a><span class="sd">    refit_time_ : float</span>
-</span><span id="GridSearch-1104"><a href="#GridSearch-1104"><span class="linenos">1104</span></a><span class="sd">        Seconds used for refitting the best model on the whole dataset.</span>
+</span><span id="GridSearch-1103"><a href="#GridSearch-1103"><span class="linenos">1103</span></a><span class="sd">        For multi-metric evaluation, this is present only if ``refit`` is</span>
+</span><span id="GridSearch-1104"><a href="#GridSearch-1104"><span class="linenos">1104</span></a><span class="sd">        specified.</span>
 </span><span id="GridSearch-1105"><a href="#GridSearch-1105"><span class="linenos">1105</span></a>
-</span><span id="GridSearch-1106"><a href="#GridSearch-1106"><span class="linenos">1106</span></a><span class="sd">        This is present only if ``refit`` is not False.</span>
-</span><span id="GridSearch-1107"><a href="#GridSearch-1107"><span class="linenos">1107</span></a>
-</span><span id="GridSearch-1108"><a href="#GridSearch-1108"><span class="linenos">1108</span></a><span class="sd">    multimetric_ : bool</span>
-</span><span id="GridSearch-1109"><a href="#GridSearch-1109"><span class="linenos">1109</span></a><span class="sd">        Whether or not the scorers compute several metrics.</span>
-</span><span id="GridSearch-1110"><a href="#GridSearch-1110"><span class="linenos">1110</span></a>
-</span><span id="GridSearch-1111"><a href="#GridSearch-1111"><span class="linenos">1111</span></a><span class="sd">    classes_ : ndarray of shape (n_classes,)</span>
-</span><span id="GridSearch-1112"><a href="#GridSearch-1112"><span class="linenos">1112</span></a><span class="sd">        The classes labels. This is present only if ``refit`` is specified and</span>
-</span><span id="GridSearch-1113"><a href="#GridSearch-1113"><span class="linenos">1113</span></a><span class="sd">        the underlying estimator is a classifier.</span>
-</span><span id="GridSearch-1114"><a href="#GridSearch-1114"><span class="linenos">1114</span></a>
-</span><span id="GridSearch-1115"><a href="#GridSearch-1115"><span class="linenos">1115</span></a><span class="sd">    n_features_in_ : int</span>
-</span><span id="GridSearch-1116"><a href="#GridSearch-1116"><span class="linenos">1116</span></a><span class="sd">        Number of features seen during :term:`fit`. Only defined if</span>
-</span><span id="GridSearch-1117"><a href="#GridSearch-1117"><span class="linenos">1117</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
-</span><span id="GridSearch-1118"><a href="#GridSearch-1118"><span class="linenos">1118</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
-</span><span id="GridSearch-1119"><a href="#GridSearch-1119"><span class="linenos">1119</span></a><span class="sd">        `n_features_in_` when fit.</span>
+</span><span id="GridSearch-1106"><a href="#GridSearch-1106"><span class="linenos">1106</span></a><span class="sd">    scorer_ : function or a dict</span>
+</span><span id="GridSearch-1107"><a href="#GridSearch-1107"><span class="linenos">1107</span></a><span class="sd">        Scorer function used on the held out data to choose the best</span>
+</span><span id="GridSearch-1108"><a href="#GridSearch-1108"><span class="linenos">1108</span></a><span class="sd">        parameters for the model.</span>
+</span><span id="GridSearch-1109"><a href="#GridSearch-1109"><span class="linenos">1109</span></a>
+</span><span id="GridSearch-1110"><a href="#GridSearch-1110"><span class="linenos">1110</span></a><span class="sd">        For multi-metric evaluation, this attribute holds the validated</span>
+</span><span id="GridSearch-1111"><a href="#GridSearch-1111"><span class="linenos">1111</span></a><span class="sd">        ``scoring`` dict which maps the scorer key to the scorer callable.</span>
+</span><span id="GridSearch-1112"><a href="#GridSearch-1112"><span class="linenos">1112</span></a>
+</span><span id="GridSearch-1113"><a href="#GridSearch-1113"><span class="linenos">1113</span></a><span class="sd">    n_splits_ : int</span>
+</span><span id="GridSearch-1114"><a href="#GridSearch-1114"><span class="linenos">1114</span></a><span class="sd">        The number of cross-validation splits (folds/iterations).</span>
+</span><span id="GridSearch-1115"><a href="#GridSearch-1115"><span class="linenos">1115</span></a>
+</span><span id="GridSearch-1116"><a href="#GridSearch-1116"><span class="linenos">1116</span></a><span class="sd">    refit_time_ : float</span>
+</span><span id="GridSearch-1117"><a href="#GridSearch-1117"><span class="linenos">1117</span></a><span class="sd">        Seconds used for refitting the best model on the whole dataset.</span>
+</span><span id="GridSearch-1118"><a href="#GridSearch-1118"><span class="linenos">1118</span></a>
+</span><span id="GridSearch-1119"><a href="#GridSearch-1119"><span class="linenos">1119</span></a><span class="sd">        This is present only if ``refit`` is not False.</span>
 </span><span id="GridSearch-1120"><a href="#GridSearch-1120"><span class="linenos">1120</span></a>
-</span><span id="GridSearch-1121"><a href="#GridSearch-1121"><span class="linenos">1121</span></a><span class="sd">    feature_names_in_ : ndarray of shape (`n_features_in_`,)</span>
-</span><span id="GridSearch-1122"><a href="#GridSearch-1122"><span class="linenos">1122</span></a><span class="sd">        Names of features seen during :term:`fit`. Only defined if</span>
-</span><span id="GridSearch-1123"><a href="#GridSearch-1123"><span class="linenos">1123</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
-</span><span id="GridSearch-1124"><a href="#GridSearch-1124"><span class="linenos">1124</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
-</span><span id="GridSearch-1125"><a href="#GridSearch-1125"><span class="linenos">1125</span></a><span class="sd">        `feature_names_in_` when fit.</span>
-</span><span id="GridSearch-1126"><a href="#GridSearch-1126"><span class="linenos">1126</span></a>
-</span><span id="GridSearch-1127"><a href="#GridSearch-1127"><span class="linenos">1127</span></a><span class="sd">    See Also</span>
-</span><span id="GridSearch-1128"><a href="#GridSearch-1128"><span class="linenos">1128</span></a><span class="sd">    --------</span>
-</span><span id="GridSearch-1129"><a href="#GridSearch-1129"><span class="linenos">1129</span></a><span class="sd">    ParameterGrid : Generates all the combinations of a hyperparameter grid.</span>
-</span><span id="GridSearch-1130"><a href="#GridSearch-1130"><span class="linenos">1130</span></a><span class="sd">    train_test_split : Utility function to split the data into a development</span>
-</span><span id="GridSearch-1131"><a href="#GridSearch-1131"><span class="linenos">1131</span></a><span class="sd">        set usable for fitting a GridSearch instance and an evaluation set</span>
-</span><span id="GridSearch-1132"><a href="#GridSearch-1132"><span class="linenos">1132</span></a><span class="sd">        for its final evaluation.</span>
-</span><span id="GridSearch-1133"><a href="#GridSearch-1133"><span class="linenos">1133</span></a><span class="sd">    sklearn.metrics.make_scorer : Make a scorer from a performance metric or</span>
-</span><span id="GridSearch-1134"><a href="#GridSearch-1134"><span class="linenos">1134</span></a><span class="sd">        loss function.</span>
-</span><span id="GridSearch-1135"><a href="#GridSearch-1135"><span class="linenos">1135</span></a>
-</span><span id="GridSearch-1136"><a href="#GridSearch-1136"><span class="linenos">1136</span></a><span class="sd">    Notes</span>
-</span><span id="GridSearch-1137"><a href="#GridSearch-1137"><span class="linenos">1137</span></a><span class="sd">    -----</span>
-</span><span id="GridSearch-1138"><a href="#GridSearch-1138"><span class="linenos">1138</span></a><span class="sd">    The parameters selected are those that maximize the score of the left out</span>
-</span><span id="GridSearch-1139"><a href="#GridSearch-1139"><span class="linenos">1139</span></a><span class="sd">    data, unless an explicit score is passed in which case it is used instead.</span>
-</span><span id="GridSearch-1140"><a href="#GridSearch-1140"><span class="linenos">1140</span></a>
-</span><span id="GridSearch-1141"><a href="#GridSearch-1141"><span class="linenos">1141</span></a><span class="sd">    If `n_jobs` was set to a value higher than one, the data is copied for each</span>
-</span><span id="GridSearch-1142"><a href="#GridSearch-1142"><span class="linenos">1142</span></a><span class="sd">    point in the grid (and not `n_jobs` times). This is done for efficiency</span>
-</span><span id="GridSearch-1143"><a href="#GridSearch-1143"><span class="linenos">1143</span></a><span class="sd">    reasons if individual jobs take very little time, but may raise errors if</span>
-</span><span id="GridSearch-1144"><a href="#GridSearch-1144"><span class="linenos">1144</span></a><span class="sd">    the dataset is large and not enough memory is available.  A workaround in</span>
-</span><span id="GridSearch-1145"><a href="#GridSearch-1145"><span class="linenos">1145</span></a><span class="sd">    this case is to set `pre_dispatch`. Then, the memory is copied only</span>
-</span><span id="GridSearch-1146"><a href="#GridSearch-1146"><span class="linenos">1146</span></a><span class="sd">    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *</span>
-</span><span id="GridSearch-1147"><a href="#GridSearch-1147"><span class="linenos">1147</span></a><span class="sd">    n_jobs`.</span>
+</span><span id="GridSearch-1121"><a href="#GridSearch-1121"><span class="linenos">1121</span></a><span class="sd">    multimetric_ : bool</span>
+</span><span id="GridSearch-1122"><a href="#GridSearch-1122"><span class="linenos">1122</span></a><span class="sd">        Whether or not the scorers compute several metrics.</span>
+</span><span id="GridSearch-1123"><a href="#GridSearch-1123"><span class="linenos">1123</span></a>
+</span><span id="GridSearch-1124"><a href="#GridSearch-1124"><span class="linenos">1124</span></a><span class="sd">    classes_ : ndarray of shape (n_classes,)</span>
+</span><span id="GridSearch-1125"><a href="#GridSearch-1125"><span class="linenos">1125</span></a><span class="sd">        The classes labels. This is present only if ``refit`` is specified and</span>
+</span><span id="GridSearch-1126"><a href="#GridSearch-1126"><span class="linenos">1126</span></a><span class="sd">        the underlying estimator is a classifier.</span>
+</span><span id="GridSearch-1127"><a href="#GridSearch-1127"><span class="linenos">1127</span></a>
+</span><span id="GridSearch-1128"><a href="#GridSearch-1128"><span class="linenos">1128</span></a><span class="sd">    n_features_in_ : int</span>
+</span><span id="GridSearch-1129"><a href="#GridSearch-1129"><span class="linenos">1129</span></a><span class="sd">        Number of features seen during :term:`fit`. Only defined if</span>
+</span><span id="GridSearch-1130"><a href="#GridSearch-1130"><span class="linenos">1130</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
+</span><span id="GridSearch-1131"><a href="#GridSearch-1131"><span class="linenos">1131</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
+</span><span id="GridSearch-1132"><a href="#GridSearch-1132"><span class="linenos">1132</span></a><span class="sd">        `n_features_in_` when fit.</span>
+</span><span id="GridSearch-1133"><a href="#GridSearch-1133"><span class="linenos">1133</span></a>
+</span><span id="GridSearch-1134"><a href="#GridSearch-1134"><span class="linenos">1134</span></a><span class="sd">    feature_names_in_ : ndarray of shape (`n_features_in_`,)</span>
+</span><span id="GridSearch-1135"><a href="#GridSearch-1135"><span class="linenos">1135</span></a><span class="sd">        Names of features seen during :term:`fit`. Only defined if</span>
+</span><span id="GridSearch-1136"><a href="#GridSearch-1136"><span class="linenos">1136</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
+</span><span id="GridSearch-1137"><a href="#GridSearch-1137"><span class="linenos">1137</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
+</span><span id="GridSearch-1138"><a href="#GridSearch-1138"><span class="linenos">1138</span></a><span class="sd">        `feature_names_in_` when fit.</span>
+</span><span id="GridSearch-1139"><a href="#GridSearch-1139"><span class="linenos">1139</span></a>
+</span><span id="GridSearch-1140"><a href="#GridSearch-1140"><span class="linenos">1140</span></a><span class="sd">    See Also</span>
+</span><span id="GridSearch-1141"><a href="#GridSearch-1141"><span class="linenos">1141</span></a><span class="sd">    --------</span>
+</span><span id="GridSearch-1142"><a href="#GridSearch-1142"><span class="linenos">1142</span></a><span class="sd">    ParameterGrid : Generates all the combinations of a hyperparameter grid.</span>
+</span><span id="GridSearch-1143"><a href="#GridSearch-1143"><span class="linenos">1143</span></a><span class="sd">    train_test_split : Utility function to split the data into a development</span>
+</span><span id="GridSearch-1144"><a href="#GridSearch-1144"><span class="linenos">1144</span></a><span class="sd">        set usable for fitting a GridSearch instance and an evaluation set</span>
+</span><span id="GridSearch-1145"><a href="#GridSearch-1145"><span class="linenos">1145</span></a><span class="sd">        for its final evaluation.</span>
+</span><span id="GridSearch-1146"><a href="#GridSearch-1146"><span class="linenos">1146</span></a><span class="sd">    sklearn.metrics.make_scorer : Make a scorer from a performance metric or</span>
+</span><span id="GridSearch-1147"><a href="#GridSearch-1147"><span class="linenos">1147</span></a><span class="sd">        loss function.</span>
 </span><span id="GridSearch-1148"><a href="#GridSearch-1148"><span class="linenos">1148</span></a>
-</span><span id="GridSearch-1149"><a href="#GridSearch-1149"><span class="linenos">1149</span></a><span class="sd">    Examples</span>
-</span><span id="GridSearch-1150"><a href="#GridSearch-1150"><span class="linenos">1150</span></a><span class="sd">    --------</span>
-</span><span id="GridSearch-1151"><a href="#GridSearch-1151"><span class="linenos">1151</span></a><span class="sd">    &gt;&gt;&gt; from sklearn import svm, datasets</span>
-</span><span id="GridSearch-1152"><a href="#GridSearch-1152"><span class="linenos">1152</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.model_selection import GridSearch</span>
-</span><span id="GridSearch-1153"><a href="#GridSearch-1153"><span class="linenos">1153</span></a><span class="sd">    &gt;&gt;&gt; iris = datasets.load_iris()</span>
-</span><span id="GridSearch-1154"><a href="#GridSearch-1154"><span class="linenos">1154</span></a><span class="sd">    &gt;&gt;&gt; parameters = {&quot;kernel&quot;: (&quot;linear&quot;, &quot;rbf&quot;), &quot;C&quot;: [1, 10]}</span>
-</span><span id="GridSearch-1155"><a href="#GridSearch-1155"><span class="linenos">1155</span></a><span class="sd">    &gt;&gt;&gt; svc = svm.SVC()</span>
-</span><span id="GridSearch-1156"><a href="#GridSearch-1156"><span class="linenos">1156</span></a><span class="sd">    &gt;&gt;&gt; clf = GridSearch(svc, parameters)</span>
-</span><span id="GridSearch-1157"><a href="#GridSearch-1157"><span class="linenos">1157</span></a><span class="sd">    &gt;&gt;&gt; clf.fit(iris.data, iris.target)</span>
-</span><span id="GridSearch-1158"><a href="#GridSearch-1158"><span class="linenos">1158</span></a><span class="sd">    GridSearch(estimator=SVC(),</span>
-</span><span id="GridSearch-1159"><a href="#GridSearch-1159"><span class="linenos">1159</span></a><span class="sd">                 param_grid={&#39;C&#39;: [1, 10], &#39;kernel&#39;: (&#39;linear&#39;, &#39;rbf&#39;)})</span>
-</span><span id="GridSearch-1160"><a href="#GridSearch-1160"><span class="linenos">1160</span></a><span class="sd">    &gt;&gt;&gt; sorted(clf.cv_results_.keys())</span>
-</span><span id="GridSearch-1161"><a href="#GridSearch-1161"><span class="linenos">1161</span></a><span class="sd">    [&#39;mean_fit_time&#39;, &#39;mean_score_time&#39;, &#39;mean_test_score&#39;,...</span>
-</span><span id="GridSearch-1162"><a href="#GridSearch-1162"><span class="linenos">1162</span></a><span class="sd">     &#39;param_C&#39;, &#39;param_kernel&#39;, &#39;params&#39;,...</span>
-</span><span id="GridSearch-1163"><a href="#GridSearch-1163"><span class="linenos">1163</span></a><span class="sd">     &#39;rank_test_score&#39;, &#39;split0_test_score&#39;,...</span>
-</span><span id="GridSearch-1164"><a href="#GridSearch-1164"><span class="linenos">1164</span></a><span class="sd">     &#39;split2_test_score&#39;, ...</span>
-</span><span id="GridSearch-1165"><a href="#GridSearch-1165"><span class="linenos">1165</span></a><span class="sd">     &#39;std_fit_time&#39;, &#39;std_score_time&#39;, &#39;std_test_score&#39;]</span>
-</span><span id="GridSearch-1166"><a href="#GridSearch-1166"><span class="linenos">1166</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="GridSearch-1167"><a href="#GridSearch-1167"><span class="linenos">1167</span></a>
-</span><span id="GridSearch-1168"><a href="#GridSearch-1168"><span class="linenos">1168</span></a>    <span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="GridSearch-1169"><a href="#GridSearch-1169"><span class="linenos">1169</span></a>        <span class="o">**</span><span class="n">BaseSearch</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">,</span>
-</span><span id="GridSearch-1170"><a href="#GridSearch-1170"><span class="linenos">1170</span></a>        <span class="s2">&quot;param_grid&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
-</span><span id="GridSearch-1171"><a href="#GridSearch-1171"><span class="linenos">1171</span></a>    <span class="p">}</span>
-</span><span id="GridSearch-1172"><a href="#GridSearch-1172"><span class="linenos">1172</span></a>
-</span><span id="GridSearch-1173"><a href="#GridSearch-1173"><span class="linenos">1173</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="GridSearch-1174"><a href="#GridSearch-1174"><span class="linenos">1174</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="GridSearch-1175"><a href="#GridSearch-1175"><span class="linenos">1175</span></a>        <span class="n">estimator</span><span class="p">:</span> <span class="n">EstimatorLike</span><span class="p">,</span>
-</span><span id="GridSearch-1176"><a href="#GridSearch-1176"><span class="linenos">1176</span></a>        <span class="n">param_grid</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
-</span><span id="GridSearch-1177"><a href="#GridSearch-1177"><span class="linenos">1177</span></a>        <span class="o">*</span><span class="p">,</span>
-</span><span id="GridSearch-1178"><a href="#GridSearch-1178"><span class="linenos">1178</span></a>        <span class="n">scoring</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="GridSearch-1179"><a href="#GridSearch-1179"><span class="linenos">1179</span></a>        <span class="n">n_jobs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="GridSearch-1180"><a href="#GridSearch-1180"><span class="linenos">1180</span></a>        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="GridSearch-1181"><a href="#GridSearch-1181"><span class="linenos">1181</span></a>        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="GridSearch-1182"><a href="#GridSearch-1182"><span class="linenos">1182</span></a>        <span class="n">pre_dispatch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;2*n_jobs&quot;</span><span class="p">,</span>
-</span><span id="GridSearch-1183"><a href="#GridSearch-1183"><span class="linenos">1183</span></a>        <span class="n">error_score</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;raise&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-</span><span id="GridSearch-1184"><a href="#GridSearch-1184"><span class="linenos">1184</span></a>        <span class="n">return_train_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="GridSearch-1185"><a href="#GridSearch-1185"><span class="linenos">1185</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="GridSearch-1186"><a href="#GridSearch-1186"><span class="linenos">1186</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="GridSearch-1187"><a href="#GridSearch-1187"><span class="linenos">1187</span></a>            <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
-</span><span id="GridSearch-1188"><a href="#GridSearch-1188"><span class="linenos">1188</span></a>            <span class="n">scoring</span><span class="o">=</span><span class="n">scoring</span><span class="p">,</span>
-</span><span id="GridSearch-1189"><a href="#GridSearch-1189"><span class="linenos">1189</span></a>            <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span>
-</span><span id="GridSearch-1190"><a href="#GridSearch-1190"><span class="linenos">1190</span></a>            <span class="n">refit</span><span class="o">=</span><span class="n">refit</span><span class="p">,</span>
-</span><span id="GridSearch-1191"><a href="#GridSearch-1191"><span class="linenos">1191</span></a>            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-</span><span id="GridSearch-1192"><a href="#GridSearch-1192"><span class="linenos">1192</span></a>            <span class="n">pre_dispatch</span><span class="o">=</span><span class="n">pre_dispatch</span><span class="p">,</span>
-</span><span id="GridSearch-1193"><a href="#GridSearch-1193"><span class="linenos">1193</span></a>            <span class="n">error_score</span><span class="o">=</span><span class="n">error_score</span><span class="p">,</span>
-</span><span id="GridSearch-1194"><a href="#GridSearch-1194"><span class="linenos">1194</span></a>            <span class="n">return_train_score</span><span class="o">=</span><span class="n">return_train_score</span><span class="p">,</span>
-</span><span id="GridSearch-1195"><a href="#GridSearch-1195"><span class="linenos">1195</span></a>        <span class="p">)</span>
-</span><span id="GridSearch-1196"><a href="#GridSearch-1196"><span class="linenos">1196</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span> <span class="o">=</span> <span class="n">param_grid</span>
-</span><span id="GridSearch-1197"><a href="#GridSearch-1197"><span class="linenos">1197</span></a>
-</span><span id="GridSearch-1198"><a href="#GridSearch-1198"><span class="linenos">1198</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_run_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluate_candidates</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="GridSearch-1199"><a href="#GridSearch-1199"><span class="linenos">1199</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Search all candidates in param_grid&quot;&quot;&quot;</span>
-</span><span id="GridSearch-1200"><a href="#GridSearch-1200"><span class="linenos">1200</span></a>        <span class="n">evaluate_candidates</span><span class="p">(</span><span class="n">ParameterGrid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span><span class="p">))</span>
+</span><span id="GridSearch-1149"><a href="#GridSearch-1149"><span class="linenos">1149</span></a><span class="sd">    Notes</span>
+</span><span id="GridSearch-1150"><a href="#GridSearch-1150"><span class="linenos">1150</span></a><span class="sd">    -----</span>
+</span><span id="GridSearch-1151"><a href="#GridSearch-1151"><span class="linenos">1151</span></a><span class="sd">    The parameters selected are those that maximize the score of the left out</span>
+</span><span id="GridSearch-1152"><a href="#GridSearch-1152"><span class="linenos">1152</span></a><span class="sd">    data, unless an explicit score is passed in which case it is used instead.</span>
+</span><span id="GridSearch-1153"><a href="#GridSearch-1153"><span class="linenos">1153</span></a>
+</span><span id="GridSearch-1154"><a href="#GridSearch-1154"><span class="linenos">1154</span></a><span class="sd">    If `n_jobs` was set to a value higher than one, the data is copied for each</span>
+</span><span id="GridSearch-1155"><a href="#GridSearch-1155"><span class="linenos">1155</span></a><span class="sd">    point in the grid (and not `n_jobs` times). This is done for efficiency</span>
+</span><span id="GridSearch-1156"><a href="#GridSearch-1156"><span class="linenos">1156</span></a><span class="sd">    reasons if individual jobs take very little time, but may raise errors if</span>
+</span><span id="GridSearch-1157"><a href="#GridSearch-1157"><span class="linenos">1157</span></a><span class="sd">    the dataset is large and not enough memory is available.  A workaround in</span>
+</span><span id="GridSearch-1158"><a href="#GridSearch-1158"><span class="linenos">1158</span></a><span class="sd">    this case is to set `pre_dispatch`. Then, the memory is copied only</span>
+</span><span id="GridSearch-1159"><a href="#GridSearch-1159"><span class="linenos">1159</span></a><span class="sd">    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *</span>
+</span><span id="GridSearch-1160"><a href="#GridSearch-1160"><span class="linenos">1160</span></a><span class="sd">    n_jobs`.</span>
+</span><span id="GridSearch-1161"><a href="#GridSearch-1161"><span class="linenos">1161</span></a>
+</span><span id="GridSearch-1162"><a href="#GridSearch-1162"><span class="linenos">1162</span></a><span class="sd">    Examples</span>
+</span><span id="GridSearch-1163"><a href="#GridSearch-1163"><span class="linenos">1163</span></a><span class="sd">    --------</span>
+</span><span id="GridSearch-1164"><a href="#GridSearch-1164"><span class="linenos">1164</span></a><span class="sd">    &gt;&gt;&gt; from sklearn import svm, datasets</span>
+</span><span id="GridSearch-1165"><a href="#GridSearch-1165"><span class="linenos">1165</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.model_selection import GridSearch</span>
+</span><span id="GridSearch-1166"><a href="#GridSearch-1166"><span class="linenos">1166</span></a><span class="sd">    &gt;&gt;&gt; iris = datasets.load_iris()</span>
+</span><span id="GridSearch-1167"><a href="#GridSearch-1167"><span class="linenos">1167</span></a><span class="sd">    &gt;&gt;&gt; parameters = {&quot;kernel&quot;: (&quot;linear&quot;, &quot;rbf&quot;), &quot;C&quot;: [1, 10]}</span>
+</span><span id="GridSearch-1168"><a href="#GridSearch-1168"><span class="linenos">1168</span></a><span class="sd">    &gt;&gt;&gt; svc = svm.SVC()</span>
+</span><span id="GridSearch-1169"><a href="#GridSearch-1169"><span class="linenos">1169</span></a><span class="sd">    &gt;&gt;&gt; clf = GridSearch(svc, parameters)</span>
+</span><span id="GridSearch-1170"><a href="#GridSearch-1170"><span class="linenos">1170</span></a><span class="sd">    &gt;&gt;&gt; clf.fit(iris.data, iris.target)</span>
+</span><span id="GridSearch-1171"><a href="#GridSearch-1171"><span class="linenos">1171</span></a><span class="sd">    GridSearch(estimator=SVC(),</span>
+</span><span id="GridSearch-1172"><a href="#GridSearch-1172"><span class="linenos">1172</span></a><span class="sd">                 param_grid={&#39;C&#39;: [1, 10], &#39;kernel&#39;: (&#39;linear&#39;, &#39;rbf&#39;)})</span>
+</span><span id="GridSearch-1173"><a href="#GridSearch-1173"><span class="linenos">1173</span></a><span class="sd">    &gt;&gt;&gt; sorted(clf.cv_results_.keys())</span>
+</span><span id="GridSearch-1174"><a href="#GridSearch-1174"><span class="linenos">1174</span></a><span class="sd">    [&#39;mean_test_score&#39;,...</span>
+</span><span id="GridSearch-1175"><a href="#GridSearch-1175"><span class="linenos">1175</span></a><span class="sd">     &#39;param_C&#39;, &#39;param_kernel&#39;, &#39;params&#39;,...</span>
+</span><span id="GridSearch-1176"><a href="#GridSearch-1176"><span class="linenos">1176</span></a><span class="sd">     &#39;rank_test_score&#39;, &#39;split0_test_score&#39;,...</span>
+</span><span id="GridSearch-1177"><a href="#GridSearch-1177"><span class="linenos">1177</span></a><span class="sd">     &#39;split2_test_score&#39;, ...</span>
+</span><span id="GridSearch-1178"><a href="#GridSearch-1178"><span class="linenos">1178</span></a><span class="sd">     &#39;std_test_score&#39;]</span>
+</span><span id="GridSearch-1179"><a href="#GridSearch-1179"><span class="linenos">1179</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="GridSearch-1180"><a href="#GridSearch-1180"><span class="linenos">1180</span></a>
+</span><span id="GridSearch-1181"><a href="#GridSearch-1181"><span class="linenos">1181</span></a>    <span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="GridSearch-1182"><a href="#GridSearch-1182"><span class="linenos">1182</span></a>        <span class="o">**</span><span class="n">BaseSearch</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">,</span>
+</span><span id="GridSearch-1183"><a href="#GridSearch-1183"><span class="linenos">1183</span></a>        <span class="s2">&quot;param_grid&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+</span><span id="GridSearch-1184"><a href="#GridSearch-1184"><span class="linenos">1184</span></a>    <span class="p">}</span>
+</span><span id="GridSearch-1185"><a href="#GridSearch-1185"><span class="linenos">1185</span></a>
+</span><span id="GridSearch-1186"><a href="#GridSearch-1186"><span class="linenos">1186</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="GridSearch-1187"><a href="#GridSearch-1187"><span class="linenos">1187</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="GridSearch-1188"><a href="#GridSearch-1188"><span class="linenos">1188</span></a>        <span class="n">estimator</span><span class="p">:</span> <span class="n">EstimatorLike</span><span class="p">,</span>
+</span><span id="GridSearch-1189"><a href="#GridSearch-1189"><span class="linenos">1189</span></a>        <span class="n">param_grid</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+</span><span id="GridSearch-1190"><a href="#GridSearch-1190"><span class="linenos">1190</span></a>        <span class="o">*</span><span class="p">,</span>
+</span><span id="GridSearch-1191"><a href="#GridSearch-1191"><span class="linenos">1191</span></a>        <span class="n">scoring</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="GridSearch-1192"><a href="#GridSearch-1192"><span class="linenos">1192</span></a>        <span class="n">n_jobs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="GridSearch-1193"><a href="#GridSearch-1193"><span class="linenos">1193</span></a>        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="GridSearch-1194"><a href="#GridSearch-1194"><span class="linenos">1194</span></a>        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="GridSearch-1195"><a href="#GridSearch-1195"><span class="linenos">1195</span></a>        <span class="n">pre_dispatch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;2*n_jobs&quot;</span><span class="p">,</span>
+</span><span id="GridSearch-1196"><a href="#GridSearch-1196"><span class="linenos">1196</span></a>        <span class="n">error_score</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;raise&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+</span><span id="GridSearch-1197"><a href="#GridSearch-1197"><span class="linenos">1197</span></a>        <span class="n">return_train_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="GridSearch-1198"><a href="#GridSearch-1198"><span class="linenos">1198</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GridSearch-1199"><a href="#GridSearch-1199"><span class="linenos">1199</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="GridSearch-1200"><a href="#GridSearch-1200"><span class="linenos">1200</span></a>            <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
+</span><span id="GridSearch-1201"><a href="#GridSearch-1201"><span class="linenos">1201</span></a>            <span class="n">scoring</span><span class="o">=</span><span class="n">scoring</span><span class="p">,</span>
+</span><span id="GridSearch-1202"><a href="#GridSearch-1202"><span class="linenos">1202</span></a>            <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span>
+</span><span id="GridSearch-1203"><a href="#GridSearch-1203"><span class="linenos">1203</span></a>            <span class="n">refit</span><span class="o">=</span><span class="n">refit</span><span class="p">,</span>
+</span><span id="GridSearch-1204"><a href="#GridSearch-1204"><span class="linenos">1204</span></a>            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+</span><span id="GridSearch-1205"><a href="#GridSearch-1205"><span class="linenos">1205</span></a>            <span class="n">pre_dispatch</span><span class="o">=</span><span class="n">pre_dispatch</span><span class="p">,</span>
+</span><span id="GridSearch-1206"><a href="#GridSearch-1206"><span class="linenos">1206</span></a>            <span class="n">error_score</span><span class="o">=</span><span class="n">error_score</span><span class="p">,</span>
+</span><span id="GridSearch-1207"><a href="#GridSearch-1207"><span class="linenos">1207</span></a>            <span class="n">return_train_score</span><span class="o">=</span><span class="n">return_train_score</span><span class="p">,</span>
+</span><span id="GridSearch-1208"><a href="#GridSearch-1208"><span class="linenos">1208</span></a>        <span class="p">)</span>
+</span><span id="GridSearch-1209"><a href="#GridSearch-1209"><span class="linenos">1209</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span> <span class="o">=</span> <span class="n">param_grid</span>
+</span><span id="GridSearch-1210"><a href="#GridSearch-1210"><span class="linenos">1210</span></a>
+</span><span id="GridSearch-1211"><a href="#GridSearch-1211"><span class="linenos">1211</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_run_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluate_candidates</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GridSearch-1212"><a href="#GridSearch-1212"><span class="linenos">1212</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Search all candidates in param_grid&quot;&quot;&quot;</span>
+</span><span id="GridSearch-1213"><a href="#GridSearch-1213"><span class="linenos">1213</span></a>        <span class="n">evaluate_candidates</span><span class="p">(</span><span class="n">ParameterGrid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span><span class="p">))</span>
 </span></pre></div>
 
 
@@ -386,8 +399,8 @@ the test set.</p>
 <p>If <code>scoring</code> represents a single score, one can use:</p>
 
 <ul>
-<li>a single string (see :ref:<code>scoring_string_names</code>);</li>
-<li>a callable (see :ref:<code>scoring_callable</code>) that returns a single value;</li>
+<li>a single string (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-string-names);</li>
+<li>a callable (see <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable">https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable</a>) that returns a single value;</li>
 <li><code>None</code>, the <code>estimator</code>'s default evaluation criterion is used.</li>
 </ul>
 
@@ -400,7 +413,7 @@ names and the values are the metric scores;</li>
 <li>a dictionary with metric names as keys and callables as values.</li>
 </ul>
 
-<p>See :ref:<code>multimetric_grid_search</code> for an example.</p></li>
+<p>See <a href="https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search">https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search</a> for an example.</p></li>
 <li><strong>n_jobs</strong> (int, default=None):
 Number of jobs to run in parallel.
 <code>None</code> means 1 unless in a <code>joblib.parallel_backend</code> context.
@@ -472,9 +485,22 @@ yield the best generalization performance.</li>
 <h6 id="attributes">Attributes</h6>
 
 <ul>
-<li><strong>cv_results_</strong> (dict of numpy (masked) ndarrays):
+<li><p><strong>cv_results_</strong> (dict of numpy (masked) ndarrays):
 A dict with keys as column headers and values as columns, that can be
-imported into a pandas <code>DataFrame</code>.</li>
+imported into a pandas <code>DataFrame</code>.</p>
+
+<p>For an example of visualization and interpretation of GridSearch results,
+see <a href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py">https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py</a>.</p>
+
+<p>NOTE</p>
+
+<p>The key <code>'params'</code> is used to store a list of parameter
+settings dicts for all the parameter candidates.</p>
+
+<p>For multi-metric evaluation, the scores for all the scorers are
+available in the <code>cv_results_</code> dict at the keys ending with that
+scorer's name (<code>'_&lt;scorer_name&gt;'</code>) instead of <code>'_score'</code> shown
+above. ('split0_test_precision', 'mean_train_precision' etc.)</p></li>
 <li><p><strong>best_estimator_</strong> (estimator):
 Estimator that was chosen by the search, i.e. estimator
 which gave highest score (or smallest loss if specified)
@@ -567,11 +593,11 @@ n_jobs</code>.</p>
 <span class="go">GridSearch(estimator=SVC(),</span>
 <span class="go">             param_grid={&#39;C&#39;: [1, 10], &#39;kernel&#39;: (&#39;linear&#39;, &#39;rbf&#39;)})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">clf</span><span class="o">.</span><span class="n">cv_results_</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-<span class="go">[&#39;mean_fit_time&#39;, &#39;mean_score_time&#39;, &#39;mean_test_score&#39;,...</span>
+<span class="go">[&#39;mean_test_score&#39;,...</span>
 <span class="go"> &#39;param_C&#39;, &#39;param_kernel&#39;, &#39;params&#39;,...</span>
 <span class="go"> &#39;rank_test_score&#39;, &#39;split0_test_score&#39;,...</span>
 <span class="go"> &#39;split2_test_score&#39;, ...</span>
-<span class="go"> &#39;std_fit_time&#39;, &#39;std_score_time&#39;, &#39;std_test_score&#39;]</span>
+<span class="go"> &#39;std_test_score&#39;]</span>
 </code></pre>
 </div>
 </div>
@@ -589,302 +615,315 @@ n_jobs</code>.</p>
 
     </div>
     <a class="headerlink" href="#RandomizedSearch"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="RandomizedSearch-1203"><a href="#RandomizedSearch-1203"><span class="linenos">1203</span></a><span class="k">class</span><span class="w"> </span><span class="nc">RandomizedSearch</span><span class="p">(</span><span class="n">BaseSearch</span><span class="p">):</span>
-</span><span id="RandomizedSearch-1204"><a href="#RandomizedSearch-1204"><span class="linenos">1204</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="RandomizedSearch-1205"><a href="#RandomizedSearch-1205"><span class="linenos">1205</span></a><span class="sd">    Randomized search on hyper parameters.</span>
-</span><span id="RandomizedSearch-1206"><a href="#RandomizedSearch-1206"><span class="linenos">1206</span></a>
-</span><span id="RandomizedSearch-1207"><a href="#RandomizedSearch-1207"><span class="linenos">1207</span></a><span class="sd">    RandomizedSearch has been adapted from sklearn&#39;s GridSearchCV to work with SequentialCVPipeline.</span>
-</span><span id="RandomizedSearch-1208"><a href="#RandomizedSearch-1208"><span class="linenos">1208</span></a><span class="sd">    For additional examples, please check out `sklearn.model_selection.RandomizedSearchCV`.</span>
-</span><span id="RandomizedSearch-1209"><a href="#RandomizedSearch-1209"><span class="linenos">1209</span></a>
-</span><span id="RandomizedSearch-1210"><a href="#RandomizedSearch-1210"><span class="linenos">1210</span></a><span class="sd">    RandomizedSearch implements a &quot;fit&quot; and a &quot;score&quot; method.</span>
-</span><span id="RandomizedSearch-1211"><a href="#RandomizedSearch-1211"><span class="linenos">1211</span></a><span class="sd">    It also implements &quot;score_samples&quot;, &quot;predict&quot;, &quot;predict_proba&quot;,</span>
-</span><span id="RandomizedSearch-1212"><a href="#RandomizedSearch-1212"><span class="linenos">1212</span></a><span class="sd">    &quot;decision_function&quot;, &quot;transform&quot; and &quot;inverse_transform&quot; if they are</span>
-</span><span id="RandomizedSearch-1213"><a href="#RandomizedSearch-1213"><span class="linenos">1213</span></a><span class="sd">    implemented in the estimator used.</span>
-</span><span id="RandomizedSearch-1214"><a href="#RandomizedSearch-1214"><span class="linenos">1214</span></a>
-</span><span id="RandomizedSearch-1215"><a href="#RandomizedSearch-1215"><span class="linenos">1215</span></a><span class="sd">    The parameters of the estimator used to apply these methods are optimized</span>
-</span><span id="RandomizedSearch-1216"><a href="#RandomizedSearch-1216"><span class="linenos">1216</span></a><span class="sd">    by cross-validated search over parameter settings.</span>
-</span><span id="RandomizedSearch-1217"><a href="#RandomizedSearch-1217"><span class="linenos">1217</span></a>
-</span><span id="RandomizedSearch-1218"><a href="#RandomizedSearch-1218"><span class="linenos">1218</span></a><span class="sd">    In contrast to GridSearch, not all parameter values are tried out, but</span>
-</span><span id="RandomizedSearch-1219"><a href="#RandomizedSearch-1219"><span class="linenos">1219</span></a><span class="sd">    rather a fixed number of parameter settings is sampled from the specified</span>
-</span><span id="RandomizedSearch-1220"><a href="#RandomizedSearch-1220"><span class="linenos">1220</span></a><span class="sd">    distributions. The number of parameter settings that are tried is</span>
-</span><span id="RandomizedSearch-1221"><a href="#RandomizedSearch-1221"><span class="linenos">1221</span></a><span class="sd">    given by n_iter.</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="RandomizedSearch-1216"><a href="#RandomizedSearch-1216"><span class="linenos">1216</span></a><span class="k">class</span><span class="w"> </span><span class="nc">RandomizedSearch</span><span class="p">(</span><span class="n">BaseSearch</span><span class="p">):</span>
+</span><span id="RandomizedSearch-1217"><a href="#RandomizedSearch-1217"><span class="linenos">1217</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="RandomizedSearch-1218"><a href="#RandomizedSearch-1218"><span class="linenos">1218</span></a><span class="sd">    Randomized search on hyper parameters.</span>
+</span><span id="RandomizedSearch-1219"><a href="#RandomizedSearch-1219"><span class="linenos">1219</span></a>
+</span><span id="RandomizedSearch-1220"><a href="#RandomizedSearch-1220"><span class="linenos">1220</span></a><span class="sd">    RandomizedSearch has been adapted from sklearn&#39;s GridSearchCV to work with SequentialCVPipeline.</span>
+</span><span id="RandomizedSearch-1221"><a href="#RandomizedSearch-1221"><span class="linenos">1221</span></a><span class="sd">    For additional examples, please check out `sklearn.model_selection.RandomizedSearchCV`.</span>
 </span><span id="RandomizedSearch-1222"><a href="#RandomizedSearch-1222"><span class="linenos">1222</span></a>
-</span><span id="RandomizedSearch-1223"><a href="#RandomizedSearch-1223"><span class="linenos">1223</span></a><span class="sd">    If all parameters are presented as a list,</span>
-</span><span id="RandomizedSearch-1224"><a href="#RandomizedSearch-1224"><span class="linenos">1224</span></a><span class="sd">    sampling without replacement is performed. If at least one parameter</span>
-</span><span id="RandomizedSearch-1225"><a href="#RandomizedSearch-1225"><span class="linenos">1225</span></a><span class="sd">    is given as a distribution, sampling with replacement is used.</span>
-</span><span id="RandomizedSearch-1226"><a href="#RandomizedSearch-1226"><span class="linenos">1226</span></a><span class="sd">    It is highly recommended to use continuous distributions for continuous</span>
-</span><span id="RandomizedSearch-1227"><a href="#RandomizedSearch-1227"><span class="linenos">1227</span></a><span class="sd">    parameters.</span>
-</span><span id="RandomizedSearch-1228"><a href="#RandomizedSearch-1228"><span class="linenos">1228</span></a>
-</span><span id="RandomizedSearch-1229"><a href="#RandomizedSearch-1229"><span class="linenos">1229</span></a><span class="sd">    Parameters</span>
-</span><span id="RandomizedSearch-1230"><a href="#RandomizedSearch-1230"><span class="linenos">1230</span></a><span class="sd">    ----------</span>
-</span><span id="RandomizedSearch-1231"><a href="#RandomizedSearch-1231"><span class="linenos">1231</span></a><span class="sd">    estimator : estimator object</span>
-</span><span id="RandomizedSearch-1232"><a href="#RandomizedSearch-1232"><span class="linenos">1232</span></a><span class="sd">        An object of that type is instantiated for each grid point.</span>
-</span><span id="RandomizedSearch-1233"><a href="#RandomizedSearch-1233"><span class="linenos">1233</span></a><span class="sd">        This is assumed to implement the scikit-learn estimator interface.</span>
-</span><span id="RandomizedSearch-1234"><a href="#RandomizedSearch-1234"><span class="linenos">1234</span></a><span class="sd">        Either estimator needs to provide a ``score`` function,</span>
-</span><span id="RandomizedSearch-1235"><a href="#RandomizedSearch-1235"><span class="linenos">1235</span></a><span class="sd">        or ``scoring`` must be passed.</span>
-</span><span id="RandomizedSearch-1236"><a href="#RandomizedSearch-1236"><span class="linenos">1236</span></a>
-</span><span id="RandomizedSearch-1237"><a href="#RandomizedSearch-1237"><span class="linenos">1237</span></a><span class="sd">    param_distributions : dict or list of dicts</span>
-</span><span id="RandomizedSearch-1238"><a href="#RandomizedSearch-1238"><span class="linenos">1238</span></a><span class="sd">        Dictionary with parameters names (`str`) as keys and distributions</span>
-</span><span id="RandomizedSearch-1239"><a href="#RandomizedSearch-1239"><span class="linenos">1239</span></a><span class="sd">        or lists of parameters to try. Distributions must provide a ``rvs``</span>
-</span><span id="RandomizedSearch-1240"><a href="#RandomizedSearch-1240"><span class="linenos">1240</span></a><span class="sd">        method for sampling (such as those from scipy.stats.distributions).</span>
-</span><span id="RandomizedSearch-1241"><a href="#RandomizedSearch-1241"><span class="linenos">1241</span></a><span class="sd">        If a list is given, it is sampled uniformly.</span>
-</span><span id="RandomizedSearch-1242"><a href="#RandomizedSearch-1242"><span class="linenos">1242</span></a><span class="sd">        If a list of dicts is given, first a dict is sampled uniformly, and</span>
-</span><span id="RandomizedSearch-1243"><a href="#RandomizedSearch-1243"><span class="linenos">1243</span></a><span class="sd">        then a parameter is sampled using that dict as above.</span>
-</span><span id="RandomizedSearch-1244"><a href="#RandomizedSearch-1244"><span class="linenos">1244</span></a>
-</span><span id="RandomizedSearch-1245"><a href="#RandomizedSearch-1245"><span class="linenos">1245</span></a><span class="sd">    n_iter : int, default=10</span>
-</span><span id="RandomizedSearch-1246"><a href="#RandomizedSearch-1246"><span class="linenos">1246</span></a><span class="sd">        Number of parameter settings that are sampled. n_iter trades</span>
-</span><span id="RandomizedSearch-1247"><a href="#RandomizedSearch-1247"><span class="linenos">1247</span></a><span class="sd">        off runtime vs quality of the solution.</span>
-</span><span id="RandomizedSearch-1248"><a href="#RandomizedSearch-1248"><span class="linenos">1248</span></a>
-</span><span id="RandomizedSearch-1249"><a href="#RandomizedSearch-1249"><span class="linenos">1249</span></a><span class="sd">    scoring : str, callable, list, tuple or dict, default=None</span>
-</span><span id="RandomizedSearch-1250"><a href="#RandomizedSearch-1250"><span class="linenos">1250</span></a><span class="sd">        Strategy to evaluate the performance of the cross-validated model on</span>
-</span><span id="RandomizedSearch-1251"><a href="#RandomizedSearch-1251"><span class="linenos">1251</span></a><span class="sd">        the test set.</span>
-</span><span id="RandomizedSearch-1252"><a href="#RandomizedSearch-1252"><span class="linenos">1252</span></a>
-</span><span id="RandomizedSearch-1253"><a href="#RandomizedSearch-1253"><span class="linenos">1253</span></a><span class="sd">        If `scoring` represents a single score, one can use:</span>
-</span><span id="RandomizedSearch-1254"><a href="#RandomizedSearch-1254"><span class="linenos">1254</span></a>
-</span><span id="RandomizedSearch-1255"><a href="#RandomizedSearch-1255"><span class="linenos">1255</span></a><span class="sd">        - a single string (see :ref:`scoring_string_names`);</span>
-</span><span id="RandomizedSearch-1256"><a href="#RandomizedSearch-1256"><span class="linenos">1256</span></a><span class="sd">        - a callable (see :ref:`scoring_callable`) that returns a single value;</span>
-</span><span id="RandomizedSearch-1257"><a href="#RandomizedSearch-1257"><span class="linenos">1257</span></a><span class="sd">        - `None`, the `estimator`&#39;s default evaluation criterion is used.</span>
-</span><span id="RandomizedSearch-1258"><a href="#RandomizedSearch-1258"><span class="linenos">1258</span></a>
-</span><span id="RandomizedSearch-1259"><a href="#RandomizedSearch-1259"><span class="linenos">1259</span></a><span class="sd">        If `scoring` represents multiple scores, one can use:</span>
-</span><span id="RandomizedSearch-1260"><a href="#RandomizedSearch-1260"><span class="linenos">1260</span></a>
-</span><span id="RandomizedSearch-1261"><a href="#RandomizedSearch-1261"><span class="linenos">1261</span></a><span class="sd">        - a list or tuple of unique strings;</span>
-</span><span id="RandomizedSearch-1262"><a href="#RandomizedSearch-1262"><span class="linenos">1262</span></a><span class="sd">        - a callable returning a dictionary where the keys are the metric</span>
-</span><span id="RandomizedSearch-1263"><a href="#RandomizedSearch-1263"><span class="linenos">1263</span></a><span class="sd">          names and the values are the metric scores;</span>
-</span><span id="RandomizedSearch-1264"><a href="#RandomizedSearch-1264"><span class="linenos">1264</span></a><span class="sd">        - a dictionary with metric names as keys and callables as values.</span>
+</span><span id="RandomizedSearch-1223"><a href="#RandomizedSearch-1223"><span class="linenos">1223</span></a><span class="sd">    RandomizedSearch implements a &quot;fit&quot; and a &quot;score&quot; method.</span>
+</span><span id="RandomizedSearch-1224"><a href="#RandomizedSearch-1224"><span class="linenos">1224</span></a><span class="sd">    It also implements &quot;score_samples&quot;, &quot;predict&quot;, &quot;predict_proba&quot;,</span>
+</span><span id="RandomizedSearch-1225"><a href="#RandomizedSearch-1225"><span class="linenos">1225</span></a><span class="sd">    &quot;decision_function&quot;, &quot;transform&quot; and &quot;inverse_transform&quot; if they are</span>
+</span><span id="RandomizedSearch-1226"><a href="#RandomizedSearch-1226"><span class="linenos">1226</span></a><span class="sd">    implemented in the estimator used.</span>
+</span><span id="RandomizedSearch-1227"><a href="#RandomizedSearch-1227"><span class="linenos">1227</span></a>
+</span><span id="RandomizedSearch-1228"><a href="#RandomizedSearch-1228"><span class="linenos">1228</span></a><span class="sd">    The parameters of the estimator used to apply these methods are optimized</span>
+</span><span id="RandomizedSearch-1229"><a href="#RandomizedSearch-1229"><span class="linenos">1229</span></a><span class="sd">    by cross-validated search over parameter settings.</span>
+</span><span id="RandomizedSearch-1230"><a href="#RandomizedSearch-1230"><span class="linenos">1230</span></a>
+</span><span id="RandomizedSearch-1231"><a href="#RandomizedSearch-1231"><span class="linenos">1231</span></a><span class="sd">    In contrast to GridSearch, not all parameter values are tried out, but</span>
+</span><span id="RandomizedSearch-1232"><a href="#RandomizedSearch-1232"><span class="linenos">1232</span></a><span class="sd">    rather a fixed number of parameter settings is sampled from the specified</span>
+</span><span id="RandomizedSearch-1233"><a href="#RandomizedSearch-1233"><span class="linenos">1233</span></a><span class="sd">    distributions. The number of parameter settings that are tried is</span>
+</span><span id="RandomizedSearch-1234"><a href="#RandomizedSearch-1234"><span class="linenos">1234</span></a><span class="sd">    given by n_iter.</span>
+</span><span id="RandomizedSearch-1235"><a href="#RandomizedSearch-1235"><span class="linenos">1235</span></a>
+</span><span id="RandomizedSearch-1236"><a href="#RandomizedSearch-1236"><span class="linenos">1236</span></a><span class="sd">    If all parameters are presented as a list,</span>
+</span><span id="RandomizedSearch-1237"><a href="#RandomizedSearch-1237"><span class="linenos">1237</span></a><span class="sd">    sampling without replacement is performed. If at least one parameter</span>
+</span><span id="RandomizedSearch-1238"><a href="#RandomizedSearch-1238"><span class="linenos">1238</span></a><span class="sd">    is given as a distribution, sampling with replacement is used.</span>
+</span><span id="RandomizedSearch-1239"><a href="#RandomizedSearch-1239"><span class="linenos">1239</span></a><span class="sd">    It is highly recommended to use continuous distributions for continuous</span>
+</span><span id="RandomizedSearch-1240"><a href="#RandomizedSearch-1240"><span class="linenos">1240</span></a><span class="sd">    parameters.</span>
+</span><span id="RandomizedSearch-1241"><a href="#RandomizedSearch-1241"><span class="linenos">1241</span></a>
+</span><span id="RandomizedSearch-1242"><a href="#RandomizedSearch-1242"><span class="linenos">1242</span></a><span class="sd">    Parameters</span>
+</span><span id="RandomizedSearch-1243"><a href="#RandomizedSearch-1243"><span class="linenos">1243</span></a><span class="sd">    ----------</span>
+</span><span id="RandomizedSearch-1244"><a href="#RandomizedSearch-1244"><span class="linenos">1244</span></a><span class="sd">    estimator : estimator object</span>
+</span><span id="RandomizedSearch-1245"><a href="#RandomizedSearch-1245"><span class="linenos">1245</span></a><span class="sd">        An object of that type is instantiated for each grid point.</span>
+</span><span id="RandomizedSearch-1246"><a href="#RandomizedSearch-1246"><span class="linenos">1246</span></a><span class="sd">        This is assumed to implement the scikit-learn estimator interface.</span>
+</span><span id="RandomizedSearch-1247"><a href="#RandomizedSearch-1247"><span class="linenos">1247</span></a><span class="sd">        Either estimator needs to provide a ``score`` function,</span>
+</span><span id="RandomizedSearch-1248"><a href="#RandomizedSearch-1248"><span class="linenos">1248</span></a><span class="sd">        or ``scoring`` must be passed.</span>
+</span><span id="RandomizedSearch-1249"><a href="#RandomizedSearch-1249"><span class="linenos">1249</span></a>
+</span><span id="RandomizedSearch-1250"><a href="#RandomizedSearch-1250"><span class="linenos">1250</span></a><span class="sd">    param_distributions : dict or list of dicts</span>
+</span><span id="RandomizedSearch-1251"><a href="#RandomizedSearch-1251"><span class="linenos">1251</span></a><span class="sd">        Dictionary with parameters names (`str`) as keys and distributions</span>
+</span><span id="RandomizedSearch-1252"><a href="#RandomizedSearch-1252"><span class="linenos">1252</span></a><span class="sd">        or lists of parameters to try. Distributions must provide a ``rvs``</span>
+</span><span id="RandomizedSearch-1253"><a href="#RandomizedSearch-1253"><span class="linenos">1253</span></a><span class="sd">        method for sampling (such as those from scipy.stats.distributions).</span>
+</span><span id="RandomizedSearch-1254"><a href="#RandomizedSearch-1254"><span class="linenos">1254</span></a><span class="sd">        If a list is given, it is sampled uniformly.</span>
+</span><span id="RandomizedSearch-1255"><a href="#RandomizedSearch-1255"><span class="linenos">1255</span></a><span class="sd">        If a list of dicts is given, first a dict is sampled uniformly, and</span>
+</span><span id="RandomizedSearch-1256"><a href="#RandomizedSearch-1256"><span class="linenos">1256</span></a><span class="sd">        then a parameter is sampled using that dict as above.</span>
+</span><span id="RandomizedSearch-1257"><a href="#RandomizedSearch-1257"><span class="linenos">1257</span></a>
+</span><span id="RandomizedSearch-1258"><a href="#RandomizedSearch-1258"><span class="linenos">1258</span></a><span class="sd">    n_iter : int, default=10</span>
+</span><span id="RandomizedSearch-1259"><a href="#RandomizedSearch-1259"><span class="linenos">1259</span></a><span class="sd">        Number of parameter settings that are sampled. n_iter trades</span>
+</span><span id="RandomizedSearch-1260"><a href="#RandomizedSearch-1260"><span class="linenos">1260</span></a><span class="sd">        off runtime vs quality of the solution.</span>
+</span><span id="RandomizedSearch-1261"><a href="#RandomizedSearch-1261"><span class="linenos">1261</span></a>
+</span><span id="RandomizedSearch-1262"><a href="#RandomizedSearch-1262"><span class="linenos">1262</span></a><span class="sd">    scoring : str, callable, list, tuple or dict, default=None</span>
+</span><span id="RandomizedSearch-1263"><a href="#RandomizedSearch-1263"><span class="linenos">1263</span></a><span class="sd">        Strategy to evaluate the performance of the cross-validated model on</span>
+</span><span id="RandomizedSearch-1264"><a href="#RandomizedSearch-1264"><span class="linenos">1264</span></a><span class="sd">        the test set.</span>
 </span><span id="RandomizedSearch-1265"><a href="#RandomizedSearch-1265"><span class="linenos">1265</span></a>
-</span><span id="RandomizedSearch-1266"><a href="#RandomizedSearch-1266"><span class="linenos">1266</span></a><span class="sd">        See :ref:`multimetric_grid_search` for an example.</span>
+</span><span id="RandomizedSearch-1266"><a href="#RandomizedSearch-1266"><span class="linenos">1266</span></a><span class="sd">        If `scoring` represents a single score, one can use:</span>
 </span><span id="RandomizedSearch-1267"><a href="#RandomizedSearch-1267"><span class="linenos">1267</span></a>
-</span><span id="RandomizedSearch-1268"><a href="#RandomizedSearch-1268"><span class="linenos">1268</span></a><span class="sd">        If None, the estimator&#39;s score method is used.</span>
-</span><span id="RandomizedSearch-1269"><a href="#RandomizedSearch-1269"><span class="linenos">1269</span></a>
-</span><span id="RandomizedSearch-1270"><a href="#RandomizedSearch-1270"><span class="linenos">1270</span></a><span class="sd">    n_jobs : int, default=None</span>
-</span><span id="RandomizedSearch-1271"><a href="#RandomizedSearch-1271"><span class="linenos">1271</span></a><span class="sd">        Number of jobs to run in parallel.</span>
-</span><span id="RandomizedSearch-1272"><a href="#RandomizedSearch-1272"><span class="linenos">1272</span></a><span class="sd">        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.</span>
-</span><span id="RandomizedSearch-1273"><a href="#RandomizedSearch-1273"><span class="linenos">1273</span></a><span class="sd">        ``-1`` means using all processors.</span>
-</span><span id="RandomizedSearch-1274"><a href="#RandomizedSearch-1274"><span class="linenos">1274</span></a><span class="sd">        for more details.</span>
-</span><span id="RandomizedSearch-1275"><a href="#RandomizedSearch-1275"><span class="linenos">1275</span></a>
-</span><span id="RandomizedSearch-1276"><a href="#RandomizedSearch-1276"><span class="linenos">1276</span></a><span class="sd">    refit : bool, str, or callable, default=True</span>
-</span><span id="RandomizedSearch-1277"><a href="#RandomizedSearch-1277"><span class="linenos">1277</span></a><span class="sd">        Refit an estimator using the best found parameters on the whole</span>
-</span><span id="RandomizedSearch-1278"><a href="#RandomizedSearch-1278"><span class="linenos">1278</span></a><span class="sd">        dataset.</span>
-</span><span id="RandomizedSearch-1279"><a href="#RandomizedSearch-1279"><span class="linenos">1279</span></a>
-</span><span id="RandomizedSearch-1280"><a href="#RandomizedSearch-1280"><span class="linenos">1280</span></a><span class="sd">        For multiple metric evaluation, this needs to be a `str` denoting the</span>
-</span><span id="RandomizedSearch-1281"><a href="#RandomizedSearch-1281"><span class="linenos">1281</span></a><span class="sd">        scorer that would be used to find the best parameters for refitting</span>
-</span><span id="RandomizedSearch-1282"><a href="#RandomizedSearch-1282"><span class="linenos">1282</span></a><span class="sd">        the estimator at the end.</span>
-</span><span id="RandomizedSearch-1283"><a href="#RandomizedSearch-1283"><span class="linenos">1283</span></a>
-</span><span id="RandomizedSearch-1284"><a href="#RandomizedSearch-1284"><span class="linenos">1284</span></a><span class="sd">        Where there are considerations other than maximum score in</span>
-</span><span id="RandomizedSearch-1285"><a href="#RandomizedSearch-1285"><span class="linenos">1285</span></a><span class="sd">        choosing a best estimator, ``refit`` can be set to a function which</span>
-</span><span id="RandomizedSearch-1286"><a href="#RandomizedSearch-1286"><span class="linenos">1286</span></a><span class="sd">        returns the selected ``best_index_`` given the ``cv_results_``. In that</span>
-</span><span id="RandomizedSearch-1287"><a href="#RandomizedSearch-1287"><span class="linenos">1287</span></a><span class="sd">        case, the ``best_estimator_`` and ``best_params_`` will be set</span>
-</span><span id="RandomizedSearch-1288"><a href="#RandomizedSearch-1288"><span class="linenos">1288</span></a><span class="sd">        according to the returned ``best_index_`` while the ``best_score_``</span>
-</span><span id="RandomizedSearch-1289"><a href="#RandomizedSearch-1289"><span class="linenos">1289</span></a><span class="sd">        attribute will not be available.</span>
-</span><span id="RandomizedSearch-1290"><a href="#RandomizedSearch-1290"><span class="linenos">1290</span></a>
-</span><span id="RandomizedSearch-1291"><a href="#RandomizedSearch-1291"><span class="linenos">1291</span></a><span class="sd">        The refitted estimator is made available at the ``best_estimator_``</span>
-</span><span id="RandomizedSearch-1292"><a href="#RandomizedSearch-1292"><span class="linenos">1292</span></a><span class="sd">        attribute and permits using ``predict`` directly on this</span>
-</span><span id="RandomizedSearch-1293"><a href="#RandomizedSearch-1293"><span class="linenos">1293</span></a><span class="sd">        ``RandomizedSearch`` instance.</span>
-</span><span id="RandomizedSearch-1294"><a href="#RandomizedSearch-1294"><span class="linenos">1294</span></a>
-</span><span id="RandomizedSearch-1295"><a href="#RandomizedSearch-1295"><span class="linenos">1295</span></a><span class="sd">        Also for multiple metric evaluation, the attributes ``best_index_``,</span>
-</span><span id="RandomizedSearch-1296"><a href="#RandomizedSearch-1296"><span class="linenos">1296</span></a><span class="sd">        ``best_score_`` and ``best_params_`` will only be available if</span>
-</span><span id="RandomizedSearch-1297"><a href="#RandomizedSearch-1297"><span class="linenos">1297</span></a><span class="sd">        ``refit`` is set and all of them will be determined w.r.t this specific</span>
-</span><span id="RandomizedSearch-1298"><a href="#RandomizedSearch-1298"><span class="linenos">1298</span></a><span class="sd">        scorer.</span>
-</span><span id="RandomizedSearch-1299"><a href="#RandomizedSearch-1299"><span class="linenos">1299</span></a>
-</span><span id="RandomizedSearch-1300"><a href="#RandomizedSearch-1300"><span class="linenos">1300</span></a><span class="sd">        See ``scoring`` parameter to know more about multiple metric</span>
-</span><span id="RandomizedSearch-1301"><a href="#RandomizedSearch-1301"><span class="linenos">1301</span></a><span class="sd">        evaluation.</span>
-</span><span id="RandomizedSearch-1302"><a href="#RandomizedSearch-1302"><span class="linenos">1302</span></a>
-</span><span id="RandomizedSearch-1303"><a href="#RandomizedSearch-1303"><span class="linenos">1303</span></a><span class="sd">    verbose : int</span>
-</span><span id="RandomizedSearch-1304"><a href="#RandomizedSearch-1304"><span class="linenos">1304</span></a><span class="sd">        Controls the verbosity: the higher, the more messages.</span>
-</span><span id="RandomizedSearch-1305"><a href="#RandomizedSearch-1305"><span class="linenos">1305</span></a>
-</span><span id="RandomizedSearch-1306"><a href="#RandomizedSearch-1306"><span class="linenos">1306</span></a><span class="sd">        - &gt;1 : the computation time for each fold and parameter candidate is</span>
-</span><span id="RandomizedSearch-1307"><a href="#RandomizedSearch-1307"><span class="linenos">1307</span></a><span class="sd">          displayed;</span>
-</span><span id="RandomizedSearch-1308"><a href="#RandomizedSearch-1308"><span class="linenos">1308</span></a><span class="sd">        - &gt;2 : the score is also displayed;</span>
-</span><span id="RandomizedSearch-1309"><a href="#RandomizedSearch-1309"><span class="linenos">1309</span></a><span class="sd">        - &gt;3 : the fold and candidate parameter indexes are also displayed</span>
-</span><span id="RandomizedSearch-1310"><a href="#RandomizedSearch-1310"><span class="linenos">1310</span></a><span class="sd">          together with the starting time of the computation.</span>
-</span><span id="RandomizedSearch-1311"><a href="#RandomizedSearch-1311"><span class="linenos">1311</span></a>
-</span><span id="RandomizedSearch-1312"><a href="#RandomizedSearch-1312"><span class="linenos">1312</span></a><span class="sd">    pre_dispatch : int, or str, default=&#39;2*n_jobs&#39;</span>
-</span><span id="RandomizedSearch-1313"><a href="#RandomizedSearch-1313"><span class="linenos">1313</span></a><span class="sd">        Controls the number of jobs that get dispatched during parallel</span>
-</span><span id="RandomizedSearch-1314"><a href="#RandomizedSearch-1314"><span class="linenos">1314</span></a><span class="sd">        execution. Reducing this number can be useful to avoid an</span>
-</span><span id="RandomizedSearch-1315"><a href="#RandomizedSearch-1315"><span class="linenos">1315</span></a><span class="sd">        explosion of memory consumption when more jobs get dispatched</span>
-</span><span id="RandomizedSearch-1316"><a href="#RandomizedSearch-1316"><span class="linenos">1316</span></a><span class="sd">        than CPUs can process. This parameter can be:</span>
-</span><span id="RandomizedSearch-1317"><a href="#RandomizedSearch-1317"><span class="linenos">1317</span></a>
-</span><span id="RandomizedSearch-1318"><a href="#RandomizedSearch-1318"><span class="linenos">1318</span></a><span class="sd">        - None, in which case all the jobs are immediately created and spawned. Use</span>
-</span><span id="RandomizedSearch-1319"><a href="#RandomizedSearch-1319"><span class="linenos">1319</span></a><span class="sd">          this for lightweight and fast-running jobs, to avoid delays due to on-demand</span>
-</span><span id="RandomizedSearch-1320"><a href="#RandomizedSearch-1320"><span class="linenos">1320</span></a><span class="sd">          spawning of the jobs</span>
-</span><span id="RandomizedSearch-1321"><a href="#RandomizedSearch-1321"><span class="linenos">1321</span></a><span class="sd">        - An int, giving the exact number of total jobs that are spawned</span>
-</span><span id="RandomizedSearch-1322"><a href="#RandomizedSearch-1322"><span class="linenos">1322</span></a><span class="sd">        - A str, giving an expression as a function of n_jobs, as in &#39;2*n_jobs&#39;</span>
-</span><span id="RandomizedSearch-1323"><a href="#RandomizedSearch-1323"><span class="linenos">1323</span></a>
-</span><span id="RandomizedSearch-1324"><a href="#RandomizedSearch-1324"><span class="linenos">1324</span></a><span class="sd">    random_state : int, RandomState instance or None, default=None</span>
-</span><span id="RandomizedSearch-1325"><a href="#RandomizedSearch-1325"><span class="linenos">1325</span></a><span class="sd">        Pseudo random number generator state used for random uniform sampling</span>
-</span><span id="RandomizedSearch-1326"><a href="#RandomizedSearch-1326"><span class="linenos">1326</span></a><span class="sd">        from lists of possible values instead of scipy.stats distributions.</span>
-</span><span id="RandomizedSearch-1327"><a href="#RandomizedSearch-1327"><span class="linenos">1327</span></a><span class="sd">        Pass an int for reproducible output across multiple</span>
-</span><span id="RandomizedSearch-1328"><a href="#RandomizedSearch-1328"><span class="linenos">1328</span></a><span class="sd">        function calls.</span>
-</span><span id="RandomizedSearch-1329"><a href="#RandomizedSearch-1329"><span class="linenos">1329</span></a>
-</span><span id="RandomizedSearch-1330"><a href="#RandomizedSearch-1330"><span class="linenos">1330</span></a><span class="sd">    error_score : &#39;raise&#39; or numeric, default=np.nan</span>
-</span><span id="RandomizedSearch-1331"><a href="#RandomizedSearch-1331"><span class="linenos">1331</span></a><span class="sd">        Value to assign to the score if an error occurs in estimator fitting.</span>
-</span><span id="RandomizedSearch-1332"><a href="#RandomizedSearch-1332"><span class="linenos">1332</span></a><span class="sd">        If set to &#39;raise&#39;, the error is raised. If a numeric value is given,</span>
-</span><span id="RandomizedSearch-1333"><a href="#RandomizedSearch-1333"><span class="linenos">1333</span></a><span class="sd">        FitFailedWarning is raised. This parameter does not affect the refit</span>
-</span><span id="RandomizedSearch-1334"><a href="#RandomizedSearch-1334"><span class="linenos">1334</span></a><span class="sd">        step, which will always raise the error.</span>
-</span><span id="RandomizedSearch-1335"><a href="#RandomizedSearch-1335"><span class="linenos">1335</span></a>
-</span><span id="RandomizedSearch-1336"><a href="#RandomizedSearch-1336"><span class="linenos">1336</span></a><span class="sd">    return_train_score : bool, default=False</span>
-</span><span id="RandomizedSearch-1337"><a href="#RandomizedSearch-1337"><span class="linenos">1337</span></a><span class="sd">        If ``False``, the ``cv_results_`` attribute will not include training</span>
-</span><span id="RandomizedSearch-1338"><a href="#RandomizedSearch-1338"><span class="linenos">1338</span></a><span class="sd">        scores.</span>
-</span><span id="RandomizedSearch-1339"><a href="#RandomizedSearch-1339"><span class="linenos">1339</span></a><span class="sd">        Computing training scores is used to get insights on how different</span>
-</span><span id="RandomizedSearch-1340"><a href="#RandomizedSearch-1340"><span class="linenos">1340</span></a><span class="sd">        parameter settings impact the overfitting/underfitting trade-off.</span>
-</span><span id="RandomizedSearch-1341"><a href="#RandomizedSearch-1341"><span class="linenos">1341</span></a><span class="sd">        However computing the scores on the training set can be computationally</span>
-</span><span id="RandomizedSearch-1342"><a href="#RandomizedSearch-1342"><span class="linenos">1342</span></a><span class="sd">        expensive and is not strictly required to select the parameters that</span>
-</span><span id="RandomizedSearch-1343"><a href="#RandomizedSearch-1343"><span class="linenos">1343</span></a><span class="sd">        yield the best generalization performance.</span>
-</span><span id="RandomizedSearch-1344"><a href="#RandomizedSearch-1344"><span class="linenos">1344</span></a>
-</span><span id="RandomizedSearch-1345"><a href="#RandomizedSearch-1345"><span class="linenos">1345</span></a><span class="sd">    Attributes</span>
-</span><span id="RandomizedSearch-1346"><a href="#RandomizedSearch-1346"><span class="linenos">1346</span></a><span class="sd">    ----------</span>
-</span><span id="RandomizedSearch-1347"><a href="#RandomizedSearch-1347"><span class="linenos">1347</span></a><span class="sd">    cv_results_ : dict of numpy (masked) ndarrays</span>
-</span><span id="RandomizedSearch-1348"><a href="#RandomizedSearch-1348"><span class="linenos">1348</span></a><span class="sd">        A dict with keys as column headers and values as columns, that can be</span>
-</span><span id="RandomizedSearch-1349"><a href="#RandomizedSearch-1349"><span class="linenos">1349</span></a><span class="sd">        imported into a pandas ``DataFrame``.</span>
-</span><span id="RandomizedSearch-1350"><a href="#RandomizedSearch-1350"><span class="linenos">1350</span></a>
-</span><span id="RandomizedSearch-1351"><a href="#RandomizedSearch-1351"><span class="linenos">1351</span></a><span class="sd">    best_estimator_ : estimator</span>
-</span><span id="RandomizedSearch-1352"><a href="#RandomizedSearch-1352"><span class="linenos">1352</span></a><span class="sd">        Estimator that was chosen by the search, i.e. estimator</span>
-</span><span id="RandomizedSearch-1353"><a href="#RandomizedSearch-1353"><span class="linenos">1353</span></a><span class="sd">        which gave highest score (or smallest loss if specified)</span>
-</span><span id="RandomizedSearch-1354"><a href="#RandomizedSearch-1354"><span class="linenos">1354</span></a><span class="sd">        on the left out data. Not available if ``refit=False``.</span>
-</span><span id="RandomizedSearch-1355"><a href="#RandomizedSearch-1355"><span class="linenos">1355</span></a>
-</span><span id="RandomizedSearch-1356"><a href="#RandomizedSearch-1356"><span class="linenos">1356</span></a><span class="sd">        For multi-metric evaluation, this attribute is present only if</span>
-</span><span id="RandomizedSearch-1357"><a href="#RandomizedSearch-1357"><span class="linenos">1357</span></a><span class="sd">        ``refit`` is specified.</span>
-</span><span id="RandomizedSearch-1358"><a href="#RandomizedSearch-1358"><span class="linenos">1358</span></a>
-</span><span id="RandomizedSearch-1359"><a href="#RandomizedSearch-1359"><span class="linenos">1359</span></a><span class="sd">        See ``refit`` parameter for more information on allowed values.</span>
-</span><span id="RandomizedSearch-1360"><a href="#RandomizedSearch-1360"><span class="linenos">1360</span></a>
-</span><span id="RandomizedSearch-1361"><a href="#RandomizedSearch-1361"><span class="linenos">1361</span></a><span class="sd">    best_score_ : float</span>
-</span><span id="RandomizedSearch-1362"><a href="#RandomizedSearch-1362"><span class="linenos">1362</span></a><span class="sd">        Mean cross-validated score of the best_estimator.</span>
+</span><span id="RandomizedSearch-1268"><a href="#RandomizedSearch-1268"><span class="linenos">1268</span></a><span class="sd">        - a single string (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-string-names);</span>
+</span><span id="RandomizedSearch-1269"><a href="#RandomizedSearch-1269"><span class="linenos">1269</span></a><span class="sd">        - a callable (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable) that returns a single value;</span>
+</span><span id="RandomizedSearch-1270"><a href="#RandomizedSearch-1270"><span class="linenos">1270</span></a><span class="sd">        - `None`, the `estimator`&#39;s default evaluation criterion is used.</span>
+</span><span id="RandomizedSearch-1271"><a href="#RandomizedSearch-1271"><span class="linenos">1271</span></a>
+</span><span id="RandomizedSearch-1272"><a href="#RandomizedSearch-1272"><span class="linenos">1272</span></a><span class="sd">        If `scoring` represents multiple scores, one can use:</span>
+</span><span id="RandomizedSearch-1273"><a href="#RandomizedSearch-1273"><span class="linenos">1273</span></a>
+</span><span id="RandomizedSearch-1274"><a href="#RandomizedSearch-1274"><span class="linenos">1274</span></a><span class="sd">        - a list or tuple of unique strings;</span>
+</span><span id="RandomizedSearch-1275"><a href="#RandomizedSearch-1275"><span class="linenos">1275</span></a><span class="sd">        - a callable returning a dictionary where the keys are the metric</span>
+</span><span id="RandomizedSearch-1276"><a href="#RandomizedSearch-1276"><span class="linenos">1276</span></a><span class="sd">          names and the values are the metric scores;</span>
+</span><span id="RandomizedSearch-1277"><a href="#RandomizedSearch-1277"><span class="linenos">1277</span></a><span class="sd">        - a dictionary with metric names as keys and callables as values.</span>
+</span><span id="RandomizedSearch-1278"><a href="#RandomizedSearch-1278"><span class="linenos">1278</span></a>
+</span><span id="RandomizedSearch-1279"><a href="#RandomizedSearch-1279"><span class="linenos">1279</span></a><span class="sd">        See https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search for an example.</span>
+</span><span id="RandomizedSearch-1280"><a href="#RandomizedSearch-1280"><span class="linenos">1280</span></a>
+</span><span id="RandomizedSearch-1281"><a href="#RandomizedSearch-1281"><span class="linenos">1281</span></a><span class="sd">        If None, the estimator&#39;s score method is used.</span>
+</span><span id="RandomizedSearch-1282"><a href="#RandomizedSearch-1282"><span class="linenos">1282</span></a>
+</span><span id="RandomizedSearch-1283"><a href="#RandomizedSearch-1283"><span class="linenos">1283</span></a><span class="sd">    n_jobs : int, default=None</span>
+</span><span id="RandomizedSearch-1284"><a href="#RandomizedSearch-1284"><span class="linenos">1284</span></a><span class="sd">        Number of jobs to run in parallel.</span>
+</span><span id="RandomizedSearch-1285"><a href="#RandomizedSearch-1285"><span class="linenos">1285</span></a><span class="sd">        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.</span>
+</span><span id="RandomizedSearch-1286"><a href="#RandomizedSearch-1286"><span class="linenos">1286</span></a><span class="sd">        ``-1`` means using all processors.</span>
+</span><span id="RandomizedSearch-1287"><a href="#RandomizedSearch-1287"><span class="linenos">1287</span></a><span class="sd">        for more details.</span>
+</span><span id="RandomizedSearch-1288"><a href="#RandomizedSearch-1288"><span class="linenos">1288</span></a>
+</span><span id="RandomizedSearch-1289"><a href="#RandomizedSearch-1289"><span class="linenos">1289</span></a><span class="sd">    refit : bool, str, or callable, default=True</span>
+</span><span id="RandomizedSearch-1290"><a href="#RandomizedSearch-1290"><span class="linenos">1290</span></a><span class="sd">        Refit an estimator using the best found parameters on the whole</span>
+</span><span id="RandomizedSearch-1291"><a href="#RandomizedSearch-1291"><span class="linenos">1291</span></a><span class="sd">        dataset.</span>
+</span><span id="RandomizedSearch-1292"><a href="#RandomizedSearch-1292"><span class="linenos">1292</span></a>
+</span><span id="RandomizedSearch-1293"><a href="#RandomizedSearch-1293"><span class="linenos">1293</span></a><span class="sd">        For multiple metric evaluation, this needs to be a `str` denoting the</span>
+</span><span id="RandomizedSearch-1294"><a href="#RandomizedSearch-1294"><span class="linenos">1294</span></a><span class="sd">        scorer that would be used to find the best parameters for refitting</span>
+</span><span id="RandomizedSearch-1295"><a href="#RandomizedSearch-1295"><span class="linenos">1295</span></a><span class="sd">        the estimator at the end.</span>
+</span><span id="RandomizedSearch-1296"><a href="#RandomizedSearch-1296"><span class="linenos">1296</span></a>
+</span><span id="RandomizedSearch-1297"><a href="#RandomizedSearch-1297"><span class="linenos">1297</span></a><span class="sd">        Where there are considerations other than maximum score in</span>
+</span><span id="RandomizedSearch-1298"><a href="#RandomizedSearch-1298"><span class="linenos">1298</span></a><span class="sd">        choosing a best estimator, ``refit`` can be set to a function which</span>
+</span><span id="RandomizedSearch-1299"><a href="#RandomizedSearch-1299"><span class="linenos">1299</span></a><span class="sd">        returns the selected ``best_index_`` given the ``cv_results_``. In that</span>
+</span><span id="RandomizedSearch-1300"><a href="#RandomizedSearch-1300"><span class="linenos">1300</span></a><span class="sd">        case, the ``best_estimator_`` and ``best_params_`` will be set</span>
+</span><span id="RandomizedSearch-1301"><a href="#RandomizedSearch-1301"><span class="linenos">1301</span></a><span class="sd">        according to the returned ``best_index_`` while the ``best_score_``</span>
+</span><span id="RandomizedSearch-1302"><a href="#RandomizedSearch-1302"><span class="linenos">1302</span></a><span class="sd">        attribute will not be available.</span>
+</span><span id="RandomizedSearch-1303"><a href="#RandomizedSearch-1303"><span class="linenos">1303</span></a>
+</span><span id="RandomizedSearch-1304"><a href="#RandomizedSearch-1304"><span class="linenos">1304</span></a><span class="sd">        The refitted estimator is made available at the ``best_estimator_``</span>
+</span><span id="RandomizedSearch-1305"><a href="#RandomizedSearch-1305"><span class="linenos">1305</span></a><span class="sd">        attribute and permits using ``predict`` directly on this</span>
+</span><span id="RandomizedSearch-1306"><a href="#RandomizedSearch-1306"><span class="linenos">1306</span></a><span class="sd">        ``RandomizedSearch`` instance.</span>
+</span><span id="RandomizedSearch-1307"><a href="#RandomizedSearch-1307"><span class="linenos">1307</span></a>
+</span><span id="RandomizedSearch-1308"><a href="#RandomizedSearch-1308"><span class="linenos">1308</span></a><span class="sd">        Also for multiple metric evaluation, the attributes ``best_index_``,</span>
+</span><span id="RandomizedSearch-1309"><a href="#RandomizedSearch-1309"><span class="linenos">1309</span></a><span class="sd">        ``best_score_`` and ``best_params_`` will only be available if</span>
+</span><span id="RandomizedSearch-1310"><a href="#RandomizedSearch-1310"><span class="linenos">1310</span></a><span class="sd">        ``refit`` is set and all of them will be determined w.r.t this specific</span>
+</span><span id="RandomizedSearch-1311"><a href="#RandomizedSearch-1311"><span class="linenos">1311</span></a><span class="sd">        scorer.</span>
+</span><span id="RandomizedSearch-1312"><a href="#RandomizedSearch-1312"><span class="linenos">1312</span></a>
+</span><span id="RandomizedSearch-1313"><a href="#RandomizedSearch-1313"><span class="linenos">1313</span></a><span class="sd">        See ``scoring`` parameter to know more about multiple metric</span>
+</span><span id="RandomizedSearch-1314"><a href="#RandomizedSearch-1314"><span class="linenos">1314</span></a><span class="sd">        evaluation.</span>
+</span><span id="RandomizedSearch-1315"><a href="#RandomizedSearch-1315"><span class="linenos">1315</span></a>
+</span><span id="RandomizedSearch-1316"><a href="#RandomizedSearch-1316"><span class="linenos">1316</span></a><span class="sd">    verbose : int</span>
+</span><span id="RandomizedSearch-1317"><a href="#RandomizedSearch-1317"><span class="linenos">1317</span></a><span class="sd">        Controls the verbosity: the higher, the more messages.</span>
+</span><span id="RandomizedSearch-1318"><a href="#RandomizedSearch-1318"><span class="linenos">1318</span></a>
+</span><span id="RandomizedSearch-1319"><a href="#RandomizedSearch-1319"><span class="linenos">1319</span></a><span class="sd">        - &gt;1 : the computation time for each fold and parameter candidate is</span>
+</span><span id="RandomizedSearch-1320"><a href="#RandomizedSearch-1320"><span class="linenos">1320</span></a><span class="sd">          displayed;</span>
+</span><span id="RandomizedSearch-1321"><a href="#RandomizedSearch-1321"><span class="linenos">1321</span></a><span class="sd">        - &gt;2 : the score is also displayed;</span>
+</span><span id="RandomizedSearch-1322"><a href="#RandomizedSearch-1322"><span class="linenos">1322</span></a><span class="sd">        - &gt;3 : the fold and candidate parameter indexes are also displayed</span>
+</span><span id="RandomizedSearch-1323"><a href="#RandomizedSearch-1323"><span class="linenos">1323</span></a><span class="sd">          together with the starting time of the computation.</span>
+</span><span id="RandomizedSearch-1324"><a href="#RandomizedSearch-1324"><span class="linenos">1324</span></a>
+</span><span id="RandomizedSearch-1325"><a href="#RandomizedSearch-1325"><span class="linenos">1325</span></a><span class="sd">    pre_dispatch : int, or str, default=&#39;2*n_jobs&#39;</span>
+</span><span id="RandomizedSearch-1326"><a href="#RandomizedSearch-1326"><span class="linenos">1326</span></a><span class="sd">        Controls the number of jobs that get dispatched during parallel</span>
+</span><span id="RandomizedSearch-1327"><a href="#RandomizedSearch-1327"><span class="linenos">1327</span></a><span class="sd">        execution. Reducing this number can be useful to avoid an</span>
+</span><span id="RandomizedSearch-1328"><a href="#RandomizedSearch-1328"><span class="linenos">1328</span></a><span class="sd">        explosion of memory consumption when more jobs get dispatched</span>
+</span><span id="RandomizedSearch-1329"><a href="#RandomizedSearch-1329"><span class="linenos">1329</span></a><span class="sd">        than CPUs can process. This parameter can be:</span>
+</span><span id="RandomizedSearch-1330"><a href="#RandomizedSearch-1330"><span class="linenos">1330</span></a>
+</span><span id="RandomizedSearch-1331"><a href="#RandomizedSearch-1331"><span class="linenos">1331</span></a><span class="sd">        - None, in which case all the jobs are immediately created and spawned. Use</span>
+</span><span id="RandomizedSearch-1332"><a href="#RandomizedSearch-1332"><span class="linenos">1332</span></a><span class="sd">          this for lightweight and fast-running jobs, to avoid delays due to on-demand</span>
+</span><span id="RandomizedSearch-1333"><a href="#RandomizedSearch-1333"><span class="linenos">1333</span></a><span class="sd">          spawning of the jobs</span>
+</span><span id="RandomizedSearch-1334"><a href="#RandomizedSearch-1334"><span class="linenos">1334</span></a><span class="sd">        - An int, giving the exact number of total jobs that are spawned</span>
+</span><span id="RandomizedSearch-1335"><a href="#RandomizedSearch-1335"><span class="linenos">1335</span></a><span class="sd">        - A str, giving an expression as a function of n_jobs, as in &#39;2*n_jobs&#39;</span>
+</span><span id="RandomizedSearch-1336"><a href="#RandomizedSearch-1336"><span class="linenos">1336</span></a>
+</span><span id="RandomizedSearch-1337"><a href="#RandomizedSearch-1337"><span class="linenos">1337</span></a><span class="sd">    random_state : int, RandomState instance or None, default=None</span>
+</span><span id="RandomizedSearch-1338"><a href="#RandomizedSearch-1338"><span class="linenos">1338</span></a><span class="sd">        Pseudo random number generator state used for random uniform sampling</span>
+</span><span id="RandomizedSearch-1339"><a href="#RandomizedSearch-1339"><span class="linenos">1339</span></a><span class="sd">        from lists of possible values instead of scipy.stats distributions.</span>
+</span><span id="RandomizedSearch-1340"><a href="#RandomizedSearch-1340"><span class="linenos">1340</span></a><span class="sd">        Pass an int for reproducible output across multiple</span>
+</span><span id="RandomizedSearch-1341"><a href="#RandomizedSearch-1341"><span class="linenos">1341</span></a><span class="sd">        function calls.</span>
+</span><span id="RandomizedSearch-1342"><a href="#RandomizedSearch-1342"><span class="linenos">1342</span></a>
+</span><span id="RandomizedSearch-1343"><a href="#RandomizedSearch-1343"><span class="linenos">1343</span></a><span class="sd">    error_score : &#39;raise&#39; or numeric, default=np.nan</span>
+</span><span id="RandomizedSearch-1344"><a href="#RandomizedSearch-1344"><span class="linenos">1344</span></a><span class="sd">        Value to assign to the score if an error occurs in estimator fitting.</span>
+</span><span id="RandomizedSearch-1345"><a href="#RandomizedSearch-1345"><span class="linenos">1345</span></a><span class="sd">        If set to &#39;raise&#39;, the error is raised. If a numeric value is given,</span>
+</span><span id="RandomizedSearch-1346"><a href="#RandomizedSearch-1346"><span class="linenos">1346</span></a><span class="sd">        FitFailedWarning is raised. This parameter does not affect the refit</span>
+</span><span id="RandomizedSearch-1347"><a href="#RandomizedSearch-1347"><span class="linenos">1347</span></a><span class="sd">        step, which will always raise the error.</span>
+</span><span id="RandomizedSearch-1348"><a href="#RandomizedSearch-1348"><span class="linenos">1348</span></a>
+</span><span id="RandomizedSearch-1349"><a href="#RandomizedSearch-1349"><span class="linenos">1349</span></a><span class="sd">    return_train_score : bool, default=False</span>
+</span><span id="RandomizedSearch-1350"><a href="#RandomizedSearch-1350"><span class="linenos">1350</span></a><span class="sd">        If ``False``, the ``cv_results_`` attribute will not include training</span>
+</span><span id="RandomizedSearch-1351"><a href="#RandomizedSearch-1351"><span class="linenos">1351</span></a><span class="sd">        scores.</span>
+</span><span id="RandomizedSearch-1352"><a href="#RandomizedSearch-1352"><span class="linenos">1352</span></a><span class="sd">        Computing training scores is used to get insights on how different</span>
+</span><span id="RandomizedSearch-1353"><a href="#RandomizedSearch-1353"><span class="linenos">1353</span></a><span class="sd">        parameter settings impact the overfitting/underfitting trade-off.</span>
+</span><span id="RandomizedSearch-1354"><a href="#RandomizedSearch-1354"><span class="linenos">1354</span></a><span class="sd">        However computing the scores on the training set can be computationally</span>
+</span><span id="RandomizedSearch-1355"><a href="#RandomizedSearch-1355"><span class="linenos">1355</span></a><span class="sd">        expensive and is not strictly required to select the parameters that</span>
+</span><span id="RandomizedSearch-1356"><a href="#RandomizedSearch-1356"><span class="linenos">1356</span></a><span class="sd">        yield the best generalization performance.</span>
+</span><span id="RandomizedSearch-1357"><a href="#RandomizedSearch-1357"><span class="linenos">1357</span></a>
+</span><span id="RandomizedSearch-1358"><a href="#RandomizedSearch-1358"><span class="linenos">1358</span></a><span class="sd">    Attributes</span>
+</span><span id="RandomizedSearch-1359"><a href="#RandomizedSearch-1359"><span class="linenos">1359</span></a><span class="sd">    ----------</span>
+</span><span id="RandomizedSearch-1360"><a href="#RandomizedSearch-1360"><span class="linenos">1360</span></a><span class="sd">    cv_results_ : dict of numpy (masked) ndarrays</span>
+</span><span id="RandomizedSearch-1361"><a href="#RandomizedSearch-1361"><span class="linenos">1361</span></a><span class="sd">        A dict with keys as column headers and values as columns, that can be</span>
+</span><span id="RandomizedSearch-1362"><a href="#RandomizedSearch-1362"><span class="linenos">1362</span></a><span class="sd">        imported into a pandas ``DataFrame``.</span>
 </span><span id="RandomizedSearch-1363"><a href="#RandomizedSearch-1363"><span class="linenos">1363</span></a>
-</span><span id="RandomizedSearch-1364"><a href="#RandomizedSearch-1364"><span class="linenos">1364</span></a><span class="sd">        For multi-metric evaluation, this is not available if ``refit`` is</span>
-</span><span id="RandomizedSearch-1365"><a href="#RandomizedSearch-1365"><span class="linenos">1365</span></a><span class="sd">        ``False``. See ``refit`` parameter for more information.</span>
+</span><span id="RandomizedSearch-1364"><a href="#RandomizedSearch-1364"><span class="linenos">1364</span></a><span class="sd">        For an example of analysing ``cv_results_``,</span>
+</span><span id="RandomizedSearch-1365"><a href="#RandomizedSearch-1365"><span class="linenos">1365</span></a><span class="sd">        see https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py.</span>
 </span><span id="RandomizedSearch-1366"><a href="#RandomizedSearch-1366"><span class="linenos">1366</span></a>
-</span><span id="RandomizedSearch-1367"><a href="#RandomizedSearch-1367"><span class="linenos">1367</span></a><span class="sd">        This attribute is not available if ``refit`` is a function.</span>
+</span><span id="RandomizedSearch-1367"><a href="#RandomizedSearch-1367"><span class="linenos">1367</span></a><span class="sd">        NOTE</span>
 </span><span id="RandomizedSearch-1368"><a href="#RandomizedSearch-1368"><span class="linenos">1368</span></a>
-</span><span id="RandomizedSearch-1369"><a href="#RandomizedSearch-1369"><span class="linenos">1369</span></a><span class="sd">    best_params_ : dict</span>
-</span><span id="RandomizedSearch-1370"><a href="#RandomizedSearch-1370"><span class="linenos">1370</span></a><span class="sd">        Parameter setting that gave the best results on the hold out data.</span>
+</span><span id="RandomizedSearch-1369"><a href="#RandomizedSearch-1369"><span class="linenos">1369</span></a><span class="sd">        The key ``&#39;params&#39;`` is used to store a list of parameter</span>
+</span><span id="RandomizedSearch-1370"><a href="#RandomizedSearch-1370"><span class="linenos">1370</span></a><span class="sd">        settings dicts for all the parameter candidates.</span>
 </span><span id="RandomizedSearch-1371"><a href="#RandomizedSearch-1371"><span class="linenos">1371</span></a>
-</span><span id="RandomizedSearch-1372"><a href="#RandomizedSearch-1372"><span class="linenos">1372</span></a><span class="sd">        For multi-metric evaluation, this is not available if ``refit`` is</span>
-</span><span id="RandomizedSearch-1373"><a href="#RandomizedSearch-1373"><span class="linenos">1373</span></a><span class="sd">        ``False``. See ``refit`` parameter for more information.</span>
-</span><span id="RandomizedSearch-1374"><a href="#RandomizedSearch-1374"><span class="linenos">1374</span></a>
-</span><span id="RandomizedSearch-1375"><a href="#RandomizedSearch-1375"><span class="linenos">1375</span></a><span class="sd">    best_index_ : int</span>
-</span><span id="RandomizedSearch-1376"><a href="#RandomizedSearch-1376"><span class="linenos">1376</span></a><span class="sd">        The index (of the ``cv_results_`` arrays) which corresponds to the best</span>
-</span><span id="RandomizedSearch-1377"><a href="#RandomizedSearch-1377"><span class="linenos">1377</span></a><span class="sd">        candidate parameter setting.</span>
-</span><span id="RandomizedSearch-1378"><a href="#RandomizedSearch-1378"><span class="linenos">1378</span></a>
-</span><span id="RandomizedSearch-1379"><a href="#RandomizedSearch-1379"><span class="linenos">1379</span></a><span class="sd">        The dict at ``search.cv_results_[&#39;params&#39;][search.best_index_]`` gives</span>
-</span><span id="RandomizedSearch-1380"><a href="#RandomizedSearch-1380"><span class="linenos">1380</span></a><span class="sd">        the parameter setting for the best model, that gives the highest</span>
-</span><span id="RandomizedSearch-1381"><a href="#RandomizedSearch-1381"><span class="linenos">1381</span></a><span class="sd">        mean score (``search.best_score_``).</span>
-</span><span id="RandomizedSearch-1382"><a href="#RandomizedSearch-1382"><span class="linenos">1382</span></a>
-</span><span id="RandomizedSearch-1383"><a href="#RandomizedSearch-1383"><span class="linenos">1383</span></a><span class="sd">        For multi-metric evaluation, this is not available if ``refit`` is</span>
-</span><span id="RandomizedSearch-1384"><a href="#RandomizedSearch-1384"><span class="linenos">1384</span></a><span class="sd">        ``False``. See ``refit`` parameter for more information.</span>
-</span><span id="RandomizedSearch-1385"><a href="#RandomizedSearch-1385"><span class="linenos">1385</span></a>
-</span><span id="RandomizedSearch-1386"><a href="#RandomizedSearch-1386"><span class="linenos">1386</span></a><span class="sd">    scorer_ : function or a dict</span>
-</span><span id="RandomizedSearch-1387"><a href="#RandomizedSearch-1387"><span class="linenos">1387</span></a><span class="sd">        Scorer function used on the held out data to choose the best</span>
-</span><span id="RandomizedSearch-1388"><a href="#RandomizedSearch-1388"><span class="linenos">1388</span></a><span class="sd">        parameters for the model.</span>
+</span><span id="RandomizedSearch-1372"><a href="#RandomizedSearch-1372"><span class="linenos">1372</span></a><span class="sd">        For multi-metric evaluation, the scores for all the scorers are</span>
+</span><span id="RandomizedSearch-1373"><a href="#RandomizedSearch-1373"><span class="linenos">1373</span></a><span class="sd">        available in the ``cv_results_`` dict at the keys ending with that</span>
+</span><span id="RandomizedSearch-1374"><a href="#RandomizedSearch-1374"><span class="linenos">1374</span></a><span class="sd">        scorer&#39;s name (``&#39;_&lt;scorer_name&gt;&#39;``) instead of ``&#39;_score&#39;`` shown</span>
+</span><span id="RandomizedSearch-1375"><a href="#RandomizedSearch-1375"><span class="linenos">1375</span></a><span class="sd">        above. (&#39;split0_test_precision&#39;, &#39;mean_train_precision&#39; etc.)</span>
+</span><span id="RandomizedSearch-1376"><a href="#RandomizedSearch-1376"><span class="linenos">1376</span></a>
+</span><span id="RandomizedSearch-1377"><a href="#RandomizedSearch-1377"><span class="linenos">1377</span></a><span class="sd">    best_estimator_ : estimator</span>
+</span><span id="RandomizedSearch-1378"><a href="#RandomizedSearch-1378"><span class="linenos">1378</span></a><span class="sd">        Estimator that was chosen by the search, i.e. estimator</span>
+</span><span id="RandomizedSearch-1379"><a href="#RandomizedSearch-1379"><span class="linenos">1379</span></a><span class="sd">        which gave highest score (or smallest loss if specified)</span>
+</span><span id="RandomizedSearch-1380"><a href="#RandomizedSearch-1380"><span class="linenos">1380</span></a><span class="sd">        on the left out data. Not available if ``refit=False``.</span>
+</span><span id="RandomizedSearch-1381"><a href="#RandomizedSearch-1381"><span class="linenos">1381</span></a>
+</span><span id="RandomizedSearch-1382"><a href="#RandomizedSearch-1382"><span class="linenos">1382</span></a><span class="sd">        For multi-metric evaluation, this attribute is present only if</span>
+</span><span id="RandomizedSearch-1383"><a href="#RandomizedSearch-1383"><span class="linenos">1383</span></a><span class="sd">        ``refit`` is specified.</span>
+</span><span id="RandomizedSearch-1384"><a href="#RandomizedSearch-1384"><span class="linenos">1384</span></a>
+</span><span id="RandomizedSearch-1385"><a href="#RandomizedSearch-1385"><span class="linenos">1385</span></a><span class="sd">        See ``refit`` parameter for more information on allowed values.</span>
+</span><span id="RandomizedSearch-1386"><a href="#RandomizedSearch-1386"><span class="linenos">1386</span></a>
+</span><span id="RandomizedSearch-1387"><a href="#RandomizedSearch-1387"><span class="linenos">1387</span></a><span class="sd">    best_score_ : float</span>
+</span><span id="RandomizedSearch-1388"><a href="#RandomizedSearch-1388"><span class="linenos">1388</span></a><span class="sd">        Mean cross-validated score of the best_estimator.</span>
 </span><span id="RandomizedSearch-1389"><a href="#RandomizedSearch-1389"><span class="linenos">1389</span></a>
-</span><span id="RandomizedSearch-1390"><a href="#RandomizedSearch-1390"><span class="linenos">1390</span></a><span class="sd">        For multi-metric evaluation, this attribute holds the validated</span>
-</span><span id="RandomizedSearch-1391"><a href="#RandomizedSearch-1391"><span class="linenos">1391</span></a><span class="sd">        ``scoring`` dict which maps the scorer key to the scorer callable.</span>
+</span><span id="RandomizedSearch-1390"><a href="#RandomizedSearch-1390"><span class="linenos">1390</span></a><span class="sd">        For multi-metric evaluation, this is not available if ``refit`` is</span>
+</span><span id="RandomizedSearch-1391"><a href="#RandomizedSearch-1391"><span class="linenos">1391</span></a><span class="sd">        ``False``. See ``refit`` parameter for more information.</span>
 </span><span id="RandomizedSearch-1392"><a href="#RandomizedSearch-1392"><span class="linenos">1392</span></a>
-</span><span id="RandomizedSearch-1393"><a href="#RandomizedSearch-1393"><span class="linenos">1393</span></a><span class="sd">    n_splits_ : int</span>
-</span><span id="RandomizedSearch-1394"><a href="#RandomizedSearch-1394"><span class="linenos">1394</span></a><span class="sd">        The number of cross-validation splits (folds/iterations).</span>
-</span><span id="RandomizedSearch-1395"><a href="#RandomizedSearch-1395"><span class="linenos">1395</span></a>
-</span><span id="RandomizedSearch-1396"><a href="#RandomizedSearch-1396"><span class="linenos">1396</span></a><span class="sd">    refit_time_ : float</span>
-</span><span id="RandomizedSearch-1397"><a href="#RandomizedSearch-1397"><span class="linenos">1397</span></a><span class="sd">        Seconds used for refitting the best model on the whole dataset.</span>
-</span><span id="RandomizedSearch-1398"><a href="#RandomizedSearch-1398"><span class="linenos">1398</span></a>
-</span><span id="RandomizedSearch-1399"><a href="#RandomizedSearch-1399"><span class="linenos">1399</span></a><span class="sd">        This is present only if ``refit`` is not False.</span>
+</span><span id="RandomizedSearch-1393"><a href="#RandomizedSearch-1393"><span class="linenos">1393</span></a><span class="sd">        This attribute is not available if ``refit`` is a function.</span>
+</span><span id="RandomizedSearch-1394"><a href="#RandomizedSearch-1394"><span class="linenos">1394</span></a>
+</span><span id="RandomizedSearch-1395"><a href="#RandomizedSearch-1395"><span class="linenos">1395</span></a><span class="sd">    best_params_ : dict</span>
+</span><span id="RandomizedSearch-1396"><a href="#RandomizedSearch-1396"><span class="linenos">1396</span></a><span class="sd">        Parameter setting that gave the best results on the hold out data.</span>
+</span><span id="RandomizedSearch-1397"><a href="#RandomizedSearch-1397"><span class="linenos">1397</span></a>
+</span><span id="RandomizedSearch-1398"><a href="#RandomizedSearch-1398"><span class="linenos">1398</span></a><span class="sd">        For multi-metric evaluation, this is not available if ``refit`` is</span>
+</span><span id="RandomizedSearch-1399"><a href="#RandomizedSearch-1399"><span class="linenos">1399</span></a><span class="sd">        ``False``. See ``refit`` parameter for more information.</span>
 </span><span id="RandomizedSearch-1400"><a href="#RandomizedSearch-1400"><span class="linenos">1400</span></a>
-</span><span id="RandomizedSearch-1401"><a href="#RandomizedSearch-1401"><span class="linenos">1401</span></a><span class="sd">    multimetric_ : bool</span>
-</span><span id="RandomizedSearch-1402"><a href="#RandomizedSearch-1402"><span class="linenos">1402</span></a><span class="sd">        Whether or not the scorers compute several metrics.</span>
-</span><span id="RandomizedSearch-1403"><a href="#RandomizedSearch-1403"><span class="linenos">1403</span></a>
-</span><span id="RandomizedSearch-1404"><a href="#RandomizedSearch-1404"><span class="linenos">1404</span></a><span class="sd">    classes_ : ndarray of shape (n_classes,)</span>
-</span><span id="RandomizedSearch-1405"><a href="#RandomizedSearch-1405"><span class="linenos">1405</span></a><span class="sd">        The classes labels. This is present only if ``refit`` is specified and</span>
-</span><span id="RandomizedSearch-1406"><a href="#RandomizedSearch-1406"><span class="linenos">1406</span></a><span class="sd">        the underlying estimator is a classifier.</span>
-</span><span id="RandomizedSearch-1407"><a href="#RandomizedSearch-1407"><span class="linenos">1407</span></a>
-</span><span id="RandomizedSearch-1408"><a href="#RandomizedSearch-1408"><span class="linenos">1408</span></a><span class="sd">    n_features_in_ : int</span>
-</span><span id="RandomizedSearch-1409"><a href="#RandomizedSearch-1409"><span class="linenos">1409</span></a><span class="sd">        Number of features seen during :term:`fit`. Only defined if</span>
-</span><span id="RandomizedSearch-1410"><a href="#RandomizedSearch-1410"><span class="linenos">1410</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
-</span><span id="RandomizedSearch-1411"><a href="#RandomizedSearch-1411"><span class="linenos">1411</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
-</span><span id="RandomizedSearch-1412"><a href="#RandomizedSearch-1412"><span class="linenos">1412</span></a><span class="sd">        `n_features_in_` when fit.</span>
-</span><span id="RandomizedSearch-1413"><a href="#RandomizedSearch-1413"><span class="linenos">1413</span></a>
-</span><span id="RandomizedSearch-1414"><a href="#RandomizedSearch-1414"><span class="linenos">1414</span></a><span class="sd">    feature_names_in_ : ndarray of shape (`n_features_in_`,)</span>
-</span><span id="RandomizedSearch-1415"><a href="#RandomizedSearch-1415"><span class="linenos">1415</span></a><span class="sd">        Names of features seen during :term:`fit`. Only defined if</span>
-</span><span id="RandomizedSearch-1416"><a href="#RandomizedSearch-1416"><span class="linenos">1416</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
-</span><span id="RandomizedSearch-1417"><a href="#RandomizedSearch-1417"><span class="linenos">1417</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
-</span><span id="RandomizedSearch-1418"><a href="#RandomizedSearch-1418"><span class="linenos">1418</span></a><span class="sd">        `feature_names_in_` when fit.</span>
-</span><span id="RandomizedSearch-1419"><a href="#RandomizedSearch-1419"><span class="linenos">1419</span></a>
-</span><span id="RandomizedSearch-1420"><a href="#RandomizedSearch-1420"><span class="linenos">1420</span></a><span class="sd">    See Also</span>
-</span><span id="RandomizedSearch-1421"><a href="#RandomizedSearch-1421"><span class="linenos">1421</span></a><span class="sd">    --------</span>
-</span><span id="RandomizedSearch-1422"><a href="#RandomizedSearch-1422"><span class="linenos">1422</span></a><span class="sd">    GridSearch : Does exhaustive search over a grid of parameters.</span>
-</span><span id="RandomizedSearch-1423"><a href="#RandomizedSearch-1423"><span class="linenos">1423</span></a><span class="sd">    ParameterSampler : A generator over parameter settings, constructed from</span>
-</span><span id="RandomizedSearch-1424"><a href="#RandomizedSearch-1424"><span class="linenos">1424</span></a><span class="sd">        param_distributions.</span>
-</span><span id="RandomizedSearch-1425"><a href="#RandomizedSearch-1425"><span class="linenos">1425</span></a>
-</span><span id="RandomizedSearch-1426"><a href="#RandomizedSearch-1426"><span class="linenos">1426</span></a><span class="sd">    Notes</span>
-</span><span id="RandomizedSearch-1427"><a href="#RandomizedSearch-1427"><span class="linenos">1427</span></a><span class="sd">    -----</span>
-</span><span id="RandomizedSearch-1428"><a href="#RandomizedSearch-1428"><span class="linenos">1428</span></a><span class="sd">    The parameters selected are those that maximize the score of the held-out</span>
-</span><span id="RandomizedSearch-1429"><a href="#RandomizedSearch-1429"><span class="linenos">1429</span></a><span class="sd">    data, according to the scoring parameter.</span>
-</span><span id="RandomizedSearch-1430"><a href="#RandomizedSearch-1430"><span class="linenos">1430</span></a>
-</span><span id="RandomizedSearch-1431"><a href="#RandomizedSearch-1431"><span class="linenos">1431</span></a><span class="sd">    If `n_jobs` was set to a value higher than one, the data is copied for each</span>
-</span><span id="RandomizedSearch-1432"><a href="#RandomizedSearch-1432"><span class="linenos">1432</span></a><span class="sd">    parameter setting(and not `n_jobs` times). This is done for efficiency</span>
-</span><span id="RandomizedSearch-1433"><a href="#RandomizedSearch-1433"><span class="linenos">1433</span></a><span class="sd">    reasons if individual jobs take very little time, but may raise errors if</span>
-</span><span id="RandomizedSearch-1434"><a href="#RandomizedSearch-1434"><span class="linenos">1434</span></a><span class="sd">    the dataset is large and not enough memory is available.  A workaround in</span>
-</span><span id="RandomizedSearch-1435"><a href="#RandomizedSearch-1435"><span class="linenos">1435</span></a><span class="sd">    this case is to set `pre_dispatch`. Then, the memory is copied only</span>
-</span><span id="RandomizedSearch-1436"><a href="#RandomizedSearch-1436"><span class="linenos">1436</span></a><span class="sd">    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *</span>
-</span><span id="RandomizedSearch-1437"><a href="#RandomizedSearch-1437"><span class="linenos">1437</span></a><span class="sd">    n_jobs`.</span>
-</span><span id="RandomizedSearch-1438"><a href="#RandomizedSearch-1438"><span class="linenos">1438</span></a>
-</span><span id="RandomizedSearch-1439"><a href="#RandomizedSearch-1439"><span class="linenos">1439</span></a><span class="sd">    Examples</span>
-</span><span id="RandomizedSearch-1440"><a href="#RandomizedSearch-1440"><span class="linenos">1440</span></a><span class="sd">    --------</span>
-</span><span id="RandomizedSearch-1441"><a href="#RandomizedSearch-1441"><span class="linenos">1441</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.datasets import load_iris</span>
-</span><span id="RandomizedSearch-1442"><a href="#RandomizedSearch-1442"><span class="linenos">1442</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.linear_model import LogisticRegression</span>
-</span><span id="RandomizedSearch-1443"><a href="#RandomizedSearch-1443"><span class="linenos">1443</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.model_selection import RandomizedSearch</span>
-</span><span id="RandomizedSearch-1444"><a href="#RandomizedSearch-1444"><span class="linenos">1444</span></a><span class="sd">    &gt;&gt;&gt; from scipy.stats import uniform</span>
-</span><span id="RandomizedSearch-1445"><a href="#RandomizedSearch-1445"><span class="linenos">1445</span></a><span class="sd">    &gt;&gt;&gt; iris = load_iris()</span>
-</span><span id="RandomizedSearch-1446"><a href="#RandomizedSearch-1446"><span class="linenos">1446</span></a><span class="sd">    &gt;&gt;&gt; logistic = LogisticRegression(</span>
-</span><span id="RandomizedSearch-1447"><a href="#RandomizedSearch-1447"><span class="linenos">1447</span></a><span class="sd">    ...     solver=&quot;saga&quot;, tol=1e-2, max_iter=200, random_state=0</span>
-</span><span id="RandomizedSearch-1448"><a href="#RandomizedSearch-1448"><span class="linenos">1448</span></a><span class="sd">    ... )</span>
-</span><span id="RandomizedSearch-1449"><a href="#RandomizedSearch-1449"><span class="linenos">1449</span></a><span class="sd">    &gt;&gt;&gt; distributions = dict(C=uniform(loc=0, scale=4), penalty=[&quot;l2&quot;, &quot;l1&quot;])</span>
-</span><span id="RandomizedSearch-1450"><a href="#RandomizedSearch-1450"><span class="linenos">1450</span></a><span class="sd">    &gt;&gt;&gt; clf = RandomizedSearch(logistic, distributions, random_state=0)</span>
-</span><span id="RandomizedSearch-1451"><a href="#RandomizedSearch-1451"><span class="linenos">1451</span></a><span class="sd">    &gt;&gt;&gt; search = clf.fit(iris.data, iris.target)</span>
-</span><span id="RandomizedSearch-1452"><a href="#RandomizedSearch-1452"><span class="linenos">1452</span></a><span class="sd">    &gt;&gt;&gt; search.best_params_</span>
-</span><span id="RandomizedSearch-1453"><a href="#RandomizedSearch-1453"><span class="linenos">1453</span></a><span class="sd">    {&#39;C&#39;: np.float64(2.195...), &#39;penalty&#39;: &#39;l1&#39;}</span>
-</span><span id="RandomizedSearch-1454"><a href="#RandomizedSearch-1454"><span class="linenos">1454</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="RandomizedSearch-1455"><a href="#RandomizedSearch-1455"><span class="linenos">1455</span></a>
-</span><span id="RandomizedSearch-1456"><a href="#RandomizedSearch-1456"><span class="linenos">1456</span></a>    <span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="RandomizedSearch-1457"><a href="#RandomizedSearch-1457"><span class="linenos">1457</span></a>        <span class="o">**</span><span class="n">BaseSearch</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1458"><a href="#RandomizedSearch-1458"><span class="linenos">1458</span></a>        <span class="s2">&quot;param_distributions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
-</span><span id="RandomizedSearch-1459"><a href="#RandomizedSearch-1459"><span class="linenos">1459</span></a>        <span class="s2">&quot;n_iter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
-</span><span id="RandomizedSearch-1460"><a href="#RandomizedSearch-1460"><span class="linenos">1460</span></a>        <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;random_state&quot;</span><span class="p">],</span>
-</span><span id="RandomizedSearch-1461"><a href="#RandomizedSearch-1461"><span class="linenos">1461</span></a>    <span class="p">}</span>
-</span><span id="RandomizedSearch-1462"><a href="#RandomizedSearch-1462"><span class="linenos">1462</span></a>
-</span><span id="RandomizedSearch-1463"><a href="#RandomizedSearch-1463"><span class="linenos">1463</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="RandomizedSearch-1464"><a href="#RandomizedSearch-1464"><span class="linenos">1464</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1465"><a href="#RandomizedSearch-1465"><span class="linenos">1465</span></a>        <span class="n">estimator</span><span class="p">:</span> <span class="n">EstimatorLike</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1466"><a href="#RandomizedSearch-1466"><span class="linenos">1466</span></a>        <span class="n">param_distributions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1467"><a href="#RandomizedSearch-1467"><span class="linenos">1467</span></a>        <span class="o">*</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1468"><a href="#RandomizedSearch-1468"><span class="linenos">1468</span></a>        <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1469"><a href="#RandomizedSearch-1469"><span class="linenos">1469</span></a>        <span class="n">scoring</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1470"><a href="#RandomizedSearch-1470"><span class="linenos">1470</span></a>        <span class="n">n_jobs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1471"><a href="#RandomizedSearch-1471"><span class="linenos">1471</span></a>        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1472"><a href="#RandomizedSearch-1472"><span class="linenos">1472</span></a>        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1473"><a href="#RandomizedSearch-1473"><span class="linenos">1473</span></a>        <span class="n">pre_dispatch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;2*n_jobs&quot;</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1474"><a href="#RandomizedSearch-1474"><span class="linenos">1474</span></a>        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1475"><a href="#RandomizedSearch-1475"><span class="linenos">1475</span></a>        <span class="n">error_score</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;raise&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1476"><a href="#RandomizedSearch-1476"><span class="linenos">1476</span></a>        <span class="n">return_train_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1477"><a href="#RandomizedSearch-1477"><span class="linenos">1477</span></a>    <span class="p">):</span>
-</span><span id="RandomizedSearch-1478"><a href="#RandomizedSearch-1478"><span class="linenos">1478</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param_distributions</span> <span class="o">=</span> <span class="n">param_distributions</span>
-</span><span id="RandomizedSearch-1479"><a href="#RandomizedSearch-1479"><span class="linenos">1479</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span> <span class="o">=</span> <span class="n">n_iter</span>
-</span><span id="RandomizedSearch-1480"><a href="#RandomizedSearch-1480"><span class="linenos">1480</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
-</span><span id="RandomizedSearch-1481"><a href="#RandomizedSearch-1481"><span class="linenos">1481</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="RandomizedSearch-1482"><a href="#RandomizedSearch-1482"><span class="linenos">1482</span></a>            <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1483"><a href="#RandomizedSearch-1483"><span class="linenos">1483</span></a>            <span class="n">scoring</span><span class="o">=</span><span class="n">scoring</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1484"><a href="#RandomizedSearch-1484"><span class="linenos">1484</span></a>            <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1485"><a href="#RandomizedSearch-1485"><span class="linenos">1485</span></a>            <span class="n">refit</span><span class="o">=</span><span class="n">refit</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1486"><a href="#RandomizedSearch-1486"><span class="linenos">1486</span></a>            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1487"><a href="#RandomizedSearch-1487"><span class="linenos">1487</span></a>            <span class="n">pre_dispatch</span><span class="o">=</span><span class="n">pre_dispatch</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1488"><a href="#RandomizedSearch-1488"><span class="linenos">1488</span></a>            <span class="n">error_score</span><span class="o">=</span><span class="n">error_score</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1489"><a href="#RandomizedSearch-1489"><span class="linenos">1489</span></a>            <span class="n">return_train_score</span><span class="o">=</span><span class="n">return_train_score</span><span class="p">,</span>
-</span><span id="RandomizedSearch-1490"><a href="#RandomizedSearch-1490"><span class="linenos">1490</span></a>        <span class="p">)</span>
-</span><span id="RandomizedSearch-1491"><a href="#RandomizedSearch-1491"><span class="linenos">1491</span></a>
-</span><span id="RandomizedSearch-1492"><a href="#RandomizedSearch-1492"><span class="linenos">1492</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_run_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluate_candidates</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="RandomizedSearch-1493"><a href="#RandomizedSearch-1493"><span class="linenos">1493</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Search n_iter candidates from param_distributions&quot;&quot;&quot;</span>
-</span><span id="RandomizedSearch-1494"><a href="#RandomizedSearch-1494"><span class="linenos">1494</span></a>        <span class="n">evaluate_candidates</span><span class="p">(</span>
-</span><span id="RandomizedSearch-1495"><a href="#RandomizedSearch-1495"><span class="linenos">1495</span></a>            <span class="n">ParameterSampler</span><span class="p">(</span>
-</span><span id="RandomizedSearch-1496"><a href="#RandomizedSearch-1496"><span class="linenos">1496</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">param_distributions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span>
-</span><span id="RandomizedSearch-1497"><a href="#RandomizedSearch-1497"><span class="linenos">1497</span></a>            <span class="p">)</span>
-</span><span id="RandomizedSearch-1498"><a href="#RandomizedSearch-1498"><span class="linenos">1498</span></a>        <span class="p">)</span>
+</span><span id="RandomizedSearch-1401"><a href="#RandomizedSearch-1401"><span class="linenos">1401</span></a><span class="sd">    best_index_ : int</span>
+</span><span id="RandomizedSearch-1402"><a href="#RandomizedSearch-1402"><span class="linenos">1402</span></a><span class="sd">        The index (of the ``cv_results_`` arrays) which corresponds to the best</span>
+</span><span id="RandomizedSearch-1403"><a href="#RandomizedSearch-1403"><span class="linenos">1403</span></a><span class="sd">        candidate parameter setting.</span>
+</span><span id="RandomizedSearch-1404"><a href="#RandomizedSearch-1404"><span class="linenos">1404</span></a>
+</span><span id="RandomizedSearch-1405"><a href="#RandomizedSearch-1405"><span class="linenos">1405</span></a><span class="sd">        The dict at ``search.cv_results_[&#39;params&#39;][search.best_index_]`` gives</span>
+</span><span id="RandomizedSearch-1406"><a href="#RandomizedSearch-1406"><span class="linenos">1406</span></a><span class="sd">        the parameter setting for the best model, that gives the highest</span>
+</span><span id="RandomizedSearch-1407"><a href="#RandomizedSearch-1407"><span class="linenos">1407</span></a><span class="sd">        mean score (``search.best_score_``).</span>
+</span><span id="RandomizedSearch-1408"><a href="#RandomizedSearch-1408"><span class="linenos">1408</span></a>
+</span><span id="RandomizedSearch-1409"><a href="#RandomizedSearch-1409"><span class="linenos">1409</span></a><span class="sd">        For multi-metric evaluation, this is not available if ``refit`` is</span>
+</span><span id="RandomizedSearch-1410"><a href="#RandomizedSearch-1410"><span class="linenos">1410</span></a><span class="sd">        ``False``. See ``refit`` parameter for more information.</span>
+</span><span id="RandomizedSearch-1411"><a href="#RandomizedSearch-1411"><span class="linenos">1411</span></a>
+</span><span id="RandomizedSearch-1412"><a href="#RandomizedSearch-1412"><span class="linenos">1412</span></a><span class="sd">    scorer_ : function or a dict</span>
+</span><span id="RandomizedSearch-1413"><a href="#RandomizedSearch-1413"><span class="linenos">1413</span></a><span class="sd">        Scorer function used on the held out data to choose the best</span>
+</span><span id="RandomizedSearch-1414"><a href="#RandomizedSearch-1414"><span class="linenos">1414</span></a><span class="sd">        parameters for the model.</span>
+</span><span id="RandomizedSearch-1415"><a href="#RandomizedSearch-1415"><span class="linenos">1415</span></a>
+</span><span id="RandomizedSearch-1416"><a href="#RandomizedSearch-1416"><span class="linenos">1416</span></a><span class="sd">        For multi-metric evaluation, this attribute holds the validated</span>
+</span><span id="RandomizedSearch-1417"><a href="#RandomizedSearch-1417"><span class="linenos">1417</span></a><span class="sd">        ``scoring`` dict which maps the scorer key to the scorer callable.</span>
+</span><span id="RandomizedSearch-1418"><a href="#RandomizedSearch-1418"><span class="linenos">1418</span></a>
+</span><span id="RandomizedSearch-1419"><a href="#RandomizedSearch-1419"><span class="linenos">1419</span></a><span class="sd">    n_splits_ : int</span>
+</span><span id="RandomizedSearch-1420"><a href="#RandomizedSearch-1420"><span class="linenos">1420</span></a><span class="sd">        The number of cross-validation splits (folds/iterations).</span>
+</span><span id="RandomizedSearch-1421"><a href="#RandomizedSearch-1421"><span class="linenos">1421</span></a>
+</span><span id="RandomizedSearch-1422"><a href="#RandomizedSearch-1422"><span class="linenos">1422</span></a><span class="sd">    refit_time_ : float</span>
+</span><span id="RandomizedSearch-1423"><a href="#RandomizedSearch-1423"><span class="linenos">1423</span></a><span class="sd">        Seconds used for refitting the best model on the whole dataset.</span>
+</span><span id="RandomizedSearch-1424"><a href="#RandomizedSearch-1424"><span class="linenos">1424</span></a>
+</span><span id="RandomizedSearch-1425"><a href="#RandomizedSearch-1425"><span class="linenos">1425</span></a><span class="sd">        This is present only if ``refit`` is not False.</span>
+</span><span id="RandomizedSearch-1426"><a href="#RandomizedSearch-1426"><span class="linenos">1426</span></a>
+</span><span id="RandomizedSearch-1427"><a href="#RandomizedSearch-1427"><span class="linenos">1427</span></a><span class="sd">    multimetric_ : bool</span>
+</span><span id="RandomizedSearch-1428"><a href="#RandomizedSearch-1428"><span class="linenos">1428</span></a><span class="sd">        Whether or not the scorers compute several metrics.</span>
+</span><span id="RandomizedSearch-1429"><a href="#RandomizedSearch-1429"><span class="linenos">1429</span></a>
+</span><span id="RandomizedSearch-1430"><a href="#RandomizedSearch-1430"><span class="linenos">1430</span></a><span class="sd">    classes_ : ndarray of shape (n_classes,)</span>
+</span><span id="RandomizedSearch-1431"><a href="#RandomizedSearch-1431"><span class="linenos">1431</span></a><span class="sd">        The classes labels. This is present only if ``refit`` is specified and</span>
+</span><span id="RandomizedSearch-1432"><a href="#RandomizedSearch-1432"><span class="linenos">1432</span></a><span class="sd">        the underlying estimator is a classifier.</span>
+</span><span id="RandomizedSearch-1433"><a href="#RandomizedSearch-1433"><span class="linenos">1433</span></a>
+</span><span id="RandomizedSearch-1434"><a href="#RandomizedSearch-1434"><span class="linenos">1434</span></a><span class="sd">    n_features_in_ : int</span>
+</span><span id="RandomizedSearch-1435"><a href="#RandomizedSearch-1435"><span class="linenos">1435</span></a><span class="sd">        Number of features seen during :term:`fit`. Only defined if</span>
+</span><span id="RandomizedSearch-1436"><a href="#RandomizedSearch-1436"><span class="linenos">1436</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
+</span><span id="RandomizedSearch-1437"><a href="#RandomizedSearch-1437"><span class="linenos">1437</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
+</span><span id="RandomizedSearch-1438"><a href="#RandomizedSearch-1438"><span class="linenos">1438</span></a><span class="sd">        `n_features_in_` when fit.</span>
+</span><span id="RandomizedSearch-1439"><a href="#RandomizedSearch-1439"><span class="linenos">1439</span></a>
+</span><span id="RandomizedSearch-1440"><a href="#RandomizedSearch-1440"><span class="linenos">1440</span></a><span class="sd">    feature_names_in_ : ndarray of shape (`n_features_in_`,)</span>
+</span><span id="RandomizedSearch-1441"><a href="#RandomizedSearch-1441"><span class="linenos">1441</span></a><span class="sd">        Names of features seen during :term:`fit`. Only defined if</span>
+</span><span id="RandomizedSearch-1442"><a href="#RandomizedSearch-1442"><span class="linenos">1442</span></a><span class="sd">        `best_estimator_` is defined (see the documentation for the `refit`</span>
+</span><span id="RandomizedSearch-1443"><a href="#RandomizedSearch-1443"><span class="linenos">1443</span></a><span class="sd">        parameter for more details) and that `best_estimator_` exposes</span>
+</span><span id="RandomizedSearch-1444"><a href="#RandomizedSearch-1444"><span class="linenos">1444</span></a><span class="sd">        `feature_names_in_` when fit.</span>
+</span><span id="RandomizedSearch-1445"><a href="#RandomizedSearch-1445"><span class="linenos">1445</span></a>
+</span><span id="RandomizedSearch-1446"><a href="#RandomizedSearch-1446"><span class="linenos">1446</span></a><span class="sd">    See Also</span>
+</span><span id="RandomizedSearch-1447"><a href="#RandomizedSearch-1447"><span class="linenos">1447</span></a><span class="sd">    --------</span>
+</span><span id="RandomizedSearch-1448"><a href="#RandomizedSearch-1448"><span class="linenos">1448</span></a><span class="sd">    GridSearch : Does exhaustive search over a grid of parameters.</span>
+</span><span id="RandomizedSearch-1449"><a href="#RandomizedSearch-1449"><span class="linenos">1449</span></a><span class="sd">    ParameterSampler : A generator over parameter settings, constructed from</span>
+</span><span id="RandomizedSearch-1450"><a href="#RandomizedSearch-1450"><span class="linenos">1450</span></a><span class="sd">        param_distributions.</span>
+</span><span id="RandomizedSearch-1451"><a href="#RandomizedSearch-1451"><span class="linenos">1451</span></a>
+</span><span id="RandomizedSearch-1452"><a href="#RandomizedSearch-1452"><span class="linenos">1452</span></a><span class="sd">    Notes</span>
+</span><span id="RandomizedSearch-1453"><a href="#RandomizedSearch-1453"><span class="linenos">1453</span></a><span class="sd">    -----</span>
+</span><span id="RandomizedSearch-1454"><a href="#RandomizedSearch-1454"><span class="linenos">1454</span></a><span class="sd">    The parameters selected are those that maximize the score of the held-out</span>
+</span><span id="RandomizedSearch-1455"><a href="#RandomizedSearch-1455"><span class="linenos">1455</span></a><span class="sd">    data, according to the scoring parameter.</span>
+</span><span id="RandomizedSearch-1456"><a href="#RandomizedSearch-1456"><span class="linenos">1456</span></a>
+</span><span id="RandomizedSearch-1457"><a href="#RandomizedSearch-1457"><span class="linenos">1457</span></a><span class="sd">    If `n_jobs` was set to a value higher than one, the data is copied for each</span>
+</span><span id="RandomizedSearch-1458"><a href="#RandomizedSearch-1458"><span class="linenos">1458</span></a><span class="sd">    parameter setting(and not `n_jobs` times). This is done for efficiency</span>
+</span><span id="RandomizedSearch-1459"><a href="#RandomizedSearch-1459"><span class="linenos">1459</span></a><span class="sd">    reasons if individual jobs take very little time, but may raise errors if</span>
+</span><span id="RandomizedSearch-1460"><a href="#RandomizedSearch-1460"><span class="linenos">1460</span></a><span class="sd">    the dataset is large and not enough memory is available.  A workaround in</span>
+</span><span id="RandomizedSearch-1461"><a href="#RandomizedSearch-1461"><span class="linenos">1461</span></a><span class="sd">    this case is to set `pre_dispatch`. Then, the memory is copied only</span>
+</span><span id="RandomizedSearch-1462"><a href="#RandomizedSearch-1462"><span class="linenos">1462</span></a><span class="sd">    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *</span>
+</span><span id="RandomizedSearch-1463"><a href="#RandomizedSearch-1463"><span class="linenos">1463</span></a><span class="sd">    n_jobs`.</span>
+</span><span id="RandomizedSearch-1464"><a href="#RandomizedSearch-1464"><span class="linenos">1464</span></a>
+</span><span id="RandomizedSearch-1465"><a href="#RandomizedSearch-1465"><span class="linenos">1465</span></a><span class="sd">    Examples</span>
+</span><span id="RandomizedSearch-1466"><a href="#RandomizedSearch-1466"><span class="linenos">1466</span></a><span class="sd">    --------</span>
+</span><span id="RandomizedSearch-1467"><a href="#RandomizedSearch-1467"><span class="linenos">1467</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.datasets import load_iris</span>
+</span><span id="RandomizedSearch-1468"><a href="#RandomizedSearch-1468"><span class="linenos">1468</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.linear_model import LogisticRegression</span>
+</span><span id="RandomizedSearch-1469"><a href="#RandomizedSearch-1469"><span class="linenos">1469</span></a><span class="sd">    &gt;&gt;&gt; from sklearn.model_selection import RandomizedSearch</span>
+</span><span id="RandomizedSearch-1470"><a href="#RandomizedSearch-1470"><span class="linenos">1470</span></a><span class="sd">    &gt;&gt;&gt; from scipy.stats import uniform</span>
+</span><span id="RandomizedSearch-1471"><a href="#RandomizedSearch-1471"><span class="linenos">1471</span></a><span class="sd">    &gt;&gt;&gt; iris = load_iris()</span>
+</span><span id="RandomizedSearch-1472"><a href="#RandomizedSearch-1472"><span class="linenos">1472</span></a><span class="sd">    &gt;&gt;&gt; logistic = LogisticRegression(</span>
+</span><span id="RandomizedSearch-1473"><a href="#RandomizedSearch-1473"><span class="linenos">1473</span></a><span class="sd">    ...     solver=&quot;saga&quot;, tol=1e-2, max_iter=200, random_state=0</span>
+</span><span id="RandomizedSearch-1474"><a href="#RandomizedSearch-1474"><span class="linenos">1474</span></a><span class="sd">    ... )</span>
+</span><span id="RandomizedSearch-1475"><a href="#RandomizedSearch-1475"><span class="linenos">1475</span></a><span class="sd">    &gt;&gt;&gt; distributions = dict(C=uniform(loc=0, scale=4), penalty=[&quot;l2&quot;, &quot;l1&quot;])</span>
+</span><span id="RandomizedSearch-1476"><a href="#RandomizedSearch-1476"><span class="linenos">1476</span></a><span class="sd">    &gt;&gt;&gt; clf = RandomizedSearch(logistic, distributions, random_state=0)</span>
+</span><span id="RandomizedSearch-1477"><a href="#RandomizedSearch-1477"><span class="linenos">1477</span></a><span class="sd">    &gt;&gt;&gt; search = clf.fit(iris.data, iris.target)</span>
+</span><span id="RandomizedSearch-1478"><a href="#RandomizedSearch-1478"><span class="linenos">1478</span></a><span class="sd">    &gt;&gt;&gt; search.best_params_</span>
+</span><span id="RandomizedSearch-1479"><a href="#RandomizedSearch-1479"><span class="linenos">1479</span></a><span class="sd">    {&#39;C&#39;: np.float64(2.195...), &#39;penalty&#39;: &#39;l1&#39;}</span>
+</span><span id="RandomizedSearch-1480"><a href="#RandomizedSearch-1480"><span class="linenos">1480</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="RandomizedSearch-1481"><a href="#RandomizedSearch-1481"><span class="linenos">1481</span></a>
+</span><span id="RandomizedSearch-1482"><a href="#RandomizedSearch-1482"><span class="linenos">1482</span></a>    <span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="RandomizedSearch-1483"><a href="#RandomizedSearch-1483"><span class="linenos">1483</span></a>        <span class="o">**</span><span class="n">BaseSearch</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1484"><a href="#RandomizedSearch-1484"><span class="linenos">1484</span></a>        <span class="s2">&quot;param_distributions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+</span><span id="RandomizedSearch-1485"><a href="#RandomizedSearch-1485"><span class="linenos">1485</span></a>        <span class="s2">&quot;n_iter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
+</span><span id="RandomizedSearch-1486"><a href="#RandomizedSearch-1486"><span class="linenos">1486</span></a>        <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;random_state&quot;</span><span class="p">],</span>
+</span><span id="RandomizedSearch-1487"><a href="#RandomizedSearch-1487"><span class="linenos">1487</span></a>    <span class="p">}</span>
+</span><span id="RandomizedSearch-1488"><a href="#RandomizedSearch-1488"><span class="linenos">1488</span></a>
+</span><span id="RandomizedSearch-1489"><a href="#RandomizedSearch-1489"><span class="linenos">1489</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="RandomizedSearch-1490"><a href="#RandomizedSearch-1490"><span class="linenos">1490</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1491"><a href="#RandomizedSearch-1491"><span class="linenos">1491</span></a>        <span class="n">estimator</span><span class="p">:</span> <span class="n">EstimatorLike</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1492"><a href="#RandomizedSearch-1492"><span class="linenos">1492</span></a>        <span class="n">param_distributions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1493"><a href="#RandomizedSearch-1493"><span class="linenos">1493</span></a>        <span class="o">*</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1494"><a href="#RandomizedSearch-1494"><span class="linenos">1494</span></a>        <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1495"><a href="#RandomizedSearch-1495"><span class="linenos">1495</span></a>        <span class="n">scoring</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1496"><a href="#RandomizedSearch-1496"><span class="linenos">1496</span></a>        <span class="n">n_jobs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1497"><a href="#RandomizedSearch-1497"><span class="linenos">1497</span></a>        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1498"><a href="#RandomizedSearch-1498"><span class="linenos">1498</span></a>        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1499"><a href="#RandomizedSearch-1499"><span class="linenos">1499</span></a>        <span class="n">pre_dispatch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;2*n_jobs&quot;</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1500"><a href="#RandomizedSearch-1500"><span class="linenos">1500</span></a>        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1501"><a href="#RandomizedSearch-1501"><span class="linenos">1501</span></a>        <span class="n">error_score</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;raise&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1502"><a href="#RandomizedSearch-1502"><span class="linenos">1502</span></a>        <span class="n">return_train_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1503"><a href="#RandomizedSearch-1503"><span class="linenos">1503</span></a>    <span class="p">):</span>
+</span><span id="RandomizedSearch-1504"><a href="#RandomizedSearch-1504"><span class="linenos">1504</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param_distributions</span> <span class="o">=</span> <span class="n">param_distributions</span>
+</span><span id="RandomizedSearch-1505"><a href="#RandomizedSearch-1505"><span class="linenos">1505</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span> <span class="o">=</span> <span class="n">n_iter</span>
+</span><span id="RandomizedSearch-1506"><a href="#RandomizedSearch-1506"><span class="linenos">1506</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
+</span><span id="RandomizedSearch-1507"><a href="#RandomizedSearch-1507"><span class="linenos">1507</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="RandomizedSearch-1508"><a href="#RandomizedSearch-1508"><span class="linenos">1508</span></a>            <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1509"><a href="#RandomizedSearch-1509"><span class="linenos">1509</span></a>            <span class="n">scoring</span><span class="o">=</span><span class="n">scoring</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1510"><a href="#RandomizedSearch-1510"><span class="linenos">1510</span></a>            <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1511"><a href="#RandomizedSearch-1511"><span class="linenos">1511</span></a>            <span class="n">refit</span><span class="o">=</span><span class="n">refit</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1512"><a href="#RandomizedSearch-1512"><span class="linenos">1512</span></a>            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1513"><a href="#RandomizedSearch-1513"><span class="linenos">1513</span></a>            <span class="n">pre_dispatch</span><span class="o">=</span><span class="n">pre_dispatch</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1514"><a href="#RandomizedSearch-1514"><span class="linenos">1514</span></a>            <span class="n">error_score</span><span class="o">=</span><span class="n">error_score</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1515"><a href="#RandomizedSearch-1515"><span class="linenos">1515</span></a>            <span class="n">return_train_score</span><span class="o">=</span><span class="n">return_train_score</span><span class="p">,</span>
+</span><span id="RandomizedSearch-1516"><a href="#RandomizedSearch-1516"><span class="linenos">1516</span></a>        <span class="p">)</span>
+</span><span id="RandomizedSearch-1517"><a href="#RandomizedSearch-1517"><span class="linenos">1517</span></a>
+</span><span id="RandomizedSearch-1518"><a href="#RandomizedSearch-1518"><span class="linenos">1518</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_run_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluate_candidates</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="RandomizedSearch-1519"><a href="#RandomizedSearch-1519"><span class="linenos">1519</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Search n_iter candidates from param_distributions&quot;&quot;&quot;</span>
+</span><span id="RandomizedSearch-1520"><a href="#RandomizedSearch-1520"><span class="linenos">1520</span></a>        <span class="n">evaluate_candidates</span><span class="p">(</span>
+</span><span id="RandomizedSearch-1521"><a href="#RandomizedSearch-1521"><span class="linenos">1521</span></a>            <span class="n">ParameterSampler</span><span class="p">(</span>
+</span><span id="RandomizedSearch-1522"><a href="#RandomizedSearch-1522"><span class="linenos">1522</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">param_distributions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span>
+</span><span id="RandomizedSearch-1523"><a href="#RandomizedSearch-1523"><span class="linenos">1523</span></a>            <span class="p">)</span>
+</span><span id="RandomizedSearch-1524"><a href="#RandomizedSearch-1524"><span class="linenos">1524</span></a>        <span class="p">)</span>
 </span></pre></div>
 
 
@@ -937,8 +976,8 @@ the test set.</p>
 <p>If <code>scoring</code> represents a single score, one can use:</p>
 
 <ul>
-<li>a single string (see :ref:<code>scoring_string_names</code>);</li>
-<li>a callable (see :ref:<code>scoring_callable</code>) that returns a single value;</li>
+<li>a single string (see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-string-names);</li>
+<li>a callable (see <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable">https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-callable</a>) that returns a single value;</li>
 <li><code>None</code>, the <code>estimator</code>'s default evaluation criterion is used.</li>
 </ul>
 
@@ -951,7 +990,7 @@ names and the values are the metric scores;</li>
 <li>a dictionary with metric names as keys and callables as values.</li>
 </ul>
 
-<p>See :ref:<code>multimetric_grid_search</code> for an example.</p>
+<p>See <a href="https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search">https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search</a> for an example.</p>
 
 <p>If None, the estimator's score method is used.</p></li>
 <li><strong>n_jobs</strong> (int, default=None):
@@ -1031,9 +1070,22 @@ yield the best generalization performance.</li>
 <h6 id="attributes">Attributes</h6>
 
 <ul>
-<li><strong>cv_results_</strong> (dict of numpy (masked) ndarrays):
+<li><p><strong>cv_results_</strong> (dict of numpy (masked) ndarrays):
 A dict with keys as column headers and values as columns, that can be
-imported into a pandas <code>DataFrame</code>.</li>
+imported into a pandas <code>DataFrame</code>.</p>
+
+<p>For an example of analysing <code>cv_results_</code>,
+see <a href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py">https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_stats.html#sphx-glr-auto-examples-model-selection-plot-grid-search-stats-py</a>.</p>
+
+<p>NOTE</p>
+
+<p>The key <code>'params'</code> is used to store a list of parameter
+settings dicts for all the parameter candidates.</p>
+
+<p>For multi-metric evaluation, the scores for all the scorers are
+available in the <code>cv_results_</code> dict at the keys ending with that
+scorer's name (<code>'_&lt;scorer_name&gt;'</code>) instead of <code>'_score'</code> shown
+above. ('split0_test_precision', 'mean_train_precision' etc.)</p></li>
 <li><p><strong>best_estimator_</strong> (estimator):
 Estimator that was chosen by the search, i.e. estimator
 which gave highest score (or smallest loss if specified)
