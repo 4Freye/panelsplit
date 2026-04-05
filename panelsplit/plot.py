@@ -91,9 +91,10 @@ def _plot_group_subplots(panel_split: PanelSplit, n_groups: int, show: bool):
         ax = axes[ax_idx]
         group_mask = panel_split._groups == group
 
+        group_indices = np.where(group_mask)[0]
         for i, (train_indices, test_indices) in enumerate(splits):
-            group_train_indices = np.intersect1d(train_indices, np.where(group_mask)[0])
-            group_test_indices = np.intersect1d(test_indices, np.where(group_mask)[0])
+            group_train_indices = np.intersect1d(train_indices, group_indices, assume_unique=True)
+            group_test_indices = np.intersect1d(test_indices, group_indices, assume_unique=True)
 
             train_periods = panel_split._periods[group_train_indices]
             test_periods = panel_split._periods[group_test_indices]
