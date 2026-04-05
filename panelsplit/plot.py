@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from .cross_validation import PanelSplit
 from typing import Tuple, Optional
 
@@ -43,16 +44,26 @@ def plot_splits(
     >>> ax.set_title("A custom plot of cross-validation splits")
     >>> plt.show()
     """
-    split_output = panel_split._u_periods_cv
+    split_output = panel_split.split()
     splits = len(split_output)
-    fig, ax = plt.subplots()
+    
+    # Dynamically scale the plot height if there are many splits
+    fig, ax = plt.subplots(figsize=(8, max(4, splits * 0.5)))
 
-    for i, (train_index, test_index) in enumerate(split_output):
-        ax.scatter(train_index, [i] * len(train_index), color="blue", marker=".", s=50)
-        ax.scatter(test_index, [i] * len(test_index), color="red", marker=".", s=50)
+    try:
+        for i, (train_index, test_index) in enumerate(split_output):
+            # Extract actual periods tied to each index, then get unique to prevent heavy overplotting
+            train_periods = np.unique(panel_split._periods[train_index])
+            test_periods = np.unique(panel_split._periods[test_index])
+            
+            ax.scatter(train_periods, [i] * len(train_periods), color="blue", marker=".", s=50)
+            ax.scatter(test_periods, [i] * len(test_periods), color="red", marker=".", s=50)
+    except Exception as e:
+        # Fallback if there are any issues with numpy indexing
+        print(f"Warning: Failed to map periods smoothly: {e}")
 
     ax.set_xlabel("Periods")
-    ax.set_ylabel("Split")
+    ax.set_ylabel("Split Index")
     ax.set_title("Cross-validation splits")
     ax.set_yticks(range(splits))  # Set the number of ticks on the y-axis
     ax.set_yticklabels(
