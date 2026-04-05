@@ -104,17 +104,12 @@ def _plot_group_subplots(
 
         group_indices = np.where(group_mask)[0]
         for i, (train_indices, test_indices) in enumerate(splits):
-<<<<<<< HEAD
             group_train_indices = np.intersect1d(
                 train_indices, group_indices, assume_unique=True
             )
             group_test_indices = np.intersect1d(
                 test_indices, group_indices, assume_unique=True
             )
-=======
-            group_train_indices = np.intersect1d(train_indices, group_indices, assume_unique=True)
-            group_test_indices = np.intersect1d(test_indices, group_indices, assume_unique=True)
->>>>>>> a640cdb29f7e73ed094f8cc59271f21c343f3e0e
 
             train_periods = panel_split._periods[group_train_indices]
             test_periods = panel_split._periods[group_test_indices]
