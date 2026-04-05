@@ -57,9 +57,9 @@ from sklearn.model_selection import StratifiedGroupKFold
 
 # Create spatial splits that evaluate cluster-level combinations robustly:
 panel_split = PanelSplit(
-    periods=panel_data.year, 
+    periods=panel_data.year,
     n_splits=2,
-    groups=panel_data["country_id"], 
+    groups=panel_data["country_id"],
     group_splitter=StratifiedGroupKFold(n_splits=3) # Use any valid Scikit-Learn group methodology!
 )
 

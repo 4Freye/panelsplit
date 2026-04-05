@@ -35,6 +35,15 @@ def plot_splits(
         If `show` is False, returns a tuple `(fig, ax)` where `fig` is the matplotlib Figure
         and `ax` is the Axes object (or an array of Axes objects if groups are used).
         If `show` is True, the plot is displayed and the function returns None.
+
+    Examples
+    --------
+    >>> from panelsplit.cross_validation import PanelSplit
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> periods = np.array([1, 2, 3, 4, 5, 6])
+    >>> ps = PanelSplit(periods, n_splits=3)
+    >>> plot_splits(ps)
     """
 
     if panel_split._groups is not None:
@@ -61,7 +70,9 @@ def plot_splits(
         return fig, ax
 
 
-def _plot_group_subplots(panel_split: PanelSplit, n_groups: int, show: bool):
+def _plot_group_subplots(
+    panel_split: PanelSplit, n_groups: int, show: bool
+) -> Optional[Tuple[plt.Figure, Union[plt.Axes, np.ndarray]]]:
     unique_groups = np.unique(np.asarray(panel_split._groups))
     selected_groups = unique_groups[:n_groups]
     actual_groups = len(selected_groups)
@@ -74,7 +85,7 @@ def _plot_group_subplots(panel_split: PanelSplit, n_groups: int, show: bool):
     )
 
     if actual_groups == 1:
-        axes = [axes]
+        axes = np.array([axes])
 
     splits = panel_split.split()
     n_total_splits = len(splits)
@@ -91,9 +102,14 @@ def _plot_group_subplots(panel_split: PanelSplit, n_groups: int, show: bool):
         ax = axes[ax_idx]
         group_mask = panel_split._groups == group
 
+        group_indices = np.where(group_mask)[0]
         for i, (train_indices, test_indices) in enumerate(splits):
-            group_train_indices = np.intersect1d(train_indices, np.where(group_mask)[0])
-            group_test_indices = np.intersect1d(test_indices, np.where(group_mask)[0])
+            group_train_indices = np.intersect1d(
+                train_indices, group_indices, assume_unique=True
+            )
+            group_test_indices = np.intersect1d(
+                test_indices, group_indices, assume_unique=True
+            )
 
             train_periods = panel_split._periods[group_train_indices]
             test_periods = panel_split._periods[group_test_indices]

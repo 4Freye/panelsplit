@@ -1,20 +1,20 @@
 import warnings
-from typing import Optional, Union, TYPE_CHECKING, Any
-from numpy.typing import NDArray
-from narwhals.typing import IntoDataFrame, IntoSeries
-from .utils.typing import ArrayLike, CVIndices
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import narwhals as nw
 import numpy as np
-from sklearn.model_selection import TimeSeriesSplit, GroupKFold
+from narwhals.typing import IntoDataFrame, IntoSeries
+from numpy.typing import NDArray
+from sklearn.model_selection import GroupKFold, TimeSeriesSplit
 
+from .utils.typing import ArrayLike, CVIndices
 from .utils.validation import (
     _safe_indexing,
     _to_numpy_array,
+    check_groups,
     check_labels,
     check_periods,
     get_index_or_col_from_df,
-    check_groups,
 )
 
 if TYPE_CHECKING:
@@ -173,7 +173,7 @@ class PanelSplit:
                 warnings.warn(
                     f"Could not cleanly pre-generate spatial splits in __init__: {e}. Passing X and y to split() natively at runtime."
                 )
-                self.train_test_splits = None
+                self.train_test_splits = []
 
     def _split_unique_periods(self, indices: Any, unique_periods: NDArray) -> CVIndices:
         """
@@ -254,22 +254,13 @@ class PanelSplit:
             for sp_train, sp_test in self._group_splitter.split(
                 dummy_X, y, groups=self._groups
             ):
-                sp_train_mask = np.zeros(len(self._periods), dtype=bool)
-                sp_train_mask[sp_train] = True
-                sp_test_mask = np.zeros(len(self._periods), dtype=bool)
-                sp_test_mask[sp_test] = True
-
-                final_train_mask = np.zeros(len(self._periods), dtype=bool)
-                final_train_mask[train_indices] = True
-                final_train_mask &= sp_train_mask
-
-                final_test_mask = np.zeros(len(self._periods), dtype=bool)
-                final_test_mask[test_indices] = True
-                final_test_mask &= sp_test_mask
-
-                spatio_temporal_splits.append(
-                    (np.where(final_train_mask)[0], np.where(final_test_mask)[0])
+                final_train_indices = np.intersect1d(
+                    train_indices, sp_train, assume_unique=True
                 )
+                final_test_indices = np.intersect1d(
+                    test_indices, sp_test, assume_unique=True
+                )
+                spatio_temporal_splits.append((final_train_indices, final_test_indices))
         return spatio_temporal_splits
 
     def split(
@@ -319,7 +310,7 @@ class PanelSplit:
         if X is not None or y is not None:
             self.train_test_splits = self._compute_spatio_temporal_splits(X=X, y=y)
 
-        if self.train_test_splits is None:
+        if not self.train_test_splits:
             raise ValueError(
                 "train_test_splits is uncomputed. Your selected group_splitter requires passing X and y explicitly to the .split() method to calculate strata boundaries."
             )
