@@ -357,3 +357,25 @@ def _check_X_y(X: ArrayLike, y: Optional[ArrayLike] = None) -> None:
 
     if y is not None and not _is_valid_data_type(y, "y"):
         raise TypeError("y should be a dataframe, series, or array-like object")
+
+
+def check_groups(groups: Any, obj_name: str = "groups") -> Optional[NDArray]:
+    """
+    Validate and homogenize the groups array. If a 2D array or DataFrame with multiple
+    columns is provided, it creates a composite 1D array of string identifiers.
+    """
+    if groups is None:
+        return None
+
+    try:
+        groups_nw = nw.from_native(groups, pass_through=True)
+        if hasattr(groups_nw, "to_numpy"):
+            arr = groups_nw.to_numpy()
+        else:
+            arr = np.array(groups)
+    except Exception:
+        arr = np.array(groups)
+
+    if arr.ndim > 1 and arr.shape[1] > 1:
+        return np.array(["_".join(map(str, row)) for row in arr])
+    return arr.flatten()

@@ -6,7 +6,7 @@ from .utils.typing import ArrayLike, CVIndices
 
 import narwhals as nw
 import numpy as np
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit, GroupKFold
 
 from .utils.validation import (
     _safe_indexing,
@@ -14,6 +14,7 @@ from .utils.validation import (
     check_labels,
     check_periods,
     get_index_or_col_from_df,
+    check_groups,
 )
 
 if TYPE_CHECKING:
@@ -64,6 +65,11 @@ class PanelSplit:
     include_train_in_test : bool
         Whether to include all training sets in their respective test sets. If set to
         True, overrides ``include_first_train_in_test``. Default is False.
+    groups : Optional[Any]
+        A 1D/2D array or DataFrame of spatial groupings/IDs for implementing spatio-temporal holdouts.
+        If provided, tests will simultaneously cross-validate over spatial nested structures using GroupKFold. Default is None.
+    n_group_splits : int
+        Number of nested splits for spatial `GroupKFold` on the provided groups. Default is 1.
 
     Attributes
     ----------
@@ -90,6 +96,8 @@ class PanelSplit:
         max_train_size: Optional[int] = None,
         include_first_train_in_test: bool = False,
         include_train_in_test: bool = False,
+        groups: Optional[Any] = None,
+        n_group_splits: int = 1,
     ) -> None:
         periods = check_periods(periods)
 
@@ -119,10 +127,27 @@ class PanelSplit:
             self._include_first_train_in_test = include_first_train_in_test
         else:
             self._include_first_train_in_test = True
+
+        self._groups = check_groups(groups) if groups is not None else None
+        self.n_group_splits = n_group_splits
+
         self._u_periods_cv = self._split_unique_periods(indices, unique_periods_array)
         self._periods = _to_numpy_array(periods)
         self._snapshots = _to_numpy_array(snapshots) if snapshots is not None else None
-        self.n_splits = n_splits
+
+        if self._groups is not None:
+            if self.n_group_splits < 2:
+                raise ValueError(
+                    "n_group_splits must be at least 2 when groups are provided."
+                )
+            if len(self._groups) != len(self._periods):
+                raise ValueError(
+                    f"groups size ({len(self._groups)}) does not match periods size ({len(self._periods)})"
+                )
+
+        self.n_splits = n_splits * (
+            self.n_group_splits if self._groups is not None else 1
+        )
         self.train_test_splits = self._gen_splits()
 
     def _split_unique_periods(self, indices: Any, unique_periods: NDArray) -> CVIndices:
@@ -185,7 +210,29 @@ class PanelSplit:
                 train_indices = np.where(np.isin(self._periods, train_periods))[0]
                 test_indices = np.where(np.isin(self._periods, test_periods))[0]
 
-            train_test_splits.append((train_indices, test_indices))
+            if self._groups is not None:
+                gkf = GroupKFold(n_splits=self.n_group_splits)
+                for sp_train, sp_test in gkf.split(
+                    np.zeros(len(self._periods)), groups=self._groups
+                ):
+                    sp_train_mask = np.zeros(len(self._periods), dtype=bool)
+                    sp_train_mask[sp_train] = True
+                    sp_test_mask = np.zeros(len(self._periods), dtype=bool)
+                    sp_test_mask[sp_test] = True
+
+                    final_train_mask = np.zeros(len(self._periods), dtype=bool)
+                    final_train_mask[train_indices] = True
+                    final_train_mask &= sp_train_mask
+
+                    final_test_mask = np.zeros(len(self._periods), dtype=bool)
+                    final_test_mask[test_indices] = True
+                    final_test_mask &= sp_test_mask
+
+                    train_test_splits.append(
+                        (np.where(final_train_mask)[0], np.where(final_test_mask)[0])
+                    )
+            else:
+                train_test_splits.append((train_indices, test_indices))
 
         return train_test_splits
 

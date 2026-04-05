@@ -48,6 +48,27 @@ for train_idx, test_idx in splits:
     print("Test:"); display(panel_data.loc[test_idx])
 ```
 
+### Spatio-Temporal Cross-Validation
+
+panelsplit can also handle combined spatio-temporal holdouts by factoring in entity hierarchies (e.g., states or cities) to prevent cluster-level leakage. You can simultaneously validate on unobserved time periods *and* structurally unobserved groups:
+
+```python
+# Create spatial splits that evaluate cluster-level combinations robustly:
+panel_split = PanelSplit(
+    periods=panel_data.year, 
+    n_splits=2,
+    groups=panel_data["country_id"], 
+    n_group_splits=3 # Number of spatial (GroupKFold) folds per temporal cutoff
+)
+
+# You can also pass arbitrarily nested multi-column groups!
+# PanelSplit will internally coalesce them into a flat hash ID for KFold slicing.
+# e.g., groups = panel_data[["country_id", "city_id"]]
+
+splits = panel_split.split()
+# Yields 6 total sub-splits (2 temporal cuts x 3 spatial holds)!
+```
+
 For more examples and detailed usage instructions, refer to the [examples](examples) directory in this repository. Also feel free to check out [an introductory article on panelsplit](https://towardsdatascience.com/how-to-cross-validate-your-panel-data-in-python-9ad981ddd043).
 
 ## Background
