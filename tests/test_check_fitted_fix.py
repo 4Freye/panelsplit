@@ -26,7 +26,9 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_check_is_fitted_unfitted_pipeline(self):
         """Test that check_is_fitted raises NotFittedError for unfitted pipeline."""
-        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+        pipeline = SequentialCVPipeline(
+            [("regressor", RandomForestRegressor())], cv_steps=[None]
+        )
 
         # Should not have fitted_steps_ attribute before fitting
         self.assertFalse(hasattr(pipeline, "fitted_steps_"))
@@ -40,7 +42,9 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_check_is_fitted_fitted_pipeline(self):
         """Test that check_is_fitted passes for fitted pipeline."""
-        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+        pipeline = SequentialCVPipeline(
+            [("regressor", RandomForestRegressor())], cv_steps=[None]
+        )
 
         # Fit the pipeline
         pipeline.fit(self.X, self.y)
@@ -61,9 +65,10 @@ class TestCheckFittedFix(unittest.TestCase):
         # Use a pipeline without CV for the final step to avoid dimension issues
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),  # No CV to avoid dimension mismatch
-                ("regressor", RandomForestRegressor(), None),
-            ]
+                ("scaler", StandardScaler()),  # No CV to avoid dimension mismatch
+                ("regressor", RandomForestRegressor()),
+            ],
+            cv_steps=[None, None],
         )
 
         # Should fail before fitting
@@ -79,7 +84,9 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_dynamic_methods_unfitted_pipeline(self):
         """Test that dynamic methods raise NotFittedError for unfitted pipeline."""
-        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+        pipeline = SequentialCVPipeline(
+            [("regressor", RandomForestRegressor())], cv_steps=[None]
+        )
 
         # Dynamic predict method should raise NotFittedError
         with self.assertRaises(NotFittedError) as context:
@@ -89,7 +96,9 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_dynamic_methods_fitted_pipeline(self):
         """Test that dynamic methods work after fitting."""
-        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+        pipeline = SequentialCVPipeline(
+            [("regressor", RandomForestRegressor())], cv_steps=[None]
+        )
 
         # Fit first
         pipeline.fit(self.X, self.y)
@@ -100,7 +109,9 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_check_is_fitted_with_specific_attribute(self):
         """Test check_is_fitted with specific attribute name."""
-        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+        pipeline = SequentialCVPipeline(
+            [("regressor", RandomForestRegressor())], cv_steps=[None]
+        )
 
         # Should fail with specific attribute check
         with self.assertRaises(NotFittedError):
@@ -115,7 +126,9 @@ class TestCheckFittedFix(unittest.TestCase):
 
     def test_sklearn_convention_compliance(self):
         """Test that the pipeline follows sklearn's fitted attribute conventions."""
-        pipeline = SequentialCVPipeline([("regressor", RandomForestRegressor(), None)])
+        pipeline = SequentialCVPipeline(
+            [("regressor", RandomForestRegressor())], cv_steps=[None]
+        )
 
         # Before fitting: no attributes ending with '_' should exist
         fitted_attrs_before = [

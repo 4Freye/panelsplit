@@ -210,9 +210,10 @@ class TestEdgeCases(unittest.TestCase):
         # Test with None transformer (no CV on None transformer)
         pipeline = SequentialCVPipeline(
             [
-                ("passthrough", None, None),
-                ("scaler", StandardScaler(), None),  # No CV to avoid index issues
-            ]
+                ("passthrough", None),
+                ("scaler", StandardScaler()),  # No CV to avoid index issues
+            ],
+            cv_steps=[None, None],
         )
 
         try:
@@ -227,13 +228,10 @@ class TestEdgeCases(unittest.TestCase):
         # Test without CV - should use regular fit/predict
         pipeline = SequentialCVPipeline(
             [
-                ("scaler", StandardScaler(), None),  # No CV
-                (
-                    "regressor",
-                    RandomForestRegressor(n_estimators=5, random_state=42),
-                    None,
-                ),  # No CV
-            ]
+                ("scaler", StandardScaler()),  # No CV
+                ("regressor", RandomForestRegressor(n_estimators=5, random_state=42)),
+            ],
+            cv_steps=[None, None],
         )
 
         try:

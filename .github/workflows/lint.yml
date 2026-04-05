@@ -27,13 +27,16 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
 
-      - name: Ensure mypy >= 0.930
-        run: uv run pip install --upgrade "mypy>=1"
+      - name: Install mypy (match pre-commit)
+        run: uv run pip install mypy==1.18.2
 
       - name: Run mypy
-        run:  uv run mypy panelsplit --disallow-untyped-defs --disallow-incomplete-defs
-
-  pydoclint:
+        run: |
+          uv run mypy panelsplit \
+            --disallow-untyped-defs \
+            --disallow-incomplete-defs \
+            --ignore-missing-imports
+  numpydoc:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
@@ -50,8 +53,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
 
-      - name: Run pydoclint
-        run:  uv run pydoclint panelsplit --check-class-attributes False
+      - name: Run numpydoc
+        run: uv run pre-commit run numpydoc-validation --all-files
 
   ruff:
     runs-on: ubuntu-latest
