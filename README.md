@@ -64,7 +64,7 @@ panel_split = PanelSplit(
 )
 
 # You can also pass arbitrarily nested multi-column groups!
-# PanelSplit will internally coalesce them into a flat hash ID for KFold slicing.
+# PanelSplit will internally flatten them into a single composite group identifier for KFold slicing.
 # e.g., groups = panel_data[["country_id", "city_id"]]
 
 # Lazy Evaluation securely propagates X and y through the StratifiedGroupKFold!
