@@ -100,7 +100,7 @@ def test_multi_grouped_spatial_splits(mock_panel_data):
         tr_periods = set(mock_panel_data["year"].iloc[train_idx])
         ts_periods = set(mock_panel_data["year"].iloc[test_idx])
         if len(tr_periods) > 0 and len(ts_periods) > 0:
-            assert max(tr_periods) <= max(ts_periods), "Temporal anomaly encountered!"
+            assert max(tr_periods) < min(ts_periods), "Temporal anomaly encountered!"
 
 
 def test_plot_splits_with_stratified_group_kfold(mock_panel_data):
