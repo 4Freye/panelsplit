@@ -4,10 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .cross_validation import PanelSplit
+from .utils.typing import ArrayLike
 
 
 def plot_splits(
-    panel_split: PanelSplit, n_groups: int = 2, show: bool = True
+    panel_split: PanelSplit,
+    X: Optional[ArrayLike] = None,
+    y: Optional[ArrayLike] = None,
+    n_groups: int = 2,
+    show: bool = True,
 ) -> Optional[Tuple[plt.Figure, Union[plt.Axes, np.ndarray]]]:
     """
     Visualize time series cross-validation splits using a scatter plot.
@@ -23,6 +28,10 @@ def plot_splits(
     ----------
     panel_split : PanelSplit
         An instance of PanelSplit containing the cross-validation splits.
+    X : ArrayLike, optional
+        Features dataset. Needed if the group_splitter relies on X for boundary calculation.
+    y : ArrayLike, optional
+        Target dataset. Needed if the group_splitter relies on y for boundary calculation.
     n_groups : int, default=2
         The number of subgroups to plot side-by-side if groups are used.
     show : bool, default=True
@@ -47,7 +56,7 @@ def plot_splits(
     """
 
     if panel_split._groups is not None:
-        return _plot_group_subplots(panel_split, n_groups=n_groups, show=show)
+        return _plot_group_subplots(panel_split, X=X, y=y, n_groups=n_groups, show=show)
 
     split_output = panel_split._u_periods_cv
     splits = len(split_output)
@@ -71,7 +80,11 @@ def plot_splits(
 
 
 def _plot_group_subplots(
-    panel_split: PanelSplit, n_groups: int, show: bool
+    panel_split: PanelSplit,
+    X: Optional[ArrayLike],
+    y: Optional[ArrayLike],
+    n_groups: int,
+    show: bool,
 ) -> Optional[Tuple[plt.Figure, Union[plt.Axes, np.ndarray]]]:
     unique_groups = np.unique(np.asarray(panel_split._groups))
     selected_groups = unique_groups[:n_groups]
@@ -87,7 +100,7 @@ def _plot_group_subplots(
     if actual_groups == 1:
         axes = np.array([axes])
 
-    splits = panel_split.split()
+    splits = panel_split.split(X=X, y=y)
     n_total_splits = len(splits)
     n_temporal_splits = (
         len(panel_split._temporal_splits)
