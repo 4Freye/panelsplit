@@ -1,9 +1,9 @@
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
 
 from panelsplit.cross_validation import PanelSplit
-from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
 
 
 @pytest.fixture
@@ -69,7 +69,7 @@ def test_stratified_grouped_spatial_splits(mock_panel_data):
     )
 
     # Needs X and y to compute splits because StratifiedGroupKFold parses `y`
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         ps.split()
 
     splits = ps.split(X=mock_panel_data, y=mock_panel_data["y"])
