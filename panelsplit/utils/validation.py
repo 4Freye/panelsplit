@@ -1,13 +1,9 @@
-import warnings
-import inspect
 import importlib
-from types import ModuleType
-from typing import TYPE_CHECKING, Any, Optional, Union, Tuple, List, Literal
-from numpy.typing import NDArray
-from narwhals.typing import IntoSeriesT, IntoDataFrameT
-from .typing import ArrayLike, EstimatorLike
-
+import inspect
+import warnings
 from collections.abc import Iterable
+from types import ModuleType
+from typing import TYPE_CHECKING, Any, List, Literal, Optional, Tuple, Union
 
 import narwhals as nw
 import numpy as np
@@ -16,8 +12,12 @@ from narwhals.dependencies import (
     is_pandas_dataframe,
     is_pandas_series,
 )
+from narwhals.typing import IntoDataFrameT, IntoSeriesT
+from numpy.typing import NDArray
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
+
+from .typing import ArrayLike, EstimatorLike
 
 
 # Keep pandas import for fallback compatibility
@@ -32,9 +32,9 @@ pd = _get_pandas()
 _PANDAS_AVAILABLE = False if pd is None else True
 
 if TYPE_CHECKING:
+    from pandas import DataFrame as PandasDataFrame
     from pandas import Index as PandasIndex
     from pandas import Series as PandasSeries
-    from pandas import DataFrame as PandasDataFrame
     from sklearn.base import BaseEstimator
 else:
     PandasIndex: Any = Any
@@ -357,3 +357,26 @@ def _check_X_y(X: ArrayLike, y: Optional[ArrayLike] = None) -> None:
 
     if y is not None and not _is_valid_data_type(y, "y"):
         raise TypeError("y should be a dataframe, series, or array-like object")
+
+
+def check_groups(groups: Any) -> Optional[NDArray]:
+    """
+    Validate and homogenize the groups array. If a 2D array or DataFrame with multiple
+    columns is provided, it creates a composite 1D array of hash IDs (via stable tuple
+    string representation) to prevent collisions across columns.
+    """
+    if groups is None:
+        return None
+
+    try:
+        groups_nw = nw.from_native(groups, pass_through=True)
+        if hasattr(groups_nw, "to_numpy"):
+            arr = groups_nw.to_numpy()
+        else:
+            arr = np.array(groups)
+    except Exception:
+        arr = np.array(groups)
+
+    if arr.ndim > 1 and arr.shape[1] > 1:
+        return np.array([str(tuple(row)) for row in arr])
+    return arr.flatten()

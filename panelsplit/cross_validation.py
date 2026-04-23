@@ -1,16 +1,17 @@
 import warnings
-from typing import Optional, Union, TYPE_CHECKING, Any
-from numpy.typing import NDArray
-from narwhals.typing import IntoDataFrame, IntoSeries
-from .utils.typing import ArrayLike, CVIndices
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import narwhals as nw
 import numpy as np
-from sklearn.model_selection import TimeSeriesSplit
+from narwhals.typing import IntoDataFrame, IntoSeries
+from numpy.typing import NDArray
+from sklearn.model_selection import GroupKFold, TimeSeriesSplit
 
+from .utils.typing import ArrayLike, CVIndices
 from .utils.validation import (
     _safe_indexing,
     _to_numpy_array,
+    check_groups,
     check_labels,
     check_periods,
     get_index_or_col_from_df,
@@ -64,6 +65,11 @@ class PanelSplit:
     include_train_in_test : bool
         Whether to include all training sets in their respective test sets. If set to
         True, overrides ``include_first_train_in_test``. Default is False.
+    groups : Optional[Any]
+        A 1D/2D array or DataFrame of spatial groupings/IDs for implementing spatio-temporal holdouts.
+        If provided, tests will simultaneously cross-validate over spatial nested structures using GroupKFold. Default is None.
+    group_splitter : Optional[Any]
+        A scikit-learn compatible splitter (e.g., `StratifiedGroupKFold(n_splits=3)`) used to build spatial splits natively. Default is `GroupKFold(n_splits=2)`.
 
     Attributes
     ----------
@@ -101,6 +107,8 @@ class PanelSplit:
         max_train_size: Optional[int] = None,
         include_first_train_in_test: bool = False,
         include_train_in_test: bool = False,
+        groups: Optional[Any] = None,
+        group_splitter: Optional[Any] = None,
     ) -> None:
         periods = check_periods(periods)
 
@@ -130,11 +138,42 @@ class PanelSplit:
             self._include_first_train_in_test = include_first_train_in_test
         else:
             self._include_first_train_in_test = True
+
         self._u_periods_cv = self._split_unique_periods(indices, unique_periods_array)
         self._periods = _to_numpy_array(periods)
         self._snapshots = _to_numpy_array(snapshots) if snapshots is not None else None
+
+        self._groups = check_groups(groups) if groups is not None else None
+
+        if self._groups is not None:
+            if group_splitter is None:
+                self._group_splitter = GroupKFold(n_splits=2)
+            else:
+                self._group_splitter = group_splitter
+            if len(self._groups) != len(self._periods):
+                raise ValueError(
+                    f"groups size ({len(self._groups)}) does not match periods size ({len(self._periods)})"
+                )
+        else:
+            self._group_splitter = None
+
         self.n_splits = n_splits
-        self.train_test_splits = self._gen_splits()
+        if self._groups is not None:
+            self.n_splits = n_splits * self._group_splitter.get_n_splits()  # type: ignore[union-attr]
+
+        self._temporal_splits = self._gen_splits()
+
+        self.train_test_splits = self._temporal_splits
+        if self._groups is not None:
+            try:
+                self.train_test_splits = self._compute_spatio_temporal_splits(
+                    X=None, y=None
+                )
+            except Exception as e:
+                warnings.warn(
+                    f"Could not cleanly pre-generate spatial splits in __init__: {e}. Passing X and y to split() natively at runtime."
+                )
+                self.train_test_splits = []
 
     def _split_unique_periods(self, indices: Any, unique_periods: NDArray) -> CVIndices:
         """
@@ -200,6 +239,30 @@ class PanelSplit:
 
         return train_test_splits
 
+    def _compute_spatio_temporal_splits(
+        self,
+        X: Optional[ArrayLike] = None,
+        y: Optional[ArrayLike] = None,
+    ) -> CVIndices:
+        """
+        Intersect internal time cuts with lazy spatial matrices natively.
+        """
+        spatio_temporal_splits = []
+        dummy_X = np.zeros(len(self._periods)) if X is None else X
+
+        for train_indices, test_indices in self._temporal_splits:
+            for sp_train, sp_test in self._group_splitter.split(
+                dummy_X, y, groups=self._groups
+            ):
+                final_train_indices = np.intersect1d(
+                    train_indices, sp_train, assume_unique=True
+                )
+                final_test_indices = np.intersect1d(
+                    test_indices, sp_test, assume_unique=True
+                )
+                spatio_temporal_splits.append((final_train_indices, final_test_indices))
+        return spatio_temporal_splits
+
     def split(
         self,
         X: Optional[ArrayLike] = None,
@@ -212,9 +275,9 @@ class PanelSplit:
         Parameters
         ----------
         X : Optional[ArrayLike]
-            Ignored; included for compatibility.
+            Data matrix to base splits on (used by logic like StratifiedGroupKFold).
         y : Optional[ArrayLike]
-            Ignored; included for compatibility.
+            Target variables to base splits on (used by logic like StratifiedGroupKFold).
         groups : Optional[np.ndarray]
             Ignored; included for compatibility.
 
@@ -241,7 +304,18 @@ class PanelSplit:
         ...     print("Train:", train, "Test:", test)
         Train: [0 1] Test: [2]
         """
-        return self.train_test_splits
+        if self._groups is None:
+            return self.train_test_splits  # type: ignore[return-value]
+
+        if X is not None or y is not None:
+            self.train_test_splits = self._compute_spatio_temporal_splits(X=X, y=y)
+
+        if not self.train_test_splits:
+            raise ValueError(
+                "train_test_splits is uncomputed. Your selected group_splitter requires passing X and y explicitly to the .split() method to calculate strata boundaries."
+            )
+
+        return self.train_test_splits  # type: ignore[return-value]
 
     def get_n_splits(
         self,
