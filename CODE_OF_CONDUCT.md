@@ -31,8 +31,9 @@ from the organisation. Some examples of poor etiquette are:
 
 For more context, you can check out this blog post on [The Cost of AI in Open Source Maintenance](https://adrin.info/the-cost-of-ai-in-open-source-maintenance.html).
 
-If this happens to you and you believe it's been a mistake, you can reach out to me at
-`eric[dot]frey[at]bse[dot]eu`.
+If this happens to you and you believe it's been a mistake, you can reach out by opening a
+[GitHub Discussion](https://github.com/4Freye/panelsplit/discussions) or contacting the maintainer
+via [GitHub](https://github.com/4Freye).
 
 *This code of conduct is adapted from the scikit-learn's code of conduct, which itself follows the Python Software Foundation's Code of Conduct.
 For the original version, see the scikit-learn repository on GitHub: <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>
