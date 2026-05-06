@@ -3,7 +3,7 @@ name = "panelsplit"
 dynamic = ["version"]
 description = "A tool for panel data analysis."
 authors = [
-    {name = "panelsplit developers", email = "eric.frey@bse.eu"},
+    {name = "panelsplit developers"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
