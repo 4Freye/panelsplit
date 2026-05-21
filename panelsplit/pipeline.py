@@ -140,11 +140,15 @@ def _sort_and_combine(
             return np.array(predictions)
 
     # Concatenate indices
-    flat_indices = np.concatenate([np.atleast_1d(pair[0]) for pair in predictions_with_idx])
+    flat_indices = np.concatenate(
+        [np.atleast_1d(pair[0]) for pair in predictions_with_idx]
+    )
 
     # Check for numpy array branch
     if all(isinstance(pair[1], np.ndarray) for pair in predictions_with_idx):
-        flat_outputs = np.concatenate([pair[1] for pair in predictions_with_idx], axis=0)
+        flat_outputs = np.concatenate(
+            [pair[1] for pair in predictions_with_idx], axis=0
+        )
         sort_idx = np.argsort(flat_indices, kind="stable")
         sorted_indices = flat_indices[sort_idx]
         sorted_outputs = flat_outputs[sort_idx]
@@ -155,17 +159,21 @@ def _sort_and_combine(
 
     # Check for narwhals (or series/dataframe-like) branch
     elif all(
-        hasattr(pair[1], "pipe") or hasattr(pair[1], "_compliant_series") or hasattr(pair[1], "_compliant_frame")
+        hasattr(pair[1], "pipe")
+        or hasattr(pair[1], "_compliant_series")
+        or hasattr(pair[1], "_compliant_frame")
         for pair in predictions_with_idx
     ):
-        nw_outputs = [nw.from_native(pair[1], pass_through=True) for pair in predictions_with_idx]
+        nw_outputs = [
+            nw.from_native(pair[1], pass_through=True) for pair in predictions_with_idx
+        ]
         concatenated_output = nw.concat(nw_outputs)
         sort_idx = np.argsort(flat_indices, kind="stable")
         sorted_indices = flat_indices[sort_idx]
-        
+
         native_concatenated = nw.to_native(concatenated_output, pass_through=True)
         sorted_outputs = _safe_indexing(native_concatenated, sort_idx)
-        
+
         sorted_outputs_nw = nw.from_native(sorted_outputs, pass_through=True)
         if include_indices:
             return sorted_indices, sorted_outputs_nw
@@ -183,10 +191,10 @@ def _sort_and_combine(
                 flat_outputs.extend(list(out))
             else:
                 flat_outputs.append(out)
-                
+
         sort_idx = np.argsort(flat_indices, kind="stable")
         sorted_indices = flat_indices[sort_idx]
-        
+
         flat_outputs_arr = np.array(flat_outputs)
         sorted_outputs = flat_outputs_arr[sort_idx]
         if include_indices:
@@ -404,6 +412,8 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         If True, include the indices in the output.
     return_group : {"test", "train"}, default = "test"
         Which group to return e.g. when calling predict().
+    n_jobs : int, default = 1
+        Number of jobs to run in parallel.
 
     Attributes
     ----------
@@ -711,7 +721,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         if cv is None:
             model = clone(transformer)
             model.fit(X, y)
-            fitted = (None, None, model)
+            fitted: Any = (None, None, model)
             if return_output:
                 # return_group is not considered here as cv == None.
                 if use_indices:
@@ -744,7 +754,10 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
                 folds_models.append((train_idx, test_idx, model_fold))
                 if return_output:
                     idx_trans.append(
-                        (test_idx if self.return_group == "test" else train_idx, output_trans)
+                        (
+                            test_idx if self.return_group == "test" else train_idx,
+                            output_trans,
+                        )
                     )
 
             if return_output:
@@ -975,7 +988,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
             Predicted target values.
 
         Notes
-        ------
+        -----
         This method is dynamically injected based on the final step of the pipeline.
 
         Examples
@@ -1154,8 +1167,8 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         Optional[NDArray]
             Array of class labels from the final classifier step, or None if unavailable.
 
-        Note
-        -------
+        Notes
+        -----
         Keep in mind that this aggregates all classes seen across all splits. Each split's
         classifier may vary in its classes (e.g. in the case of few observations and high class imabalance.)
 

@@ -323,10 +323,10 @@ def test_parallel_cv_pipeline():
     X = np.random.randn(size, 4)
     y = np.random.randn(size)
     period = np.repeat(np.arange(10), size // 10)
-    
+
     ps = PanelSplit(period, n_splits=4)
     rf = RandomForestRegressor(n_estimators=5, random_state=42)
-    
+
     # 1. Run pipeline with n_jobs=1 (sequential)
     pipe_seq = SequentialCVPipeline(
         steps=[("imputer", SimpleImputer()), ("rf", rf)],
@@ -335,7 +335,7 @@ def test_parallel_cv_pipeline():
     )
     pipe_seq.fit(X, y)
     preds_seq = pipe_seq.predict(X)
-    
+
     # 2. Run pipeline with n_jobs=2 (parallel)
     pipe_par = SequentialCVPipeline(
         steps=[("imputer", SimpleImputer()), ("rf", rf)],
@@ -344,10 +344,10 @@ def test_parallel_cv_pipeline():
     )
     pipe_par.fit(X, y)
     preds_par = pipe_par.predict(X)
-    
+
     # Verify that the parallel execution produces the exact same results as sequential
     np.testing.assert_array_almost_equal(preds_seq, preds_par)
-    
+
     # Check that parameters are set correctly
     pipe_par.set_params(n_jobs=3)
     assert pipe_par.n_jobs == 3

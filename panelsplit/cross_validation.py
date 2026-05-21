@@ -164,13 +164,13 @@ class PanelSplit:
         self._temporal_splits = self._gen_splits()
 
         # Cache variables for split calculations
-        self._cached_X = None
-        self._cached_y = None
-        self._cached_splits = None
+        self._cached_X: Optional[ArrayLike] = None
+        self._cached_y: Optional[ArrayLike] = None
+        self._cached_splits: Optional[CVIndices] = None
 
-        self._cached_spatial_splits = None
-        self._cached_spatial_X = None
-        self._cached_spatial_y = None
+        self._cached_spatial_splits: Optional[list[Any]] = None
+        self._cached_spatial_X: Optional[ArrayLike] = None
+        self._cached_spatial_y: Optional[ArrayLike] = None
 
         self.train_test_splits = self._temporal_splits
         if self._groups is not None:
@@ -335,7 +335,8 @@ class PanelSplit:
         # If the splitter does not depend on X/y (e.g. GroupKFold, LeaveOneGroupOut)
         # and we already pre-generated splits, we can return them immediately.
         is_independent = any(
-            cls.__name__ in (
+            cls.__name__
+            in (
                 "GroupKFold",
                 "LeaveOneGroupOut",
                 "LeavePGroupsOut",

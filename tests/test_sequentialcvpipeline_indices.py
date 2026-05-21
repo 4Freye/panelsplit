@@ -16,7 +16,7 @@ y_reg = np.array([1.0, 2.0, 3.0, 4.0])
 y_clf = np.array([0, 0, 1, 1])  # simple binary labels
 
 # PanelSplit used for CV variants
-ps = PanelSplit([1, 1, 2, 3], n_splits=2, include_first_train_in_test=True)
+ps = PanelSplit(np.array([1, 1, 2, 3]), n_splits=2, include_first_train_in_test=True)
 
 
 @pytest.mark.parametrize(

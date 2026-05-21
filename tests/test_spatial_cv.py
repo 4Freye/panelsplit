@@ -132,7 +132,7 @@ def test_spatial_splitter_caching(mock_panel_data):
     assert ps_ind._cached_splits is not None
     splits_ind_1 = ps_ind.split()
     splits_ind_2 = ps_ind.split(X=mock_panel_data, y=mock_panel_data["y"])
-    
+
     # Check that it returns the exact same cached object reference
     assert splits_ind_1 is splits_ind_2
     assert len(splits_ind_1) == 4
@@ -154,7 +154,7 @@ def test_spatial_splitter_caching(mock_panel_data):
 
     # Second call with the same X and y should hit the cache
     splits_dep_2 = ps_dep.split(X=mock_panel_data, y=mock_panel_data["y"])
-    
+
     assert splits_dep_1 is splits_dep_2
     assert len(splits_dep_1) == 4
 
@@ -199,4 +199,3 @@ def test_custom_independent_splitter_caching(mock_panel_data):
     splits_gss_1 = ps_gss.split()
     splits_gss_2 = ps_gss.split(X=mock_panel_data, y=mock_panel_data["y"])
     assert splits_gss_1 is splits_gss_2
-
