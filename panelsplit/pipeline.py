@@ -130,8 +130,12 @@ def _sort_and_combine(
     if np.isscalar(first_output):
         scalar_pairs = []
         for idxs, out in predictions_with_idx:
-            rep_idx = idxs[0] if (hasattr(idxs, "__len__") and len(idxs) > 0) else idxs
+            if hasattr(idxs, "__len__") and len(idxs) == 0:
+                continue
+            rep_idx = idxs[0] if hasattr(idxs, "__len__") else idxs
             scalar_pairs.append((rep_idx, out))
+        if not scalar_pairs:
+            return np.array([]) if not include_indices else (np.array([]), np.array([]))
         scalar_pairs.sort(key=lambda pair: pair[0])
         indices, predictions = zip(*scalar_pairs)
         if include_indices:
@@ -174,23 +178,33 @@ def _sort_and_combine(
         native_concatenated = nw.to_native(concatenated_output, pass_through=True)
         sorted_outputs = _safe_indexing(native_concatenated, sort_idx)
 
-        sorted_outputs_nw = nw.from_native(sorted_outputs, pass_through=True)
         if include_indices:
-            return sorted_indices, sorted_outputs_nw
+            return sorted_indices, sorted_outputs
         else:
-            return sorted_outputs_nw
+            return sorted_outputs
 
     # Fallback branch
     else:
         flat_outputs = []
         for pair in predictions_with_idx:
+            idxs = np.atleast_1d(pair[0])
+            n_samples = len(idxs)
+            if n_samples == 0:
+                continue
             out = pair[1]
             if isinstance(out, list):
-                flat_outputs.extend(out)
+                if len(out) == n_samples:
+                    flat_outputs.extend(out)
+                else:
+                    flat_outputs.extend([out] * n_samples)
             elif hasattr(out, "__iter__") and not isinstance(out, (str, bytes)):
-                flat_outputs.extend(list(out))
+                out_list = list(out)
+                if len(out_list) == n_samples:
+                    flat_outputs.extend(out_list)
+                else:
+                    flat_outputs.extend([out] * n_samples)
             else:
-                flat_outputs.append(out)
+                flat_outputs.extend([out] * n_samples)
 
         sort_idx = np.argsort(flat_indices, kind="stable")
         sorted_indices = flat_indices[sort_idx]
@@ -413,7 +427,12 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
     return_group : {"test", "train"}, default = "test"
         Which group to return e.g. when calling predict().
     n_jobs : int, default = 1
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel during cross-validation fold fitting.
+        Uses process-based parallelism (via joblib). If nested parallelism occurs
+        (e.g., if one of the pipeline's estimators also uses `n_jobs`), the outer
+        joblib loop will control the process allocation, but it is recommended to
+        set the estimator's `n_jobs=1` to avoid CPU oversubscription and excessive
+        context switching overhead.
 
     Attributes
     ----------

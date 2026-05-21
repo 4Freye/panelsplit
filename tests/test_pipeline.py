@@ -320,8 +320,9 @@ def test_score_on_sequentialCVpipeline():
 
 def test_parallel_cv_pipeline():
     size = 100
-    X = np.random.randn(size, 4)
-    y = np.random.randn(size)
+    rng = np.random.default_rng(42)
+    X = rng.standard_normal((size, 4))
+    y = rng.standard_normal(size)
     period = np.repeat(np.arange(10), size // 10)
 
     ps = PanelSplit(period, n_splits=4)

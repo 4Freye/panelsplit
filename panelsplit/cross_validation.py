@@ -5,7 +5,13 @@ import narwhals as nw
 import numpy as np
 from narwhals.typing import IntoDataFrame, IntoSeries
 from numpy.typing import NDArray
-from sklearn.model_selection import GroupKFold, TimeSeriesSplit
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    TimeSeriesSplit,
+)
 
 from .utils.typing import ArrayLike, CVIndices
 from .utils.validation import (
@@ -334,16 +340,16 @@ class PanelSplit:
 
         # If the splitter does not depend on X/y (e.g. GroupKFold, LeaveOneGroupOut)
         # and we already pre-generated splits, we can return them immediately.
-        is_independent = any(
-            cls.__name__
-            in (
-                "GroupKFold",
-                "LeaveOneGroupOut",
-                "LeavePGroupsOut",
-                "GroupShuffleSplit",
-            )
-            for cls in self._group_splitter.__class__.__mro__
+        is_independent = isinstance(
+            self._group_splitter,
+            (GroupKFold, LeaveOneGroupOut, LeavePGroupsOut, GroupShuffleSplit),
         )
+
+        if not is_independent and (X is None or y is None):
+            raise ValueError(
+                "Your selected group_splitter requires passing X and y explicitly to the .split() method to calculate strata boundaries."
+            )
+
         if is_independent and self._cached_splits is not None:
             return self._cached_splits
 
