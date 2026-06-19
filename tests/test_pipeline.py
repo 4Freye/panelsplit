@@ -318,7 +318,42 @@ def test_score_on_sequentialCVpipeline():
     pipe.score(X, y)
 
 
-# %%
-# %%
+def test_parallel_cv_pipeline():
+    size = 100
+    rng = np.random.default_rng(42)
+    X = rng.standard_normal((size, 4))
+    y = rng.standard_normal(size)
+    period = np.repeat(np.arange(10), size // 10)
+
+    ps = PanelSplit(period, n_splits=4)
+    rf = RandomForestRegressor(n_estimators=5, random_state=42)
+
+    # 1. Run pipeline with n_jobs=1 (sequential)
+    pipe_seq = SequentialCVPipeline(
+        steps=[("imputer", SimpleImputer()), ("rf", rf)],
+        cv_steps=[None, ps],
+        n_jobs=1,
+    )
+    pipe_seq.fit(X, y)
+    preds_seq = pipe_seq.predict(X)
+
+    # 2. Run pipeline with n_jobs=2 (parallel)
+    pipe_par = SequentialCVPipeline(
+        steps=[("imputer", SimpleImputer()), ("rf", rf)],
+        cv_steps=[None, ps],
+        n_jobs=2,
+    )
+    pipe_par.fit(X, y)
+    preds_par = pipe_par.predict(X)
+
+    # Verify that the parallel execution produces the exact same results as sequential
+    np.testing.assert_array_almost_equal(preds_seq, preds_par)
+
+    # Check that parameters are set correctly
+    pipe_par.set_params(n_jobs=3)
+    assert pipe_par.n_jobs == 3
+    assert pipe_par.get_params()["n_jobs"] == 3
+
+
 if __name__ == "__main__":
     unittest.main()

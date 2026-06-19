@@ -5,7 +5,13 @@ import narwhals as nw
 import numpy as np
 from narwhals.typing import IntoDataFrame, IntoSeries
 from numpy.typing import NDArray
-from sklearn.model_selection import GroupKFold, TimeSeriesSplit
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    TimeSeriesSplit,
+)
 
 from .utils.typing import ArrayLike, CVIndices
 from .utils.validation import (
@@ -163,12 +169,24 @@ class PanelSplit:
 
         self._temporal_splits = self._gen_splits()
 
+        # Cache variables for split calculations
+        self._cached_X: Optional[ArrayLike] = None
+        self._cached_y: Optional[ArrayLike] = None
+        self._cached_splits: Optional[CVIndices] = None
+
+        self._cached_spatial_splits: Optional[list[Any]] = None
+        self._cached_spatial_X: Optional[ArrayLike] = None
+        self._cached_spatial_y: Optional[ArrayLike] = None
+
         self.train_test_splits = self._temporal_splits
         if self._groups is not None:
             try:
                 self.train_test_splits = self._compute_spatio_temporal_splits(
                     X=None, y=None
                 )
+                self._cached_X = None
+                self._cached_y = None
+                self._cached_splits = self.train_test_splits
             except Exception as e:
                 warnings.warn(
                     f"Could not cleanly pre-generate spatial splits in __init__: {e}. Passing X and y to split() natively at runtime."
@@ -248,12 +266,25 @@ class PanelSplit:
         Intersect internal time cuts with lazy spatial matrices natively.
         """
         spatio_temporal_splits = []
-        dummy_X = np.zeros(len(self._periods)) if X is None else X
+
+        # Check if we have cached spatial splits for the same inputs
+        if (
+            self._cached_spatial_splits is not None
+            and X is self._cached_spatial_X
+            and y is self._cached_spatial_y
+        ):
+            spatial_splits = self._cached_spatial_splits
+        else:
+            dummy_X = np.zeros(len(self._periods)) if X is None else X
+            spatial_splits = list(
+                self._group_splitter.split(dummy_X, y, groups=self._groups)
+            )
+            self._cached_spatial_splits = spatial_splits
+            self._cached_spatial_X = X
+            self._cached_spatial_y = y
 
         for train_indices, test_indices in self._temporal_splits:
-            for sp_train, sp_test in self._group_splitter.split(
-                dummy_X, y, groups=self._groups
-            ):
+            for sp_train, sp_test in spatial_splits:
                 final_train_indices = np.intersect1d(
                     train_indices, sp_train, assume_unique=True
                 )
@@ -307,8 +338,34 @@ class PanelSplit:
         if self._groups is None:
             return self.train_test_splits  # type: ignore[return-value]
 
+        # If the splitter does not depend on X/y (e.g. GroupKFold, LeaveOneGroupOut)
+        # and we already pre-generated splits, we can return them immediately.
+        is_independent = isinstance(
+            self._group_splitter,
+            (GroupKFold, LeaveOneGroupOut, LeavePGroupsOut, GroupShuffleSplit),
+        )
+
+        if not is_independent and (X is None or y is None):
+            raise ValueError(
+                "Your selected group_splitter requires passing X and y explicitly to the .split() method to calculate strata boundaries."
+            )
+
+        if is_independent and self._cached_splits is not None:
+            return self._cached_splits
+
+        # Check if we have cached spatio-temporal splits for the exact same X and y inputs
+        if (
+            self._cached_splits is not None
+            and X is self._cached_X
+            and y is self._cached_y
+        ):
+            return self._cached_splits
+
         if X is not None or y is not None:
             self.train_test_splits = self._compute_spatio_temporal_splits(X=X, y=y)
+            self._cached_X = X
+            self._cached_y = y
+            self._cached_splits = self.train_test_splits
 
         if not self.train_test_splits:
             raise ValueError(

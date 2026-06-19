@@ -26,6 +26,75 @@ from sklearn.utils._tags import get_tags
 from sklearn.utils import Tags, Bunch
 from copy import deepcopy
 from typing import Literal
+from joblib import Parallel, delayed
+
+
+def _subset_data(
+    X: Union[IntoDataFrame, IntoSeries, np.ndarray],
+    indices: Union[int, NDArray[np.int64]],
+) -> Union[IntoDataFrame, IntoSeries, np.ndarray]:
+    """
+    Subset the input X based on provided indices.
+    """
+    X_nw = nw.from_native(X, pass_through=True)
+    return _safe_indexing(X_nw, indices, to_native=True)
+
+
+def _fit_fold(
+    transformer: EstimatorLike,
+    X: ArrayLike,
+    y: Optional[ArrayLike],
+    train_idx: NDArray[np.int64],
+    test_idx: NDArray[np.int64],
+    return_output: bool,
+    method: str,
+    return_group: Literal["train", "test"],
+) -> Tuple[NDArray[np.int64], NDArray[np.int64], EstimatorLike, Any]:
+    """
+    Fit a single fold and optionally compute predictions/transformed output.
+    """
+    model_fold = clone(transformer)
+    X_train = _subset_data(X, train_idx)
+    y_train = None if y is None else _subset_data(y, train_idx)
+    model_fold.fit(X_train, y_train)
+
+    output_trans = None
+    if return_output:
+        if return_group == "test":
+            X_test = _subset_data(X, test_idx)
+            y_test = None if y is None else _subset_data(y, test_idx)
+            output_trans = _call_method_with_correct_args(
+                model_fold, method, X_test, y_test
+            )
+        else:
+            output_trans = _call_method_with_correct_args(
+                model_fold, method, X_train, y_train
+            )
+
+    return train_idx, test_idx, model_fold, output_trans
+
+
+def _predict_fold(
+    model: EstimatorLike,
+    method_name: str,
+    X: ArrayLike,
+    indices: Union[int, NDArray[np.int64]],
+    y: Optional[ArrayLike] = None,
+) -> Tuple[Union[int, NDArray[np.int64]], Any]:
+    """
+    Apply a method of the given model to a subset of X based on indices.
+    """
+    X_subset = _subset_data(X, indices)
+    y_subset = None if y is None else _subset_data(y, indices)
+    if isinstance(X_subset, np.ndarray) and X_subset.ndim == 1:
+        expected = getattr(model, "n_features_in_", None)
+        if expected is not None and X_subset.shape[0] == expected:
+            X_subset = X_subset.reshape(1, -1)
+        else:
+            X_subset = X_subset.reshape(-1, 1)
+
+    output = _call_method_with_correct_args(model, method_name, X_subset, y_subset)
+    return indices, output
 
 
 def _log_message(
@@ -45,38 +114,107 @@ def _log_message(
 
 
 def _sort_and_combine(
-    predictions_with_idx: List[Tuple[int, Any]],
+    predictions_with_idx: List[Tuple[Any, Any]],
     include_indices: bool = False,
     return_group: Literal["train", "test"] = "test",
 ) -> Any:
     """
-    Sort and combine predictions from (index, prediction) pairs.
-
-    If all predictions are numpy arrays -> returns an ndarray (vstack).
-    If all predictions are narwhals-series-like -> returns a narwhals object (concat).
-    Otherwise -> returns a numpy array constructed from the list.
+    Sort and combine predictions from (indices, prediction) pairs in a vectorized way.
     """
-    predictions_with_idx.sort(key=lambda pair: pair[0])
-    indices, _predictions = zip(*predictions_with_idx)
-    predictions: Any = list(_predictions)
+    if not predictions_with_idx:
+        return np.array([]) if not include_indices else (np.array([]), np.array([]))
 
-    # All-ndarray branch
-    if predictions and all(isinstance(p, np.ndarray) for p in predictions):
-        predictions = np.vstack(predictions)
+    first_output = predictions_with_idx[0][1]
 
-    # All-narwhals (or series-like) branch: ensure every item looks like a narwhals series/frame
-    elif predictions and all(
-        hasattr(p, "pipe") or hasattr(p, "_compliant_series") for p in predictions
+    # If first_output is scalar
+    if np.isscalar(first_output):
+        scalar_pairs = []
+        for idxs, out in predictions_with_idx:
+            if hasattr(idxs, "__len__") and len(idxs) == 0:
+                continue
+            rep_idx = idxs[0] if hasattr(idxs, "__len__") else idxs
+            scalar_pairs.append((rep_idx, out))
+        if not scalar_pairs:
+            return np.array([]) if not include_indices else (np.array([]), np.array([]))
+        scalar_pairs.sort(key=lambda pair: pair[0])
+        indices, predictions = zip(*scalar_pairs)
+        if include_indices:
+            return np.array(indices), np.array(predictions)
+        else:
+            return np.array(predictions)
+
+    # Concatenate indices
+    flat_indices = np.concatenate(
+        [np.atleast_1d(pair[0]) for pair in predictions_with_idx]
+    )
+
+    # Check for numpy array branch
+    if all(isinstance(pair[1], np.ndarray) for pair in predictions_with_idx):
+        flat_outputs = np.concatenate(
+            [pair[1] for pair in predictions_with_idx], axis=0
+        )
+        sort_idx = np.argsort(flat_indices, kind="stable")
+        sorted_indices = flat_indices[sort_idx]
+        sorted_outputs = flat_outputs[sort_idx]
+        if include_indices:
+            return sorted_indices, sorted_outputs
+        else:
+            return sorted_outputs
+
+    # Check for narwhals (or series/dataframe-like) branch
+    elif all(
+        hasattr(pair[1], "pipe")
+        or hasattr(pair[1], "_compliant_series")
+        or hasattr(pair[1], "_compliant_frame")
+        for pair in predictions_with_idx
     ):
-        # Cast so nw.concat's generics line up with what we pass
-        predictions = nw.concat(predictions)
+        nw_outputs = [
+            nw.from_native(pair[1], pass_through=True) for pair in predictions_with_idx
+        ]
+        concatenated_output = nw.concat(nw_outputs)
+        sort_idx = np.argsort(flat_indices, kind="stable")
+        sorted_indices = flat_indices[sort_idx]
+
+        native_concatenated = nw.to_native(concatenated_output, pass_through=True)
+        sorted_outputs = _safe_indexing(native_concatenated, sort_idx)
+
+        if include_indices:
+            return sorted_indices, sorted_outputs
+        else:
+            return sorted_outputs
+
+    # Fallback branch
     else:
-        # Fallback: coerce to numpy array
-        predictions = np.array(predictions)
-    if include_indices:
-        return np.array(indices), predictions
-    else:
-        return predictions
+        flat_outputs = []
+        for pair in predictions_with_idx:
+            idxs = np.atleast_1d(pair[0])
+            n_samples = len(idxs)
+            if n_samples == 0:
+                continue
+            out = pair[1]
+            if isinstance(out, list):
+                if len(out) == n_samples:
+                    flat_outputs.extend(out)
+                else:
+                    flat_outputs.extend([out] * n_samples)
+            elif hasattr(out, "__iter__") and not isinstance(out, (str, bytes)):
+                out_list = list(out)
+                if len(out_list) == n_samples:
+                    flat_outputs.extend(out_list)
+                else:
+                    flat_outputs.extend([out] * n_samples)
+            else:
+                flat_outputs.extend([out] * n_samples)
+
+        sort_idx = np.argsort(flat_indices, kind="stable")
+        sorted_indices = flat_indices[sort_idx]
+
+        flat_outputs_arr = np.array(flat_outputs)
+        sorted_outputs = flat_outputs_arr[sort_idx]
+        if include_indices:
+            return sorted_indices, sorted_outputs
+        else:
+            return sorted_outputs
 
 
 # Cache for method signature inspection to avoid repeated reflection
@@ -288,6 +426,13 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         If True, include the indices in the output.
     return_group : {"test", "train"}, default = "test"
         Which group to return e.g. when calling predict().
+    n_jobs : int, default = 1
+        Number of jobs to run in parallel during cross-validation fold fitting.
+        Uses process-based parallelism (via joblib). If nested parallelism occurs
+        (e.g., if one of the pipeline's estimators also uses `n_jobs`), the outer
+        joblib loop will control the process allocation, but it is recommended to
+        set the estimator's `n_jobs=1` to avoid CPU oversubscription and excessive
+        context switching overhead.
 
     Attributes
     ----------
@@ -326,6 +471,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         verbose: bool = False,
         include_indices: bool = False,
         return_group: Literal["test", "train"] = "test",
+        n_jobs: int = 1,
     ):
         # Each step must be a tuple: (name, transformer)
         if not len(steps) == len(cv_steps):
@@ -349,6 +495,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
 
         self.verbose = verbose
         self.include_indices = include_indices
+        self.n_jobs = n_jobs
 
         final_tr = self.steps[-1][1]
 
@@ -418,7 +565,11 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         params = self._get_params("steps", deep=deep)
         # Ensure top-level params are present as well so set_params can set them
         params.update(
-            {"include_indices": self.include_indices, "verbose": self.verbose}
+            {
+                "include_indices": self.include_indices,
+                "verbose": self.verbose,
+                "n_jobs": self.n_jobs,
+            }
         )
         return params
 
@@ -446,6 +597,8 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
             self.include_indices = params.pop("include_indices")
         if "verbose" in params:
             self.verbose = params.pop("verbose")
+        if "n_jobs" in params:
+            self.n_jobs = params.pop("n_jobs")
 
         # delegate the rest (nested step params) to helper
         self._set_params("steps", **params)
@@ -474,10 +627,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         """
         Subset the input X based on provided indices.
         """
-        # Use narwhals for dataframe-agnostic operations
-        X_nw = nw.from_native(X, pass_through=True)
-
-        return _safe_indexing(X_nw, indices, to_native=True)
+        return _subset_data(X, indices)
 
     def _append_indexed_output(
         self, output_list: List, test_idx: Union[List, NDArray], output: Any
@@ -487,13 +637,10 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
 
         Handles both scalar outputs (e.g., from score()) and array-like outputs.
         """
-        if np.isscalar(output):
-            output_list.append((test_idx[0], output))
-        else:
-            for i, idx in enumerate(test_idx):
-                output_list.append((idx, self._subset(output, i)))
+        output_list.append((test_idx, output))
 
     def _combine(
+        self,
         transformed_list: List,
     ) -> Union[ArrayLike, List]:
         """
@@ -593,7 +740,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         if cv is None:
             model = clone(transformer)
             model.fit(X, y)
-            fitted = (None, None, model)
+            fitted: Any = (None, None, model)
             if return_output:
                 # return_group is not considered here as cv == None.
                 if use_indices:
@@ -605,35 +752,37 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
                     output = _call_method_with_correct_args(model, method, X, y)
         else:
             splits = check_cv(cv, X=X, y=y)
-            idx_trans: List = []
             folds_models = []
-            for train_idx, test_idx in splits:
-                model_fold = clone(transformer)
-                X_train = self._subset(X, train_idx)
-                y_train = None if y is None else self._subset(y, train_idx)
-                X_test = self._subset(X, test_idx)
-                y_test = None if y is None else self._subset(y, test_idx)
-                model_fold.fit(X_train, y_train)
+            idx_trans = []
 
+            results = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_fold)(
+                    transformer=transformer,
+                    X=X,
+                    y=y,
+                    train_idx=train_idx,
+                    test_idx=test_idx,
+                    return_output=return_output,
+                    method=method,
+                    return_group=self.return_group,
+                )
+                for train_idx, test_idx in splits
+            )
+
+            for train_idx, test_idx, model_fold, output_trans in results:
                 folds_models.append((train_idx, test_idx, model_fold))
-
                 if return_output:
-                    if self.return_group == "test":
-                        # Use _call_method_with_correct_args to handle methods like score that need y
-                        output_trans = _call_method_with_correct_args(
-                            model_fold, method, X_test, y_test
+                    idx_trans.append(
+                        (
+                            test_idx if self.return_group == "test" else train_idx,
+                            output_trans,
                         )
-                        # Pair each output with its original index
-                        self._append_indexed_output(idx_trans, test_idx, output_trans)
-                    else:
-                        output_trans = _call_method_with_correct_args(
-                            model_fold, method, X_train, y_train
-                        )
-                        self._append_indexed_output(idx_trans, train_idx, output_trans)
+                    )
+
             if return_output:
                 output = _sort_and_combine(idx_trans, include_indices=use_indices)
 
-            fitted = folds_models  # type: ignore
+            fitted = folds_models
         if return_output:
             return output, fitted
         else:
@@ -664,24 +813,19 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
                     return output
             else:
                 raise ValueError(f"Fitted model does not have a {method_name} method.")
-        predictions_with_idx: List = []
-        for train_idx, test_idx, model in fitted_model:
-            if self.return_group == "test":
-                output_list = self._apply_method_to_indices(
-                    model, method_name, X, test_idx, y
-                )
 
-                self._append_indexed_output(predictions_with_idx, test_idx, output_list)
-            else:
-                output_list = self._apply_method_to_indices(
-                    model, method_name, X, train_idx, y
-                )
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(_predict_fold)(
+                model=model,
+                method_name=method_name,
+                X=X,
+                indices=test_idx if self.return_group == "test" else train_idx,
+                y=y,
+            )
+            for train_idx, test_idx, model in fitted_model
+        )
 
-                self._append_indexed_output(
-                    predictions_with_idx, train_idx, output_list
-                )
-
-        return _sort_and_combine(predictions_with_idx, include_indices=use_indices)
+        return _sort_and_combine(results, include_indices=use_indices)
 
     def _fit(self, X: ArrayLike, y: Optional[ArrayLike] = None) -> ArrayLike:
         """
@@ -863,7 +1007,7 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
             Predicted target values.
 
         Notes
-        ------
+        -----
         This method is dynamically injected based on the final step of the pipeline.
 
         Examples
@@ -1042,8 +1186,8 @@ class SequentialCVPipeline(_BaseComposition, BaseEstimator):
         Optional[NDArray]
             Array of class labels from the final classifier step, or None if unavailable.
 
-        Note
-        -------
+        Notes
+        -----
         Keep in mind that this aggregates all classes seen across all splits. Each split's
         classifier may vary in its classes (e.g. in the case of few observations and high class imabalance.)
 
